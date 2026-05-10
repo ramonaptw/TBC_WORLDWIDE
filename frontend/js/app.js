@@ -930,10 +930,14 @@ async function loadStatistik() {
 
   container.innerHTML = `
     <div style="display:flex;gap:10px;margin-bottom:14px">
-      ${miniKpi('Member', thisKunden, diff(thisKunden, lastKunden), diffColor(thisKunden, lastKunden))}
-      ${miniKpi('Umsatz', fmt(thisUmsatz), diff(thisUmsatz, lastUmsatz), diffColor(thisUmsatz, lastUmsatz))}
-      ${miniKpi('Marge', fmt(thisMarge), diff(thisMarge, lastMarge), diffColor(thisMarge, lastMarge))}
+      <div style="background:var(--surface);border:2px solid var(--tbc-blue);border-radius:var(--radius);padding:14px 18px;flex:2;min-width:200px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tbc-blue);margin-bottom:4px">⭐ Umsatz (Bonus-Metrik)</div>
+        <div style="font-size:26px;font-weight:800;color:var(--text-primary);line-height:1.05">${fmt(thisUmsatz)}</div>
+        <div style="font-size:12px;margin-top:3px;color:${diffColor(thisUmsatz, lastUmsatz)}">${diff(thisUmsatz, lastUmsatz)} vs. Vormonat</div>
+      </div>
       ${miniKpi('Design Intake → CS', fmt(thisDesignEur), diff(thisDesignEur, lastDesignEur), diffColor(thisDesignEur, lastDesignEur))}
+      ${miniKpi('Member', thisKunden, diff(thisKunden, lastKunden), diffColor(thisKunden, lastKunden))}
+      ${miniKpi('Marge', fmt(thisMarge), diff(thisMarge, lastMarge), diffColor(thisMarge, lastMarge))}
     </div>
 
     <div class="stat-cards-grid ${isAdmin ? 'stat-cards-3' : 'stat-cards-2'}"  style="gap:14px;margin-bottom:14px">
@@ -1141,20 +1145,33 @@ async function loadDatenbank() {
     const csLabel = k.assigned_cs_name ? k.assigned_cs_name : '–';
     const phaseLabel = k.onboarding_phase ? (PHASE_LABEL[k.onboarding_phase] || k.onboarding_phase) : null;
 
+    const serviceChip = k.service_type === 'templates_only'
+      ? '<span style="font-size:10px;font-weight:700;color:#0369A1;background:#E0F2FE;border:1px solid #BAE6FD;border-radius:6px;padding:2px 7px">TO · Templates</span>'
+      : '<span style="font-size:10px;font-weight:700;color:#5B21B6;background:#F3E8FF;border:1px solid #DDD6FE;border-radius:6px;padding:2px 7px">FS · Full</span>';
+    const slaChip = (k.handover_at && !k.whatsapp_contact_at && k.onboarding_phase !== 'fertig')
+      ? (() => {
+          const ageH = (Date.now() - new Date(k.handover_at).getTime()) / 3600000;
+          if (ageH >= 24) return '<span style="font-size:10px;font-weight:700;color:#B91C1C;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:2px 7px">⚠ SLA</span>';
+          return '<span style="font-size:10px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:2px 7px">⏱ ' + Math.max(0, Math.round(24 - ageH)) + 'h</span>';
+        })()
+      : '';
+
     let statusBadge;
     if (isUebergeben) {
-      const nbDoneChip = k.nb_onboarding_done
-        ? '<span style="font-size:10px;font-weight:700;color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;padding:2px 7px">NB-Onb. ✓</span>'
-        : '<span style="font-size:10px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:2px 7px">NB-Onb. ⚠ offen</span>';
       statusBadge = `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
         <span style="font-size:11px;font-weight:700;color:var(--success);background:#F0FDF4;border:1px solid #22C55E;border-radius:99px;padding:2px 8px">📤 Übergeben an ${csLabel}</span>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           ${phaseLabel ? `<span style="font-size:10px;font-weight:700;color:#6D28D9;background:#F3E8FF;border:1px solid #DDD6FE;border-radius:6px;padding:2px 7px">Phase: ${phaseLabel}</span>` : ''}
-          ${nbDoneChip}
+          ${serviceChip}
+          ${slaChip}
         </div>
       </div>`;
     } else {
-      statusBadge = `<div><span style="font-size:11px;font-weight:700;color:#92400E;background:#FFF8E1;border:1px solid #F59E0B;border-radius:99px;padding:2px 8px">🏆 Gewonnen</span>${uebergabeDeadlineBadge(k.created_at)}</div>`;
+      statusBadge = `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+        <span style="font-size:11px;font-weight:700;color:#92400E;background:#FFF8E1;border:1px solid #F59E0B;border-radius:99px;padding:2px 8px">🏆 Gewonnen</span>
+        ${uebergabeDeadlineBadge(k.created_at)}
+        <div style="display:flex;gap:4px;flex-wrap:wrap">${serviceChip}</div>
+      </div>`;
     }
     if (isCS && k.created_by !== currentUser.id) {
       statusBadge = `<span style="font-size:10px;font-weight:700;color:var(--text-secondary);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px 7px;display:inline-block;margin-bottom:4px">von ${k.mitarbeiter_name} gewonnen</span><br>${statusBadge}`;
@@ -1208,31 +1225,32 @@ async function loadCsUsersInto(selectEl, currentValue) {
 
 let _kundeEditOriginal = null;
 
-function openNewKundeModal() {
+function kSelectServiceType(value) {
+  document.getElementById('kServiceType').value = value;
+  document.querySelectorAll('#kServiceTypeGroup .kstype-card').forEach(el => {
+    el.classList.toggle('active', el.dataset.value === value);
+  });
+  // Templates-Sender wird Pflicht bei templates_only
+  const req = document.getElementById('kTemplatesSenderReq');
+  if (req) req.textContent = value === 'templates_only' ? '(Pflicht)' : '(optional)';
+}
+
+async function openNewKundeModal() {
   document.getElementById('kundeModalTitle').textContent = 'Member anlegen';
   document.getElementById('kundeId').value = '';
   ['kFirma','kTelefon','kUmsatz','kMarge'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('kKanal').value = '';
   document.getElementById('kAbschluss').value = new Date().toISOString().slice(0, 10);
   document.getElementById('kHubspotId').value = '';
-  document.getElementById('kAlreadyOnboarded').checked = false;
-  document.getElementById('kAlreadyOnboardedRow').style.display = '';
-  document.getElementById('kAssignCSRow').style.display = 'none';
-  document.getElementById('kAssignCS').value = '';
-  document.getElementById('kEditOnboardingSection').style.display = 'none';
+  document.getElementById('kTemplatesSender').value = '';
+  kSelectServiceType('full_service');
+  // Edit-only Sektion auch bei Anlegen verfügbar machen, damit man direkt Henry+Phase zuweisen kann
+  document.getElementById('kEditOnboardingSection').style.display = '';
+  await loadCsUsersInto(document.getElementById('kEditAssignCS'));
+  document.getElementById('kEditAssignCS').value = '';
+  document.getElementById('kEditPhase').value = '';
   _kundeEditOriginal = null;
   openModal('modalKunde');
-}
-
-async function toggleAlreadyOnboarded() {
-  const checked = document.getElementById('kAlreadyOnboarded').checked;
-  const row = document.getElementById('kAssignCSRow');
-  row.style.display = checked ? '' : 'none';
-  if (checked) {
-    const sel = document.getElementById('kAssignCS');
-    await loadCsUsersInto(sel);
-    if (!sel.value && _csUsersCache && _csUsersCache.length === 1) sel.value = String(_csUsersCache[0].id);
-  }
 }
 
 async function editKunde(id) {
@@ -1248,16 +1266,19 @@ async function editKunde(id) {
   document.getElementById('kUmsatz').value = k.umsatz;
   document.getElementById('kMarge').value = k.marge;
   document.getElementById('kHubspotId').value = k.hubspot_company_id || '';
-  // The "already onboarded" checkbox is only meaningful at create-time
-  document.getElementById('kAlreadyOnboarded').checked = false;
-  document.getElementById('kAlreadyOnboardedRow').style.display = 'none';
-  document.getElementById('kAssignCSRow').style.display = 'none';
-  // Edit-only section: assign CS + change phase on existing member
+  // Service-Typ + Templates-Sender vorbelegen
+  kSelectServiceType(k.service_type || 'full_service');
+  document.getElementById('kTemplatesSender').value = k.templates_sender || '';
+  // CS-Übergabe Sektion
   document.getElementById('kEditOnboardingSection').style.display = '';
   await loadCsUsersInto(document.getElementById('kEditAssignCS'), k.assigned_cs_user_id);
   document.getElementById('kEditPhase').value = k.onboarding_phase || '';
-  document.getElementById('kEditNbOnboardingDone').checked = !!k.nb_onboarding_done;
-  _kundeEditOriginal = { cs: k.assigned_cs_user_id || null, phase: k.onboarding_phase || '', nbDone: !!k.nb_onboarding_done };
+  _kundeEditOriginal = {
+    cs: k.assigned_cs_user_id || null,
+    phase: k.onboarding_phase || '',
+    serviceType: k.service_type || 'full_service',
+    templatesSender: k.templates_sender || '',
+  };
   openModal('modalKunde');
 }
 
@@ -1271,51 +1292,45 @@ async function saveKunde() {
     umsatz: document.getElementById('kUmsatz').value,
     marge: document.getElementById('kMarge').value,
     hubspot_company_id: document.getElementById('kHubspotId').value.trim() || null,
+    service_type: document.getElementById('kServiceType').value || 'full_service',
+    templates_sender: document.getElementById('kTemplatesSender').value || null,
   };
   if (!data.firma) return showToast('Firma ist erforderlich', 'error');
   if (!data.kanal) return showToast('Kanal ist erforderlich', 'error');
   if (!data.abschlussdatum) return showToast('Abschlussdatum ist erforderlich', 'error');
-  const alreadyOnboarded = !id && document.getElementById('kAlreadyOnboarded').checked;
-  let assignedCsId = null;
-  if (alreadyOnboarded) {
-    assignedCsId = parseInt(document.getElementById('kAssignCS').value) || null;
-    if (!assignedCsId) return showToast('Bitte Customer Success Empfänger wählen', 'error');
+  if (data.service_type === 'templates_only' && !data.templates_sender) {
+    return showToast('Templates-Sender ist Pflicht bei Templates-Only', 'error');
   }
 
   if (id) {
     await api.put('/kunden/' + id, data);
-    // Optional: change CS-Empfänger / Phase / NB-onboarding-done from the edit-only section
-    const newCs     = parseInt(document.getElementById('kEditAssignCS').value) || null;
-    const newPhase  = document.getElementById('kEditPhase').value || '';
-    const newNbDone = !!document.getElementById('kEditNbOnboardingDone').checked;
-    const orig = _kundeEditOriginal || { cs: null, phase: '', nbDone: false };
-    const csChanged     = (orig.cs ?? null) !== newCs;
-    const phaseChanged  = (orig.phase || '') !== newPhase;
-    const nbDoneChanged = !!orig.nbDone !== newNbDone;
-    if (csChanged || phaseChanged || nbDoneChanged) {
+    const newCs    = parseInt(document.getElementById('kEditAssignCS').value) || null;
+    const newPhase = document.getElementById('kEditPhase').value || '';
+    const orig = _kundeEditOriginal || { cs: null, phase: '' };
+    const csChanged    = (orig.cs ?? null) !== newCs;
+    const phaseChanged = (orig.phase || '') !== newPhase;
+    if (csChanged || phaseChanged) {
       const body = {};
-      if (csChanged)     body.assigned_cs_user_id = newCs;
+      if (csChanged)    body.assigned_cs_user_id = newCs;
       if (phaseChanged && newPhase) body.onboarding_phase = newPhase;
-      if (nbDoneChanged) body.nb_onboarding_done = newNbDone;
       try { await api.patch('/kunden/' + id + '/status', body); } catch {}
     }
   } else {
     const created = await api.post('/kunden', data);
-    if (alreadyOnboarded) {
-      // NB did the onboarding themselves — still hand over to CS for Design Intake.
-      // phase='design' triggers status='übergeben', push, and Onboarding-task on the backend.
-      // nb_onboarding_done=true makes the auto-task description reflect that NB already onboarded.
+    // Direkt-Übergabe beim Anlegen wenn CS-Empfänger + Phase gewählt
+    const initialCs    = parseInt(document.getElementById('kEditAssignCS').value) || null;
+    const initialPhase = document.getElementById('kEditPhase').value || '';
+    if (initialCs && initialPhase) {
       await api.patch('/kunden/' + created.id + '/status', {
-        onboarding_phase: 'design',
-        assigned_cs_user_id: assignedCsId,
-        nb_onboarding_done: true,
+        assigned_cs_user_id: initialCs,
+        onboarding_phase: initialPhase,
       }).catch(() => {});
     } else {
-      // Auto-create Pre-Onboarding task for the creator
+      // Auto-Task für NB: Member innerhalb 24h übergeben
       const due = new Date(); due.setDate(due.getDate() + 1);
       api.post('/tasks', {
-        title: `Onboarding starten: ${data.firma}`,
-        description: `Member "${data.firma}" innerhalb von 24h übergeben. Bitte Deal übergeben abschließen.`,
+        title: `Übergabe an Customer Success: ${data.firma}`,
+        description: `Member "${data.firma}" wurde angelegt — innerhalb 24h an Customer Success übergeben (Edit → CS-Empfänger + Phase Design).`,
         assigned_to: currentUser.id,
         priority: 'high',
         status: 'open',
@@ -1325,7 +1340,7 @@ async function saveKunde() {
     }
   }
   closeModal('modalKunde');
-  showToast(id ? 'Kunde aktualisiert!' : 'Kunde angelegt!');
+  showToast(id ? 'Member aktualisiert!' : 'Member angelegt!');
   loadDatenbank();
 }
 
@@ -1376,13 +1391,39 @@ async function openCsMemberOverview(kundeId) {
   // Header
   document.getElementById('csmTitle').textContent = k.firma;
   const phaseLabel = k.onboarding_phase ? (_csmPhases.find(p => p.key === k.onboarding_phase)?.label || k.onboarding_phase) : null;
-  const nbDoneChip = k.nb_onboarding_done
-    ? '<span style="font-size:11px;font-weight:700;color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:99px;padding:2px 8px">NB-Onb. ✓</span>'
-    : '<span style="font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:99px;padding:2px 8px">NB-Onb. ⚠ offen</span>';
+  const serviceLabel = k.service_type === 'templates_only' ? 'Templates-Only' : 'Full Service';
+  const serviceColor = k.service_type === 'templates_only'
+    ? { bg: '#E0F2FE', cl: '#0369A1', bd: '#BAE6FD' }
+    : { bg: '#F3E8FF', cl: '#5B21B6', bd: '#DDD6FE' };
+  const senderHint = k.templates_sender === 'nb' ? ' · von NB' : k.templates_sender === 'cs' ? ' · von CS' : '';
   const phaseChip = phaseLabel
     ? `<span style="font-size:11px;font-weight:700;color:#6D28D9;background:#F3E8FF;border:1px solid #DDD6FE;border-radius:99px;padding:2px 8px">Phase: ${phaseLabel}</span>`
     : '';
-  document.getElementById('csmBadgeRow').innerHTML = phaseChip + nbDoneChip;
+  const serviceChip = `<span style="font-size:11px;font-weight:700;color:${serviceColor.cl};background:${serviceColor.bg};border:1px solid ${serviceColor.bd};border-radius:99px;padding:2px 8px">${serviceLabel}${senderHint}</span>`;
+  document.getElementById('csmBadgeRow').innerHTML = phaseChip + serviceChip;
+
+  // SLA banner just below the header
+  const slaBanner = (() => {
+    if (!k.handover_at) return '';
+    if (k.whatsapp_contact_at) return `<div style="margin:0 0 14px;padding:9px 12px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;color:#15803D;font-size:13px;font-weight:600">✓ Erstkontakt am ${formatDate(k.whatsapp_contact_at)}</div>`;
+    const ageH = (Date.now() - new Date(k.handover_at).getTime()) / 3600000;
+    if (ageH >= 24) {
+      const overH = Math.floor(ageH - 24);
+      return `<div style="margin:0 0 14px;padding:9px 12px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;color:#B91C1C;font-size:13px;font-weight:700">⚠ 24h-SLA überschritten um ${overH}h — bitte WhatsApp-Kontakt aufnehmen!</div>`;
+    }
+    const remH = Math.floor(24 - ageH);
+    const remM = Math.floor(((24 - ageH) - remH) * 60);
+    return `<div style="margin:0 0 14px;padding:9px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;color:#B45309;font-size:13px;font-weight:700">⏱ Erstkontakt offen — ${remH}h ${remM}min verbleibend</div>`;
+  })();
+  // Insert SLA banner before the Phase row
+  const moveRow = document.getElementById('csmMoveRow');
+  let banner = document.getElementById('csmSlaBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'csmSlaBanner';
+    moveRow.parentNode.insertBefore(banner, moveRow.parentNode.firstChild);
+  }
+  banner.innerHTML = slaBanner;
   document.getElementById('csmMeta').innerHTML = [
     `<span>👤 von ${k.mitarbeiter_name || '–'}</span>`,
     k.kanal ? `<span>📥 ${k.kanal}</span>` : '',
@@ -3442,7 +3483,6 @@ async function obRun() {
     api.patch('/kunden/' + pendingId + '/status', {
       onboarding_phase: 'design',
       assigned_cs_user_id: assignedCsId,
-      nb_onboarding_done: false,
     }).catch(() => {});
   }
 }

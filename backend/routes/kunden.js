@@ -3,6 +3,34 @@ const db = require('../models/database');
 const { authenticate } = require('../middleware/auth');
 const { notifyUser } = require('../lib/push-notify');
 
+const SERVICE_TYPES = ['full_service', 'templates_only'];
+const TEMPLATE_SENDERS = ['nb', 'cs'];
+
+function checklistFor(serviceType, templatesSender) {
+  if (serviceType === 'templates_only') {
+    const senderLabel = templatesSender === 'nb' ? 'NB' : templatesSender === 'cs' ? 'Customer Success' : null;
+    return [
+      { label: 'WhatsApp kontaktiert',                                                    done: false },
+      { label: senderLabel ? `Templates an Kunde gesendet (von ${senderLabel})` : 'Templates an Kunde gesendet', done: false },
+      { label: 'Designs vom Kunden zurück',                                               done: false },
+    ];
+  }
+  return [
+    { label: 'WhatsApp kontaktiert',          done: false },
+    { label: 'Erstgespräch mit Kunde geführt', done: false },
+    { label: 'Design abgeklärt',              done: false },
+    { label: 'In Design beim Designer',       done: false },
+  ];
+}
+
+function handoverDescription(firma, nbName, serviceType, templatesSender) {
+  if (serviceType === 'templates_only') {
+    const who = templatesSender === 'nb' ? `${nbName}` : templatesSender === 'cs' ? 'dir' : 'noch zu klären';
+    return `Du hast den Kunden "${firma}" von ${nbName} erhalten (Templates-Only). Templates werden von ${who} gesendet. Bitte WhatsApp-Kontakt innerhalb 24h aufnehmen.`;
+  }
+  return `Du hast den Kunden "${firma}" von ${nbName} erhalten (Full Service). Bitte WhatsApp-Kontakt innerhalb 24h aufnehmen und Onboarding durchführen.`;
+}
+
 router.get('/', authenticate, (req, res) => {
   const role = req.user.role;
   let kunden;
@@ -25,8 +53,11 @@ router.get('/', authenticate, (req, res) => {
 });
 
 router.post('/', authenticate, (req, res) => {
-  const { firma, telefon, kanal, abschlussdatum, umsatz, marge, hubspot_company_id, assigned_cs_user_id, nb_onboarding_done } = req.body;
+  const { firma, telefon, kanal, abschlussdatum, umsatz, marge, hubspot_company_id, assigned_cs_user_id, service_type, templates_sender } = req.body;
   if (!firma || !kanal || !abschlussdatum) return res.status(400).json({ error: 'Pflichtfelder fehlen' });
+  const stype = SERVICE_TYPES.includes(service_type) ? service_type : 'full_service';
+  const tsender = TEMPLATE_SENDERS.includes(templates_sender) ? templates_sender : null;
+  if (stype === 'templates_only' && !tsender) return res.status(400).json({ error: 'templates_sender Pflicht bei Templates-Only' });
   const row = db.insert('kunden', {
     firma, telefon: telefon || null, kanal, abschlussdatum,
     umsatz: Number(umsatz) || 0, marge: Number(marge) || 0,
@@ -34,14 +65,19 @@ router.post('/', authenticate, (req, res) => {
     status: 'gewonnen',
     created_by: req.user.id,
     assigned_cs_user_id: assigned_cs_user_id ? Number(assigned_cs_user_id) : null,
-    nb_onboarding_done: !!nb_onboarding_done,
+    service_type: stype,
+    templates_sender: tsender,
+    handover_at: null,
+    whatsapp_contact_at: null,
+    sla_warned_at: null,
+    sla_escalated_at: null,
     phase_history: [],
   });
   res.status(201).json(row);
 });
 
 router.put('/:id', authenticate, (req, res) => {
-  const { firma, telefon, kanal, abschlussdatum, umsatz, marge, status, hubspot_company_id, assigned_cs_user_id, nb_onboarding_done } = req.body;
+  const { firma, telefon, kanal, abschlussdatum, umsatz, marge, status, hubspot_company_id, assigned_cs_user_id, service_type, templates_sender } = req.body;
   const patch = {
     firma, telefon: telefon || null, kanal, abschlussdatum,
     umsatz: Number(umsatz) || 0, marge: Number(marge) || 0,
@@ -51,7 +87,8 @@ router.put('/:id', authenticate, (req, res) => {
   if (assigned_cs_user_id !== undefined) {
     patch.assigned_cs_user_id = assigned_cs_user_id ? Number(assigned_cs_user_id) : null;
   }
-  if (nb_onboarding_done !== undefined) patch.nb_onboarding_done = !!nb_onboarding_done;
+  if (service_type !== undefined && SERVICE_TYPES.includes(service_type)) patch.service_type = service_type;
+  if (templates_sender !== undefined) patch.templates_sender = TEMPLATE_SENDERS.includes(templates_sender) ? templates_sender : null;
   const updated = db.update('kunden', Number(req.params.id), patch);
   if (!updated) return res.status(404).json({ error: 'Nicht gefunden' });
   res.json(updated);
@@ -59,7 +96,7 @@ router.put('/:id', authenticate, (req, res) => {
 
 // PATCH status and/or onboarding_phase
 router.patch('/:id/status', authenticate, (req, res) => {
-  const { status, onboarding_phase, assigned_cs_user_id, nb_onboarding_done } = req.body;
+  const { status, onboarding_phase, assigned_cs_user_id, service_type, templates_sender } = req.body;
   const id = Number(req.params.id);
   const before = db.findOne('kunden', k => k.id === id);
   if (!before) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -72,7 +109,8 @@ router.patch('/:id/status', authenticate, (req, res) => {
   if (assigned_cs_user_id !== undefined) {
     updates.assigned_cs_user_id = assigned_cs_user_id ? Number(assigned_cs_user_id) : null;
   }
-  if (nb_onboarding_done !== undefined) updates.nb_onboarding_done = !!nb_onboarding_done;
+  if (service_type !== undefined && SERVICE_TYPES.includes(service_type)) updates.service_type = service_type;
+  if (templates_sender !== undefined) updates.templates_sender = TEMPLATE_SENDERS.includes(templates_sender) ? templates_sender : null;
 
   let phaseEnteredDesign = false;
   if (onboarding_phase) {
@@ -83,6 +121,7 @@ router.patch('/:id/status', authenticate, (req, res) => {
     if (onboarding_phase === 'design' && wasUnsetOrInitial) {
       updates.status = 'übergeben';
       phaseEnteredDesign = true;
+      if (!before.handover_at) updates.handover_at = new Date().toISOString();
     }
     const history = Array.isArray(before.phase_history) ? before.phase_history.slice() : [];
     history.push({ phase: onboarding_phase, at: new Date().toISOString(), by: req.user.id });
@@ -100,6 +139,11 @@ router.patch('/:id/status', authenticate, (req, res) => {
   const shouldHandover = updated.assigned_cs_user_id && (phaseEnteredDesign || csNewlyAssigned);
 
   if (shouldHandover) {
+    // Set handover_at also for the CS-reassignment path if missing
+    if (!updated.handover_at) {
+      db.update('kunden', id, { handover_at: new Date().toISOString() });
+    }
+
     notifyUser(updated.assigned_cs_user_id, {
       title: 'Neuer Member zugewiesen',
       body: updated.firma,
@@ -115,12 +159,9 @@ router.patch('/:id/status', authenticate, (req, res) => {
     if (!existingOpen) {
       const nbName = (db.findOne('users', u => u.id === updated.created_by)?.name) || 'New Business';
       const due = new Date(); due.setDate(due.getDate() + 3);
-      const nbDone = !!updated.nb_onboarding_done;
       db.insert('tasks', {
         title: 'Onboarding-Übergabe: ' + updated.firma,
-        description: nbDone
-          ? `Du hast den Kunden "${updated.firma}" von ${nbName} erhalten. Onboarding ist von ${nbName}s Seite aus erfolgt — bitte trotzdem den Kontakt aufnehmen und Details für die Übergabe ins Design klären.`
-          : `Du hast den Kunden "${updated.firma}" von ${nbName} erhalten. Bitte WhatsApp-Kontakt aufnehmen und das komplette Onboarding durchführen.`,
+        description: handoverDescription(updated.firma, nbName, updated.service_type || 'full_service', updated.templates_sender),
         status: 'open',
         priority: 'high',
         assigned_to: updated.assigned_cs_user_id,
@@ -129,12 +170,7 @@ router.patch('/:id/status', authenticate, (req, res) => {
         project: 'Onboarding',
         kunde_id: id,
         sourcing: null,
-        checklist: [
-          { label: 'WhatsApp kontaktiert',                       done: false },
-          { label: 'Erstgespräch mit Kunde geführt',             done: false },
-          { label: 'Onboarding (Henrys Seite) abgeschlossen',    done: false },
-          { label: 'Alle Details geklärt → bereit für Production', done: false },
-        ],
+        checklist: checklistFor(updated.service_type || 'full_service', updated.templates_sender),
       });
     }
   }

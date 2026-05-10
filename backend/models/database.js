@@ -164,6 +164,21 @@ db.find('users').forEach(u => {
   }
 });
 
+// One-time, idempotent kunden migration:
+// - default service_type → 'full_service'
+// - legacy nb_onboarding_done === true  → templates_sender = 'nb'
+// - backfill handover_at from the first 'design' entry in phase_history
+db.find('kunden').forEach(k => {
+  const patch = {};
+  if (!k.service_type) patch.service_type = 'full_service';
+  if (k.nb_onboarding_done === true && !k.templates_sender) patch.templates_sender = 'nb';
+  if (!k.handover_at && Array.isArray(k.phase_history)) {
+    const firstDesign = k.phase_history.find(h => h.phase === 'design');
+    if (firstDesign?.at) patch.handover_at = firstDesign.at;
+  }
+  if (Object.keys(patch).length) db.update('kunden', k.id, patch);
+});
+
 // Seed tools + onboarding steps only on first-ever run
 if (isFirstRun) {
   const steps = [

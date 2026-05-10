@@ -118,6 +118,15 @@ router.patch('/:id/checklist', authenticate, (req, res) => {
   const checklist = Array.isArray(task.checklist) ? [...task.checklist] : [];
   if (checklist[index]) checklist[index] = { ...checklist[index], done: Boolean(done) };
   db.update('tasks', Number(req.params.id), { checklist });
+
+  // SLA hook: when the 'WhatsApp kontaktiert' item is ticked done, stamp the kunde.
+  if (task.kunde_id && checklist[index] && /whatsapp.*kontaktiert/i.test(checklist[index].label) && checklist[index].done) {
+    const k = db.findOne('kunden', x => x.id === task.kunde_id);
+    if (k && !k.whatsapp_contact_at) {
+      db.update('kunden', k.id, { whatsapp_contact_at: new Date().toISOString() });
+    }
+  }
+
   res.json({ success: true, checklist });
 });
 
