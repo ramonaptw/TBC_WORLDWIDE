@@ -468,6 +468,10 @@
                 <div class="lead-person-grid" id="calllistPersonGrid"></div>
               </div>
               <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+                <div style="flex:1;min-width:180px">
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);margin-bottom:6px">Filter (optional)</div>
+                  <input type="text" id="calllistNameFilter" placeholder="z.B. Burger, Café, Restaurant" class="form-control" onkeydown="if(event.key==='Enter')loadCalllist()">
+                </div>
                 <div>
                   <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);margin-bottom:6px">Anzahl Unternehmen</div>
                   <input type="number" id="calllistLimit" value="20" min="1" max="100" class="form-control" style="width:90px">

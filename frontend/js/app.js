@@ -2168,6 +2168,7 @@ let _calllistEntries = [];
 
 async function loadCalllist() {
   const limit = parseInt(document.getElementById('calllistLimit')?.value) || 20;
+  const nameFilter = (document.getElementById('calllistNameFilter')?.value || '').trim();
   const status = document.getElementById('calllistStatus');
   const results = document.getElementById('calllistResults');
   const btn = document.getElementById('calllistBtn');
@@ -2178,17 +2179,17 @@ async function loadCalllist() {
   }
 
   btn.disabled = true;
-  status.innerHTML = `<div style="color:var(--text-secondary);padding:12px 0">⏳ Lädt aus HubSpot…</div>`;
+  status.innerHTML = `<div style="color:var(--text-secondary);padding:12px 0">⏳ Lädt aus HubSpot${nameFilter ? ` mit Filter „${nameFilter}"` : ''}…</div>`;
   results.innerHTML = '';
   try {
-    const data = await leadApiCall('calllist', { ownerId: calllistOwnerId, limit });
+    const data = await leadApiCall('calllist', { ownerId: calllistOwnerId, limit, nameFilter });
     if (!data.entries?.length) {
-      status.innerHTML = `<div style="color:var(--text-secondary);padding:12px 0">Keine Einträge mit Telefonnummer gefunden.</div>`;
+      status.innerHTML = `<div style="color:var(--text-secondary);padding:12px 0">Keine Einträge${nameFilter ? ` für „${nameFilter}"` : ''} mit Telefonnummer gefunden.</div>`;
       btn.disabled = false;
       return;
     }
     _calllistEntries = data.entries;
-    status.innerHTML = `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">${data.entries.length} Einträge${data.total ? ` · ${data.total} Unternehmen gefunden` : ''} · sortiert nach letztem Kontakt</div>`;
+    status.innerHTML = `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">${data.entries.length} Einträge${data.total ? ` · ${data.total} Unternehmen gefunden` : ''}${nameFilter ? ` · Filter: „${nameFilter}"` : ''} · sortiert nach letztem Kontakt</div>`;
     results.innerHTML = `
       <div class="card" style="padding:14px 14px 0">
         <input type="text" id="calllistFilter" placeholder="🔍 Suche nach Unternehmen oder Kontakt (z.B. Smash, Kaffee)…"
