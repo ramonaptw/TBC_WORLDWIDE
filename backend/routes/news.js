@@ -17,7 +17,7 @@ router.get('/', authenticate, (req, res) => {
   res.json(news);
 });
 
-router.post('/', authenticate, requireRole('admin', 'management'), (req, res) => {
+router.post('/', authenticate, requireRole('admin', 'management', 'sellsupport'), (req, res) => {
   const { title, content, pinned } = req.body;
   if (!title || !content) return res.status(400).json({ error: 'Titel und Inhalt erforderlich' });
 
@@ -25,7 +25,7 @@ router.post('/', authenticate, requireRole('admin', 'management'), (req, res) =>
   res.status(201).json(item);
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'management'), (req, res) => {
+router.delete('/:id', authenticate, requireRole('admin', 'management', 'sellsupport'), (req, res) => {
   db.delete('announcements', req.params.id);
   res.json({ success: true });
 });

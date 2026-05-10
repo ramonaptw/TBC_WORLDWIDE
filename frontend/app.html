@@ -106,6 +106,7 @@
           </div>
           <button onclick="closeUserMenu();openProfileModal()" style="display:block;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">👤 Profil bearbeiten</button>
           <button id="darkModeBtn" onclick="toggleDarkMode()" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''"><span id="darkModeIcon">🌙</span> <span id="darkModeLabel">Dark Mode</span></button>
+          <button onclick="closeUserMenu();togglePushNotifications()" style="display:block;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">🔔 Benachrichtigungen</button>
           <button id="userMenuAdmin" onclick="closeUserMenu();showPage('admin')" style="display:none;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">🛡️ Admin-Bereich</button>
           <button onclick="closeUserMenu();logout()" style="display:block;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--danger)" onmouseenter="this.style.background='rgba(239,68,68,0.12)'" onmouseleave="this.style.background=''">⏻ Abmelden</button>
         </div>
@@ -819,8 +820,20 @@
 </div>
 
 <!-- Sourcing-Anfrage Modal -->
+<style>
+.src-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:13px;border:1px solid var(--border)}
+.src-table tr+tr td{border-top:1px solid var(--border)}
+.src-table td{padding:0;vertical-align:middle}
+.src-table td.src-label{background:var(--bg);padding:9px 12px;font-weight:600;color:var(--text-primary);width:42%;border-right:1px solid var(--border);line-height:1.35}
+.src-table td.src-label small{display:block;font-weight:400;color:var(--text-secondary);font-size:11px;margin-top:2px}
+.src-table td.src-value{padding:0}
+.src-table td.src-value input,.src-table td.src-value select{border:none;background:transparent;outline:none;width:100%;padding:9px 12px;font-family:inherit;font-size:13px;color:var(--text-primary)}
+.src-table td.src-value input:focus,.src-table td.src-value select:focus{background:rgba(59,130,246,0.07);box-shadow:inset 0 0 0 2px var(--tbc-blue)}
+.src-table td.src-value input::placeholder{color:var(--text-light)}
+[data-theme="dark"] .src-table td.src-value input:focus,[data-theme="dark"] .src-table td.src-value select:focus{background:rgba(59,130,246,0.12)}
+</style>
 <div class="modal-overlay" id="modalSourcing" style="display:none">
-  <div class="modal" style="max-width:680px">
+  <div class="modal" style="max-width:720px">
     <div class="modal-header">
       <h3>📦 Sourcing-Anfrage erstellen</h3>
       <button class="modal-close" onclick="closeModal('modalSourcing')">✕</button>
@@ -829,28 +842,25 @@
       <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px">
         Wird als Aufgabe an Sales Support gesendet. Pflichtfelder mit *.
       </p>
-      <div class="grid-2">
-        <div class="form-group"><label class="form-label">Customer *</label><input class="form-control" id="srcCustomer" placeholder="z.B. Fischerei Hodann GmbH"></div>
-        <div class="form-group"><label class="form-label">Supplier</label><input class="form-control" id="srcSupplier" placeholder="??? oder spezifisch"></div>
-      </div>
-      <div class="grid-2">
-        <div class="form-group"><label class="form-label">Product type *</label><input class="form-control" id="srcProductType" placeholder="z.B. Paper Bag L Pocket"></div>
-        <div class="form-group"><label class="form-label">Model</label>
-          <select class="form-control" id="srcModel"><option value="">– wählen –</option><option value="Auto">Auto</option><option value="Manual">Manual</option><option value="XXX">XXX</option></select>
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="form-group"><label class="form-label">Size of product</label><input class="form-control" id="srcSize" placeholder="z.B. 15x20cm"></div>
-        <div class="form-group"><label class="form-label">Quantity for quote *</label><input class="form-control" id="srcQuantity" placeholder="z.B. 40.000 Pieces / 100.000 Pieces"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Printing (A/B side, 1/2/3 colours, full colour)</label><input class="form-control" id="srcPrinting" placeholder="z.B. 1 Color, A-Side"></div>
-      <div class="form-group"><label class="form-label">Material (grms/m², white/brown)</label><input class="form-control" id="srcMaterial" placeholder="z.B. 40gsm, white"></div>
-      <div class="form-group"><label class="form-label">Varnishes (laminate, varnish, UV lacquer)</label><input class="form-control" id="srcVarnishes" placeholder="z.B. Greaseproof Paper"></div>
-      <div class="grid-2">
-        <div class="form-group"><label class="form-label">Target price (optional)</label><input class="form-control" id="srcTargetPrice" placeholder="z.B. 0,12 € / Stk."></div>
-        <div class="form-group"><label class="form-label">Examples (optional)</label><input class="form-control" id="srcExamples" placeholder="Links / Referenzen"></div>
-      </div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+      <table class="src-table">
+        <tbody>
+          <tr><td class="src-label">Customer *</td><td class="src-value"><input id="srcCustomer" placeholder="z.B. Fischerei Hodann GmbH"></td></tr>
+          <tr><td class="src-label">Supplier</td><td class="src-value"><input id="srcSupplier" placeholder="??? oder spezifisch"></td></tr>
+          <tr><td class="src-label">Product type *</td><td class="src-value"><input id="srcProductType" placeholder="z.B. Paper Bag L Pocket"></td></tr>
+          <tr><td class="src-label">Model<small>auto / manual</small></td><td class="src-value">
+            <select id="srcModel"><option value="">–</option><option value="Auto">Auto</option><option value="Manual">Manual</option><option value="XXX">XXX</option></select>
+          </td></tr>
+          <tr><td class="src-label">Size of product</td><td class="src-value"><input id="srcSize" placeholder="z.B. 15x20cm"></td></tr>
+          <tr><td class="src-label">Printing<small>A/B side, 1/2/3 colours, full colour</small></td><td class="src-value"><input id="srcPrinting" placeholder="z.B. 1 Color, A-Side"></td></tr>
+          <tr><td class="src-label">Material<small>grms/m², white/brown</small></td><td class="src-value"><input id="srcMaterial" placeholder="z.B. 40gsm, white"></td></tr>
+          <tr><td class="src-label">Varnishes<small>laminate, varnish, UV lacquer</small></td><td class="src-value"><input id="srcVarnishes" placeholder="z.B. Greaseproof Paper"></td></tr>
+          <tr><td class="src-label">Quantity for quote *</td><td class="src-value"><input id="srcQuantity" placeholder="z.B. 40.000 Pieces / 100.000 Pieces"></td></tr>
+          <tr><td class="src-label">Target price<small>if available</small></td><td class="src-value"><input id="srcTargetPrice" placeholder="z.B. 0,12 € / Stk."></td></tr>
+          <tr><td class="src-label">Examples<small>if available</small></td><td class="src-value"><input id="srcExamples" placeholder="Links / Referenzen"></td></tr>
+          <tr><td class="src-label">Notiz<small>zusätzliche Hinweise</small></td><td class="src-value"><input id="srcNote" placeholder="optional"></td></tr>
+        </tbody>
+      </table>
+
       <div class="grid-2">
         <div class="form-group"><label class="form-label">Zugewiesen an *</label>
           <select class="form-control" id="srcAssigned"><option value="">– wählen –</option></select>

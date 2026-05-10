@@ -23,6 +23,7 @@ app.use('/api/wiki', require('./routes/wiki'));
 app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/brand', require('./routes/brand'));
+app.use('/api/push', require('./routes/push'));
 
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {

@@ -69,7 +69,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (fresh) currentUser = { ...currentUser, ...fresh };
   applyAppName(brand?.name || 'B Mobile');
 
-  const roleLabels = { admin: 'Administrator', manager: 'Human Resources', employee: 'Mitarbeiter', sellsupport: 'Sales Support', newbusiness: 'New Business', customersuccess: 'Customer Success', hr: 'Human Resources' };
+  // Register service worker + (re)subscribe silently if user already granted permission
+  registerPushSW().then(() => maybeResubscribePush()).catch(() => {});
+
+  const roleLabels = { admin: 'Administrator', management: 'Management', sellsupport: 'Sales Support', newbusiness: 'New Business', customersuccess: 'Customer Success' };
   const roleLabel = roleLabels[currentUser.role] || currentUser.role;
   const av = document.getElementById('sidebarAvatar');
   if (currentUser.avatar) {
@@ -1507,6 +1510,80 @@ function applyAppName(name) {
   if (el) el.textContent = name;
 }
 
+/* ─── Push Notifications ─── */
+let _swReg = null;
+
+async function registerPushSW() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  _swReg = await navigator.serviceWorker.register('/sw.js');
+  return _swReg;
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function maybeResubscribePush() {
+  if (!_swReg || Notification.permission !== 'granted') return;
+  const existing = await _swReg.pushManager.getSubscription();
+  if (existing) {
+    await api.post('/push/subscribe', { subscription: existing }).catch(() => {});
+    return;
+  }
+  await subscribePush();
+}
+
+async function subscribePush() {
+  if (!_swReg) return;
+  const { key, enabled } = await api.get('/push/vapid-public-key').catch(() => ({}));
+  if (!enabled || !key) {
+    showToast('Push-Benachrichtigungen sind serverseitig nicht konfiguriert.', 'error');
+    return false;
+  }
+  try {
+    const sub = await _swReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key),
+    });
+    await api.post('/push/subscribe', { subscription: sub });
+    return true;
+  } catch (err) {
+    console.error('[push] subscribe failed:', err);
+    return false;
+  }
+}
+
+async function togglePushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    return showToast('Dein Browser unterstützt keine Push-Benachrichtigungen.', 'error');
+  }
+  if (!_swReg) await registerPushSW();
+  if (!_swReg) return showToast('Service Worker konnte nicht registriert werden.', 'error');
+
+  // Already subscribed → unsubscribe
+  const existing = await _swReg.pushManager.getSubscription();
+  if (existing) {
+    try { await api.post('/push/unsubscribe', { endpoint: existing.endpoint }); } catch {}
+    await existing.unsubscribe();
+    showToast('Push-Benachrichtigungen deaktiviert.');
+    return;
+  }
+
+  // Need permission?
+  if (Notification.permission === 'denied') {
+    return showToast('Benachrichtigungen sind in den Browser-Einstellungen blockiert.', 'error');
+  }
+  if (Notification.permission === 'default') {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return showToast('Berechtigung verweigert.', 'error');
+  }
+
+  if (await subscribePush()) showToast('Push-Benachrichtigungen aktiviert!');
+}
+
 function logoPreviewFile(file) {
   if (!file) return;
   const reader = new FileReader();
@@ -2074,16 +2151,17 @@ const SOURCING_FIELDS = [
   ['productType', 'Product type'],
   ['model',       'Model'],
   ['size',        'Size of product'],
-  ['quantity',    'Quantity for quote'],
   ['printing',    'Printing'],
   ['material',    'Material'],
   ['varnishes',   'Varnishes'],
+  ['quantity',    'Quantity for quote'],
   ['targetPrice', 'Target price'],
   ['examples',    'Examples'],
+  ['note',        'Notiz'],
 ];
 
 async function openSourcingModal() {
-  ['srcCustomer','srcSupplier','srcProductType','srcSize','srcQuantity','srcPrinting','srcMaterial','srcVarnishes','srcTargetPrice','srcExamples','srcDue'].forEach(id => document.getElementById(id).value = '');
+  ['srcCustomer','srcSupplier','srcProductType','srcSize','srcQuantity','srcPrinting','srcMaterial','srcVarnishes','srcTargetPrice','srcExamples','srcNote','srcDue'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('srcModel').value = '';
 
   // Populate assignee dropdown — preselect first sellsupport user if available
@@ -2110,12 +2188,13 @@ async function saveSourcingTask() {
     productType: document.getElementById('srcProductType').value.trim(),
     model:       document.getElementById('srcModel').value,
     size:        document.getElementById('srcSize').value.trim(),
-    quantity:    document.getElementById('srcQuantity').value.trim(),
     printing:    document.getElementById('srcPrinting').value.trim(),
     material:    document.getElementById('srcMaterial').value.trim(),
     varnishes:   document.getElementById('srcVarnishes').value.trim(),
+    quantity:    document.getElementById('srcQuantity').value.trim(),
     targetPrice: document.getElementById('srcTargetPrice').value.trim(),
     examples:    document.getElementById('srcExamples').value.trim(),
+    note:        document.getElementById('srcNote').value.trim(),
   };
   const assigned = document.getElementById('srcAssigned').value;
   const due = document.getElementById('srcDue').value;
