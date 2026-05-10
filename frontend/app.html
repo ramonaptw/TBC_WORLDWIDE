@@ -106,7 +106,6 @@
           </div>
           <button onclick="closeUserMenu();openProfileModal()" style="display:block;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">👤 Profil bearbeiten</button>
           <button id="darkModeBtn" onclick="toggleDarkMode()" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''"><span id="darkModeIcon">🌙</span> <span id="darkModeLabel">Dark Mode</span></button>
-          <button onclick="closeUserMenu();togglePushNotifications()" style="display:block;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">🔔 Benachrichtigungen</button>
           <button id="userMenuAdmin" onclick="closeUserMenu();showPage('admin')" style="display:none;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">🛡️ Admin-Bereich</button>
           <button onclick="closeUserMenu();logout()" style="display:block;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--danger)" onmouseenter="this.style.background='rgba(239,68,68,0.12)'" onmouseleave="this.style.background=''">⏻ Abmelden</button>
         </div>
@@ -1380,41 +1379,10 @@
         <div id="csmChecklist" style="border:1px solid var(--border);border-radius:10px;overflow:hidden"></div>
       </div>
 
-      <!-- Repeat Orders -->
-      <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-light)">↻ Repeat Orders</div>
-          <button class="btn btn-sm btn-secondary" id="csmAddRoBtn" style="font-size:11px">+ Repeat Order</button>
-        </div>
-        <div id="csmRepeatList" style="border:1px solid var(--border);border-radius:10px;overflow:hidden"></div>
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modalCsMember')">Schließen</button>
       <button class="btn btn-primary" id="csmEditBtn">✏️ Member-Daten bearbeiten</button>
-    </div>
-  </div>
-</div>
-
-<!-- Repeat Order Modal (Customer Success) -->
-<div class="modal-overlay" id="modalRepeatOrder" style="display:none">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <h3>↻ Repeat Order eintragen</h3>
-      <button class="modal-close" onclick="closeModal('modalRepeatOrder')">✕</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px"><span id="roKundeFirma">–</span></p>
-      <div class="grid-2">
-        <div class="form-group"><label class="form-label">Datum *</label><input class="form-control" type="date" id="roDate"></div>
-        <div class="form-group"><label class="form-label">Umsatz (€) *</label><input class="form-control" type="number" min="0" id="roUmsatz" placeholder="z.B. 5000"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Marge (€)</label><input class="form-control" type="number" min="0" id="roMarge" placeholder="optional"></div>
-      <div class="form-group"><label class="form-label">Notiz</label><textarea class="form-control" id="roNotes" placeholder="optional" rows="2"></textarea></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modalRepeatOrder')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="saveRepeatOrder()">Speichern</button>
     </div>
   </div>
 </div>

@@ -69,9 +69,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (fresh) currentUser = { ...currentUser, ...fresh };
   applyAppName(brand?.name || 'B Mobile');
 
-  // Register service worker + (re)subscribe silently if user already granted permission
-  registerPushSW().then(() => maybeResubscribePush()).catch(() => {});
-
   const roleLabels = { admin: 'Administrator', management: 'Management', sellsupport: 'Sales Support', newbusiness: 'New Business', customersuccess: 'Customer Success' };
   const roleLabel = roleLabels[currentUser.role] || currentUser.role;
   const av = document.getElementById('sidebarAvatar');
@@ -801,7 +798,7 @@ async function loadStatistik() {
   statMonthInit();
   const isAdmin = ['admin', 'management'].includes(currentUser.role);
   const allKunden = await api.get('/kunden');
-  // Customer Success has its own statistik view (Design/Production Intake + Repeat Orders)
+  // Customer Success has its own statistik view (Design Intake / Production Intake)
   if (currentUser.role === 'customersuccess') return loadStatistikCS(allKunden);
   // Non-admins see only their own customers
   const kunden = isAdmin ? allKunden : allKunden.filter(k => k.created_by === currentUser.id);
@@ -930,9 +927,9 @@ async function loadStatistik() {
 
   container.innerHTML = `
     <div style="display:flex;gap:10px;margin-bottom:14px">
-      <div style="background:var(--surface);border:2px solid var(--tbc-blue);border-radius:var(--radius);padding:14px 18px;flex:2;min-width:200px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tbc-blue);margin-bottom:4px">⭐ Umsatz (Bonus-Metrik)</div>
-        <div style="font-size:26px;font-weight:800;color:var(--text-primary);line-height:1.05">${fmt(thisUmsatz)}</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;flex:2;min-width:200px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);margin-bottom:4px">Umsatz</div>
+        <div style="font-size:24px;font-weight:800;color:var(--text-primary);line-height:1.05">${fmt(thisUmsatz)}</div>
         <div style="font-size:12px;margin-top:3px;color:${diffColor(thisUmsatz, lastUmsatz)}">${diff(thisUmsatz, lastUmsatz)} vs. Vormonat</div>
       </div>
       ${miniKpi('Design Intake → CS', fmt(thisDesignEur), diff(thisDesignEur, lastDesignEur), diffColor(thisDesignEur, lastDesignEur))}
@@ -1013,7 +1010,7 @@ async function loadStatistik() {
   `;
 }
 
-/* ─── CS Statistik (Design / Production / Repeat Orders) ─── */
+/* ─── CS Statistik (Design Intake / Production Intake) ─── */
 async function loadStatistikCS(allKunden) {
   const container = document.getElementById('statistikContent');
   const myKunden = allKunden.filter(k => k.assigned_cs_user_id === currentUser.id);
@@ -1028,11 +1025,6 @@ async function loadStatistikCS(allKunden) {
   const productionCount  = productionKunden.length;
   const designRevenue    = designKunden.reduce((s, k) => s + (Number(k.umsatz) || 0), 0);
   const productionRevenue = productionKunden.reduce((s, k) => s + (Number(k.umsatz) || 0), 0);
-
-  let repeats = [];
-  try { repeats = await api.get('/repeat-orders?month=' + selMonth); } catch {}
-  const repeatCount = repeats.length;
-  const repeatRevenue = repeats.reduce((s, r) => s + (Number(r.umsatz) || 0), 0);
 
   // 6-month trend of Production Intake
   const trend = [];
@@ -1066,7 +1058,6 @@ async function loadStatistikCS(allKunden) {
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       ${miniKpi('Design Intake', fmt(designRevenue), `${designCount} Member · ${selMonth}`)}
       ${miniKpi('Production Intake', fmt(productionRevenue), `${productionCount} Member · ${selMonth}`)}
-      ${miniKpi('Repeat Orders', fmt(repeatRevenue), `${repeatCount} Aufträge`)}
     </div>
 
     <div class="card" style="margin-bottom:14px">
@@ -1182,7 +1173,6 @@ async function loadDatenbank() {
         <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:#F3E8FF;color:#6D28D9;border-radius:6px" onclick="setKundePhase(${k.id},'design',this)" title="In Design verschieben">Design</button>
         <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:#E0F2FE;color:#0369A1;border-radius:6px" onclick="setKundePhase(${k.id},'production',this)" title="In Production verschieben">Production</button>
         <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:#DCFCE7;color:#15803D;border-radius:6px" onclick="setKundePhase(${k.id},'fertig',this)" title="Fertig">Fertig</button>
-        <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:var(--bg);color:var(--text-primary);border-radius:6px" onclick="openRepeatOrderModal(${k.id},'${k.firma.replace(/'/g,"\\'")}')" title="Repeat Order eintragen">↻ Repeat</button>
       </div>` : '';
 
     return `<tr>
@@ -1370,10 +1360,7 @@ let _csmKundeId = null;
 
 async function openCsMemberOverview(kundeId) {
   _csmKundeId = kundeId;
-  const [kunden, repeats] = await Promise.all([
-    api.get('/kunden').catch(() => []),
-    api.get('/repeat-orders?kunde_id=' + kundeId).catch(() => []),
-  ]);
+  const kunden = await api.get('/kunden').catch(() => []);
   const k = kunden.find(x => x.id === kundeId);
   if (!k) return showToast('Member nicht gefunden', 'error');
 
@@ -1438,8 +1425,7 @@ async function openCsMemberOverview(kundeId) {
       style="padding:8px 16px;border-radius:10px;border:1.5px solid ${isCurrent ? p.cl : 'var(--border)'};background:${isCurrent ? p.bg : 'var(--bg)'};color:${isCurrent ? p.cl : 'var(--text-primary)'};font-size:13px;font-weight:${isCurrent ? 700 : 600};cursor:pointer;transition:all .15s">${p.label}</button>`;
   }).join('');
 
-  // Move to production big button (only when currently in design)
-  const moveRow = document.getElementById('csmMoveRow');
+  // Move to production big button (only when currently in design) — reuse moveRow declared above
   if (k.onboarding_phase === 'design' && _csmTaskId) {
     moveRow.style.display = '';
     moveRow.innerHTML = `<button class="btn btn-primary" style="width:100%;padding:12px;font-size:14px;font-weight:700" onclick="csmMoveToProduction()">→ Member in Production verschieben</button>`;
@@ -1461,20 +1447,7 @@ async function openCsMemberOverview(kundeId) {
     clCard.style.display = 'none';
   }
 
-  // Repeat orders
-  const rl = document.getElementById('csmRepeatList');
-  if (repeats.length) {
-    rl.innerHTML = repeats.map(r => `
-      <div style="display:flex;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid var(--border-light);font-size:13px">
-        <span style="flex:1">${formatDate(r.date)}${r.notes ? ` · <span style="color:var(--text-secondary);font-size:12px">${r.notes}</span>` : ''}</span>
-        <span style="font-weight:700">€${Number(r.umsatz || 0).toLocaleString('de-DE')}</span>
-      </div>`).join('');
-  } else {
-    rl.innerHTML = '<div style="padding:14px;color:var(--text-light);font-size:13px;text-align:center">Noch keine Repeat Orders.</div>';
-  }
-
   // Button wiring
-  document.getElementById('csmAddRoBtn').onclick = () => openRepeatOrderModal(k.id, k.firma);
   document.getElementById('csmEditBtn').onclick = () => { closeModal('modalCsMember'); editKunde(k.id); };
 
   openModal('modalCsMember');
@@ -1514,31 +1487,6 @@ async function csmMoveToProduction() {
   } catch (e) { showToast('Fehler: ' + e.message, 'error'); }
 }
 
-/* ─── Repeat Orders (Customer Success) ─── */
-let _roCurrentKundeId = null;
-function openRepeatOrderModal(kundeId, firma) {
-  _roCurrentKundeId = kundeId;
-  document.getElementById('roKundeFirma').textContent = firma || '';
-  document.getElementById('roDate').value = new Date().toISOString().slice(0, 10);
-  ['roUmsatz', 'roMarge', 'roNotes'].forEach(id => document.getElementById(id).value = '');
-  openModal('modalRepeatOrder');
-}
-
-async function saveRepeatOrder() {
-  if (!_roCurrentKundeId) return;
-  const date = document.getElementById('roDate').value;
-  const umsatz = parseInt(document.getElementById('roUmsatz').value) || 0;
-  const marge = parseInt(document.getElementById('roMarge').value) || 0;
-  const notes = document.getElementById('roNotes').value.trim();
-  if (!date || !umsatz) return showToast('Datum und Umsatz erforderlich', 'error');
-  try {
-    await api.post('/repeat-orders', { kunde_id: _roCurrentKundeId, date, umsatz, marge, notes });
-    closeModal('modalRepeatOrder');
-    showToast('Repeat Order gespeichert!');
-  } catch (err) {
-    showToast(err.message || 'Speichern fehlgeschlagen', 'error');
-  }
-}
 
 function startUebergabe(kundeId, firma) {
   obPendingKundeId = kundeId;
@@ -2101,79 +2049,6 @@ function applyAppName(name) {
   if (el) el.textContent = name;
 }
 
-/* ─── Push Notifications ─── */
-let _swReg = null;
-
-async function registerPushSW() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
-  _swReg = await navigator.serviceWorker.register('/sw.js');
-  return _swReg;
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
-
-async function maybeResubscribePush() {
-  if (!_swReg || Notification.permission !== 'granted') return;
-  const existing = await _swReg.pushManager.getSubscription();
-  if (existing) {
-    await api.post('/push/subscribe', { subscription: existing }).catch(() => {});
-    return;
-  }
-  await subscribePush();
-}
-
-async function subscribePush() {
-  if (!_swReg) return;
-  const { key, enabled } = await api.get('/push/vapid-public-key').catch(() => ({}));
-  if (!enabled || !key) {
-    showToast('Push-Benachrichtigungen sind serverseitig nicht konfiguriert.', 'error');
-    return false;
-  }
-  try {
-    const sub = await _swReg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(key),
-    });
-    await api.post('/push/subscribe', { subscription: sub });
-    return true;
-  } catch (err) {
-    console.error('[push] subscribe failed:', err);
-    return false;
-  }
-}
-
-async function togglePushNotifications() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-    return showToast('Dein Browser unterstützt keine Push-Benachrichtigungen.', 'error');
-  }
-  if (!_swReg) await registerPushSW();
-  if (!_swReg) return showToast('Service Worker konnte nicht registriert werden.', 'error');
-
-  // Already subscribed → unsubscribe
-  const existing = await _swReg.pushManager.getSubscription();
-  if (existing) {
-    try { await api.post('/push/unsubscribe', { endpoint: existing.endpoint }); } catch {}
-    await existing.unsubscribe();
-    showToast('Push-Benachrichtigungen deaktiviert.');
-    return;
-  }
-
-  // Need permission?
-  if (Notification.permission === 'denied') {
-    return showToast('Benachrichtigungen sind in den Browser-Einstellungen blockiert.', 'error');
-  }
-  if (Notification.permission === 'default') {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return showToast('Berechtigung verweigert.', 'error');
-  }
-
-  if (await subscribePush()) showToast('Push-Benachrichtigungen aktiviert!');
-}
 
 function logoPreviewFile(file) {
   if (!file) return;

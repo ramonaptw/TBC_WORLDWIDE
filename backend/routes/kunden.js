@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const db = require('../models/database');
 const { authenticate } = require('../middleware/auth');
-const { notifyUser } = require('../lib/push-notify');
 
 const SERVICE_TYPES = ['full_service', 'templates_only'];
 const TEMPLATE_SENDERS = ['nb', 'cs'];
@@ -143,12 +142,6 @@ router.patch('/:id/status', authenticate, (req, res) => {
     if (!updated.handover_at) {
       db.update('kunden', id, { handover_at: new Date().toISOString() });
     }
-
-    notifyUser(updated.assigned_cs_user_id, {
-      title: 'Neuer Member zugewiesen',
-      body: updated.firma,
-      url: '/app/datenbank',
-    }).catch(err => console.error('[kunden] push notify failed:', err.message));
 
     const existingOpen = db.findOne('tasks', t =>
       t.kunde_id === id &&
