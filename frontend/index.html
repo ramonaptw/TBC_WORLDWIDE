@@ -588,17 +588,45 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
   <h2 class="cta-h2">Bereit zu starten?<br><em>Los geht's.</em></h2>
   <p class="cta-p">Melde dich an und spare ab heute täglich Stunden.</p>
   <div class="cta-login-box">
-    <h3>Anmelden</h3>
-    <p>Mit deiner @thebrandingclub.com-Adresse einloggen.</p>
     <div class="cta-lf-err" id="ctaErr"></div>
     <div class="cta-lf-ok" id="ctaOk" style="display:none;background:rgba(22,163,74,.15);color:#86efac;border:1px solid rgba(22,163,74,.3);border-radius:9px;padding:9px 13px;font-size:12px;margin-bottom:12px"></div>
-    <form id="ctaForm">
-      <div class="cta-lf-group"><label class="cta-lf-label">E-Mail</label><input class="cta-lf-input" id="ctaEmail" type="email" placeholder="vorname@thebrandingclub.com" required autocomplete="email"></div>
-      <div class="cta-lf-group"><label class="cta-lf-label">Passwort</label><input class="cta-lf-input" id="ctaPw" type="password" placeholder="••••••••" required autocomplete="current-password"></div>
-      <button class="cta-btn" type="submit" id="ctaBtn">Jetzt anmelden →</button>
-    </form>
-    <div style="margin-top:14px;text-align:center">
-      <a href="#" id="ctaForgot" style="color:rgba(255,255,255,.55);font-size:12px;text-decoration:underline;cursor:pointer">Passwort vergessen / Erstanmeldung</a>
+
+    <!-- VIEW: Login -->
+    <div class="cta-view" id="viewLogin">
+      <h3>Anmelden</h3>
+      <p>Mit deiner @thebrandingclub.com-Adresse einloggen.</p>
+      <form id="ctaForm">
+        <div class="cta-lf-group"><label class="cta-lf-label">E-Mail</label><input class="cta-lf-input" id="ctaEmail" type="email" placeholder="vorname@thebrandingclub.com" required autocomplete="email"></div>
+        <div class="cta-lf-group"><label class="cta-lf-label">Passwort</label><input class="cta-lf-input" id="ctaPw" type="password" placeholder="••••••••" required autocomplete="current-password"></div>
+        <button class="cta-btn" type="submit" id="ctaBtn">Jetzt anmelden →</button>
+      </form>
+      <div style="margin-top:14px;text-align:center;font-size:12px;color:rgba(255,255,255,.55)">
+        <a href="#" data-view="forgot" style="color:rgba(255,255,255,.55);text-decoration:underline;cursor:pointer">Passwort vergessen</a>
+        <span style="margin:0 8px;color:rgba(255,255,255,.25)">·</span>
+        <a href="#" data-view="register" style="color:rgba(255,255,255,.55);text-decoration:underline;cursor:pointer">Registrieren</a>
+      </div>
+    </div>
+
+    <!-- VIEW: Forgot password -->
+    <div class="cta-view" id="viewForgot" style="display:none">
+      <h3>Passwort vergessen</h3>
+      <p>Wir senden dir einen Link zum Zurücksetzen.</p>
+      <form id="forgotForm">
+        <div class="cta-lf-group"><label class="cta-lf-label">E-Mail</label><input class="cta-lf-input" id="forgotEmail" type="email" placeholder="vorname@thebrandingclub.com" required autocomplete="email"></div>
+        <button class="cta-btn" type="submit" id="forgotBtn">Reset-Link senden →</button>
+      </form>
+      <div style="margin-top:14px;text-align:center"><a href="#" data-view="login" style="color:rgba(255,255,255,.55);font-size:12px;text-decoration:underline;cursor:pointer">← Zurück zur Anmeldung</a></div>
+    </div>
+
+    <!-- VIEW: Register -->
+    <div class="cta-view" id="viewRegister" style="display:none">
+      <h3>Registrieren</h3>
+      <p>Trag deine @thebrandingclub.com-Adresse ein — du bekommst einen Link zum Festlegen deines Passworts.</p>
+      <form id="registerForm">
+        <div class="cta-lf-group"><label class="cta-lf-label">E-Mail</label><input class="cta-lf-input" id="registerEmail" type="email" placeholder="vorname@thebrandingclub.com" required autocomplete="email"></div>
+        <button class="cta-btn" type="submit" id="registerBtn">Registrierungslink senden →</button>
+      </form>
+      <div style="margin-top:14px;text-align:center"><a href="#" data-view="login" style="color:rgba(255,255,255,.55);font-size:12px;text-decoration:underline;cursor:pointer">← Zurück zur Anmeldung</a></div>
     </div>
   </div>
 </section>
@@ -638,19 +666,25 @@ document.getElementById('ctaForm').addEventListener('submit', e => {
     document.getElementById('ctaErr'), document.getElementById('ctaBtn'), 'Jetzt anmelden →');
 });
 
-// ── Forgot password / first-time setup ──
-document.getElementById('ctaForgot').addEventListener('click', async e => {
-  e.preventDefault();
-  const errEl = document.getElementById('ctaErr');
-  const okEl = document.getElementById('ctaOk');
-  const email = (document.getElementById('ctaEmail').value || '').trim();
-  errEl.style.display = 'none';
-  okEl.style.display = 'none';
-  if (!email) {
-    errEl.textContent = 'Bitte zuerst deine @thebrandingclub.com-Adresse eintragen.';
-    errEl.style.display = 'block';
-    return;
-  }
+// ── View switching (login / forgot / register) ──
+const ctaErrEl = document.getElementById('ctaErr');
+const ctaOkEl = document.getElementById('ctaOk');
+function showView(name) {
+  ctaErrEl.style.display = 'none';
+  ctaOkEl.style.display = 'none';
+  document.querySelectorAll('.cta-view').forEach(v => v.style.display = 'none');
+  document.getElementById('view' + name[0].toUpperCase() + name.slice(1)).style.display = 'block';
+}
+document.querySelectorAll('[data-view]').forEach(a => {
+  a.addEventListener('click', e => { e.preventDefault(); showView(a.dataset.view); });
+});
+
+// ── Email-link request (shared by forgot + register) ──
+async function requestEmailLink(email, btnEl, defaultLabel, successMsg) {
+  ctaErrEl.style.display = 'none';
+  ctaOkEl.style.display = 'none';
+  btnEl.disabled = true;
+  btnEl.textContent = 'Sende…';
   try {
     const res = await fetch('/api/auth/password-reset/request', {
       method: 'POST',
@@ -659,12 +693,35 @@ document.getElementById('ctaForgot').addEventListener('click', async e => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Anfrage fehlgeschlagen');
-    okEl.textContent = 'E-Mail gesendet. Prüfe dein Postfach (Link 30 Min gültig).';
-    okEl.style.display = 'block';
+    ctaOkEl.textContent = successMsg;
+    ctaOkEl.style.display = 'block';
   } catch (err) {
-    errEl.textContent = err.message;
-    errEl.style.display = 'block';
+    ctaErrEl.textContent = err.message;
+    ctaErrEl.style.display = 'block';
+  } finally {
+    btnEl.disabled = false;
+    btnEl.textContent = defaultLabel;
   }
+}
+
+document.getElementById('forgotForm').addEventListener('submit', e => {
+  e.preventDefault();
+  requestEmailLink(
+    document.getElementById('forgotEmail').value,
+    document.getElementById('forgotBtn'),
+    'Reset-Link senden →',
+    'Reset-Link gesendet. Prüfe dein Postfach (Link 30 Min gültig).'
+  );
+});
+
+document.getElementById('registerForm').addEventListener('submit', e => {
+  e.preventDefault();
+  requestEmailLink(
+    document.getElementById('registerEmail').value,
+    document.getElementById('registerBtn'),
+    'Registrierungslink senden →',
+    'Registrierungslink gesendet. Prüfe dein Postfach (Link 30 Min gültig).'
+  );
 });
 
 // ── Load app name ──
