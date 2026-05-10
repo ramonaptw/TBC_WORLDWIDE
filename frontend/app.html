@@ -145,6 +145,12 @@
           </div>
         </div>
 
+        <!-- CS Design Intake (only customersuccess) -->
+        <div class="card" id="dashCsIntakeCard" style="display:none;margin-top:16px">
+          <div class="card-header"><h2>📥 Design Intake diesen Monat</h2></div>
+          <div id="dashCsIntake" style="padding:0"></div>
+        </div>
+
         <!-- Recent -->
         <div class="card" id="dashRecentCard" style="margin-top:16px">
           <div class="card-header"><h2>🕐 Zuletzt hinzugefügt</h2></div>
@@ -1305,8 +1311,17 @@
             </select>
           </div>
         </div>
+        <div class="form-group" style="margin-top:8px">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+            <input type="checkbox" id="kEditNbOnboardingDone" style="margin-top:2px">
+            <span style="font-size:13px">
+              <strong>Onboarding bereits durch NB erfolgt</strong>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">Die CS-Aufgabe weist darauf hin, dass NB schon Templates/Erstkontakt etc. gemacht hat.</div>
+            </span>
+          </label>
+        </div>
         <div style="font-size:11px;color:var(--text-light);margin-top:6px">
-          Beim erstmaligen Setzen von „Design" wird der Member als übergeben markiert und der CS-User bekommt eine Push-Benachrichtigung.
+          Beim erstmaligen Setzen von „Design" wird der Member als übergeben markiert, der CS-User bekommt eine Push-Benachrichtigung und eine Übergabe-Aufgabe (mit „WhatsApp kontaktiert" als 1. Schritt).
         </div>
       </div>
     </div>
