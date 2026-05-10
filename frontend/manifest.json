@@ -1,0 +1,13 @@
+{
+  "name": "B Mobile – Mitarbeiter-Portal",
+  "short_name": "B Mobile",
+  "description": "TBC Deutschland Mitarbeiter-Portal",
+  "start_url": "/app.html",
+  "display": "standalone",
+  "background_color": "#0F1E45",
+  "theme_color": "#0F1E45",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/api/brand/logo", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

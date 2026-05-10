@@ -1,0 +1,100 @@
+const router = require('express').Router();
+const db = require('../models/database');
+const { authenticate, requireRole } = require('../middleware/auth');
+
+const PRIORITY_ORDER = { high: 1, medium: 2, low: 3 };
+
+router.get('/', authenticate, (req, res) => {
+  const { status, priority, project } = req.query;
+  const users = db.find('users');
+  const userMap = {};
+  users.forEach(u => { userMap[u.id] = u.name; });
+
+  let tasks = db.find('tasks');
+  // Everyone only sees their own tasks; admins use /api/admin for full overview
+  tasks = tasks.filter(t => t.assigned_to === req.user.id || t.created_by === req.user.id);
+  if (status) tasks = tasks.filter(t => t.status === status);
+  if (priority) tasks = tasks.filter(t => t.priority === priority);
+  if (project) tasks = tasks.filter(t => (t.project || '').toLowerCase().includes(project.toLowerCase()));
+
+  tasks.sort((a, b) => {
+    const pa = PRIORITY_ORDER[a.priority] || 9;
+    const pb = PRIORITY_ORDER[b.priority] || 9;
+    if (pa !== pb) return pa - pb;
+    return (a.due_date || '').localeCompare(b.due_date || '');
+  });
+
+  const result = tasks.map(t => ({
+    ...t,
+    assigned_name: userMap[t.assigned_to] || null,
+    created_name: userMap[t.created_by] || null
+  }));
+
+  res.json(result);
+});
+
+router.post('/', authenticate, (req, res) => {
+  const { title, description, priority, assigned_to, due_date, project, checklist } = req.body;
+  if (!title) return res.status(400).json({ error: 'Titel erforderlich' });
+
+  const task = db.insert('tasks', {
+    title, description: description || '', status: 'open',
+    priority: priority || 'medium',
+    assigned_to: assigned_to ? Number(assigned_to) : null,
+    created_by: req.user.id,
+    due_date: due_date || null,
+    project: project || '',
+    checklist: Array.isArray(checklist) ? checklist : [],
+    kunde_id: req.body.kunde_id ? Number(req.body.kunde_id) : null,
+  });
+  res.status(201).json(task);
+});
+
+router.put('/:id', authenticate, (req, res) => {
+  const { title, description, status, priority, assigned_to, due_date, project } = req.body;
+  db.update('tasks', Number(req.params.id), {
+    title, description, status, priority,
+    assigned_to: assigned_to ? Number(assigned_to) : null,
+    due_date, project
+  });
+  res.json({ success: true });
+});
+
+router.delete('/:id', authenticate, requireRole('admin', 'manager'), (req, res) => {
+  db.delete('tasks', req.params.id);
+  res.json({ success: true });
+});
+
+router.get('/:id', authenticate, (req, res) => {
+  const users = db.find('users');
+  const userMap = {};
+  users.forEach(u => { userMap[u.id] = u.name; });
+  const task = db.findOne('tasks', t => t.id === Number(req.params.id));
+  if (!task) return res.status(404).json({ error: 'Nicht gefunden' });
+  res.json({ ...task, assigned_name: userMap[task.assigned_to] || null });
+});
+
+// Toggle checklist item
+router.patch('/:id/checklist', authenticate, (req, res) => {
+  const task = db.findOne('tasks', t => t.id === Number(req.params.id));
+  if (!task) return res.status(404).json({ error: 'Nicht gefunden' });
+  const { index, done } = req.body;
+  const checklist = Array.isArray(task.checklist) ? [...task.checklist] : [];
+  if (checklist[index]) checklist[index] = { ...checklist[index], done: Boolean(done) };
+  db.update('tasks', Number(req.params.id), { checklist });
+  res.json({ success: true, checklist });
+});
+
+router.post('/:id/feedback', authenticate, (req, res) => {
+  const task = db.findOne('tasks', t => t.id === Number(req.params.id));
+  if (!task) return res.status(404).json({ error: 'Nicht gefunden' });
+  const { rating, pros, cons } = req.body;
+  const feedback = Array.isArray(task.feedback) ? [...task.feedback] : [];
+  const idx = feedback.findIndex(f => f.user_id === req.user.id);
+  const entry = { user_id: req.user.id, user_name: req.user.name, rating: Number(rating) || 0, pros: pros || '', cons: cons || '', created_at: new Date().toISOString() };
+  if (idx >= 0) feedback[idx] = entry; else feedback.push(entry);
+  db.update('tasks', Number(req.params.id), { feedback });
+  res.json({ success: true });
+});
+
+module.exports = router;

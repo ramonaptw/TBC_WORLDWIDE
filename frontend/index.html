@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>B Mobile – Dein Sales-Portal</title>
+  <link rel="icon" href="/api/brand/logo" type="image/png">
+  <link rel="apple-touch-icon" href="/api/brand/logo">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="B Mobile">
+  <meta name="theme-color" content="#111111">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#111111;
+  --black2:#1a1a1a;
+  --gold:#1a3a8f;
+  --gold-light:#eef2ff;
+  --white:#ffffff;
+  --off:#F8F8F6;
+  --off2:#F0F0EE;
+  --text:#111111;
+  --text2:#555555;
+  --text3:#999999;
+  --border:#E5E5E3;
+  --radius:18px;
+  --green:#16a34a;
+  --green-bg:#f0fdf4;
+  --red:#dc2626;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--white);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ── NAV ── */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;height:calc(58px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);display:flex;align-items:center;padding-left:24px;padding-right:24px;gap:20px;transition:background .3s,border-color .3s}
+.nav.at-top{background:rgba(0,0,0,0.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid transparent}
+.nav.scrolled{background:rgba(10,10,10,0.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.08)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff}
+.nav-logo img{width:30px;height:30px;border-radius:8px;object-fit:cover}
+.nav-logo-name{font-size:15px;font-weight:800;letter-spacing:-0.3px;color:#fff}
+.nav-spacer{flex:1}
+.nav-btn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:9px;padding:8px 18px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .15s}
+.nav-btn:hover{background:rgba(255,255,255,.2)}
+
+/* ── HERO ── */
+.hero{min-height:100vh;background:var(--black);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;position:relative;overflow:hidden;text-align:center}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(37,99,235,.15) 0%,transparent 70%);pointer-events:none}
+/* subtle dot grid */
+.hero::after{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:32px 32px;pointer-events:none}
+.hero-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(240,165,0,.12);border:1px solid rgba(240,165,0,.25);color:var(--gold);font-size:11px;font-weight:700;padding:5px 14px;border-radius:100px;margin-bottom:28px;letter-spacing:.6px;text-transform:uppercase;position:relative;z-index:1}
+.hero-dot{width:6px;height:6px;background:var(--gold);border-radius:50%;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-h1{font-size:72px;font-weight:900;line-height:1.02;letter-spacing:-3px;color:#fff;margin-bottom:22px;position:relative;z-index:1;max-width:820px}
+.hero-h1 em{font-style:normal;background:linear-gradient(95deg,#4f7fe8 0%,#1a3a8f 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:18px;color:rgba(255,255,255,.45);line-height:1.7;max-width:520px;margin-bottom:44px;position:relative;z-index:1}
+.hero-ctas{display:flex;gap:12px;justify-content:center;margin-bottom:64px;position:relative;z-index:1;flex-wrap:wrap}
+.hero-cta-p{background:#1a3a8f;color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:-.2px;transition:opacity .15s,transform .1s}
+.hero-cta-p:hover{opacity:.9}
+.hero-cta-p:active{transform:scale(.98)}
+.hero-cta-s{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 28px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.hero-cta-s:hover{background:rgba(255,255,255,.12)}
+/* floating feature chips */
+.hero-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;position:relative;z-index:1;max-width:700px}
+.hero-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:8px 14px;font-size:12px;color:rgba(255,255,255,.65);font-weight:500;backdrop-filter:blur(8px)}
+.hero-chip-icon{font-size:14px}
+.hero-chip strong{color:#fff;font-weight:700}
+.hero-chip .chip-save{color:#93c5fd;font-weight:700;font-size:11px;background:rgba(37,99,235,.18);padding:2px 7px;border-radius:100px;margin-left:2px}
+.hero-scroll{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,.2);position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:1;letter-spacing:.5px;text-transform:uppercase}
+.hero-scroll-line{width:1px;height:28px;background:linear-gradient(to bottom,rgba(255,255,255,.2),transparent);animation:lineGrow 1.6s ease-in-out infinite}
+@keyframes lineGrow{0%,100%{transform:scaleY(1);opacity:.5}50%{transform:scaleY(1.3);opacity:1}}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(4px)}}
+
+/* ── FEATURE SECTIONS ── */
+.section{padding:100px 0;border-bottom:1px solid var(--border)}
+.section-inner{max-width:1160px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.section-inner.flip{direction:rtl}
+.section-inner.flip > *{direction:ltr}
+.section-tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+.section-h2{font-size:38px;font-weight:900;letter-spacing:-1.2px;line-height:1.1;margin-bottom:16px}
+.section-p{font-size:16px;color:var(--text2);line-height:1.7;margin-bottom:28px}
+.time-pill{display:inline-flex;align-items:center;gap:8px;background:var(--off2);border:1px solid var(--border);border-radius:100px;padding:8px 16px;font-size:13px;font-weight:600}
+.time-before{color:var(--text3);text-decoration:line-through;font-weight:400}
+.time-arrow{color:var(--text3)}
+.time-after{color:var(--green);font-weight:800}
+
+/* ── MOCKUP SHELL ── */
+.mockup-shell{background:#fff;border-radius:20px;box-shadow:0 8px 48px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.06);overflow:hidden;position:relative}
+.mockup-bar{background:var(--off2);padding:10px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border)}
+.m-dot{width:10px;height:10px;border-radius:50%}
+.m-dot-r{background:#ff5f57}.m-dot-y{background:#febc2e}.m-dot-g{background:#28c840}
+.mockup-bar-title{font-size:11px;color:var(--text3);font-weight:500;margin-left:6px}
+.mockup-body{padding:20px}
+
+/* ── MOCKUP 1: Screenshot → Lead ── */
+.m1-upload{border:2px dashed var(--border);border-radius:14px;padding:32px 20px;text-align:center;transition:all .5s;background:var(--off)}
+.m1-upload-icon{font-size:36px;margin-bottom:10px}
+.m1-upload-text{font-size:13px;color:var(--text3);font-weight:500}
+.m1-analyzing{display:none;text-align:center;padding:24px}
+.m1-spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--black);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.m1-analyzing-text{font-size:13px;color:var(--text2);font-weight:500}
+.m1-analyzing-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.m1-result{display:none;opacity:0;transform:translateY(8px);transition:all .4s}
+.m1-result.show{opacity:1;transform:none}
+.m1-result-card{border:1.5px solid var(--border);border-radius:14px;padding:16px;background:var(--off);display:flex;gap:14px;align-items:flex-start;margin-bottom:12px}
+.m1-avatar{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#f093fb,#f5576c);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.m1-info-name{font-size:14px;font-weight:700;margin-bottom:2px}
+.m1-info-user{font-size:12px;color:var(--text3)}
+.m1-info-web{font-size:12px;color:#1a56db;margin-top:3px}
+.m1-badge{display:inline-block;background:var(--green-bg);color:var(--green);font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;border:1px solid rgba(22,163,74,.2);margin-top:6px}
+.m1-btns{display:flex;gap:8px}
+.m1-btn{flex:1;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;border:none;cursor:pointer}
+.m1-btn-p{background:var(--black);color:#fff}
+.m1-btn-s{background:var(--off2);color:var(--text);border:1px solid var(--border)}
+
+/* ── MOCKUP 2: Instagram Suche ── */
+.m2-search-wrap{position:relative;margin-bottom:12px}
+.m2-search{width:100%;padding:11px 14px 11px 38px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;background:var(--off);outline:none;color:var(--text)}
+.m2-search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px}
+.m2-cursor{display:inline-block;width:2px;height:13px;background:var(--black);border-radius:1px;animation:caret .8s step-end infinite}
+@keyframes caret{0%,100%{opacity:1}50%{opacity:0}}
+.m2-dropdown{display:none;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.m2-dropdown.show{display:block}
+.m2-item{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;transition:background .15s}
+.m2-item:not(:last-child){border-bottom:1px solid var(--border)}
+.m2-item:hover{background:var(--off)}
+.m2-av{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
+.m2-iname{font-size:13px;font-weight:700}
+.m2-ifull{font-size:11px;color:var(--text3)}
+.m2-iright{margin-left:auto;text-align:right}
+.m2-foll{font-size:11px;color:var(--text3)}
+.m2-ver{font-size:10px;color:#1a56db;font-weight:700}
+
+/* ── MOCKUP 3: Callliste ── */
+.m3-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.m3-title{font-size:13px;font-weight:700}
+.m3-sub{font-size:11px;color:var(--text3)}
+.m3-gen-btn{background:var(--black);color:#fff;border:none;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer}
+.m3-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--off);margin-bottom:8px;opacity:0;transform:translateX(-8px);transition:all .35s}
+.m3-item.show{opacity:1;transform:none}
+.m3-item-av{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.m3-item-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.m3-item-phone{font-size:11px;color:var(--text3)}
+.m3-item-call{margin-left:auto;background:var(--green-bg);color:var(--green);border:1px solid rgba(22,163,74,.2);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;white-space:nowrap}
+
+/* ── MOCKUP 4: Duplikat-Check ── */
+.m4-form{margin-bottom:14px}
+.m4-input-row{display:flex;gap:8px;margin-bottom:10px}
+.m4-inp{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--off);outline:none}
+.m4-check-btn{background:var(--black);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap}
+.m4-searching{display:none;align-items:center;gap:8px;font-size:12px;color:var(--text2);padding:10px 0}
+.m4-searching.show{display:flex}
+.m4-searching-spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--text2);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+.m4-found{display:none;border:1.5px solid #fecaca;border-radius:14px;padding:14px;background:#fef2f2;opacity:0;transform:translateY(6px);transition:all .3s}
+.m4-found.show{display:block;opacity:1;transform:none}
+.m4-found-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.m4-found-icon{font-size:20px}
+.m4-found-title{font-size:13px;font-weight:700;color:var(--red)}
+.m4-found-sub{font-size:11px;color:var(--text2);margin-bottom:12px}
+.m4-found-meta{display:flex;gap:8px;flex-wrap:wrap}
+.m4-chip{background:#fff;border:1px solid var(--border);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:600}
+.m4-new{display:none;border:1.5px solid rgba(22,163,74,.3);border-radius:14px;padding:14px;background:var(--green-bg);opacity:0;transform:translateY(6px);transition:all .3s}
+.m4-new.show{display:block;opacity:1;transform:none}
+.m4-new-head{display:flex;align-items:center;gap:8px}
+.m4-new-icon{font-size:18px}
+.m4-new-title{font-size:13px;font-weight:700;color:var(--green)}
+
+/* ── MOCKUP 5: HubSpot ── */
+.m5-steps{margin-bottom:16px}
+.m5-step{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--off);margin-bottom:8px;opacity:0;transform:translateY(6px);transition:all .35s}
+.m5-step.show{opacity:1;transform:none}
+.m5-step-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.m5-step-icon.done{background:var(--green-bg)}
+.m5-step-name{font-size:13px;font-weight:600;flex:1}
+.m5-step-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px}
+.m5-step-badge.done{background:var(--green-bg);color:var(--green);border:1px solid rgba(22,163,74,.2)}
+.m5-link-row{display:none;opacity:0;transition:all .35s}
+.m5-link-row.show{display:flex;opacity:1}
+.m5-link{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff3cd;border:1.5px solid #ffc107;border-radius:14px;text-decoration:none;color:var(--text);width:100%}
+.m5-link-icon{font-size:20px}
+.m5-link-text{font-size:13px;font-weight:700}
+.m5-link-sub{font-size:11px;color:var(--text2)}
+.m5-link-arr{margin-left:auto;font-size:16px;color:var(--text3)}
+
+/* ── EXTRAS GRID ── */
+.extras-section{padding:80px 0;background:var(--off)}
+.extras-inner{max-width:1160px;margin:0 auto;padding:0 40px}
+.extras-label{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+.extras-h2{font-size:36px;font-weight:900;letter-spacing:-1px;margin-bottom:48px}
+.extras-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.extra-card{background:#fff;border-radius:18px;padding:24px;border:1px solid var(--border);transition:transform .2s,box-shadow .2s}
+.extra-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.08)}
+.extra-icon{font-size:28px;margin-bottom:14px}
+.extra-title{font-size:15px;font-weight:800;margin-bottom:6px;letter-spacing:-.3px}
+.extra-desc{font-size:13px;color:var(--text2);line-height:1.6}
+.extra-time{display:inline-flex;align-items:center;gap:5px;font-size:11px;margin-top:10px;color:var(--text3)}
+.extra-time strong{color:var(--green);font-size:12px}
+
+/* ── INSTALL / PWA ── */
+.inst-tabs{display:flex;gap:8px;margin-bottom:24px}
+.inst-tab{padding:9px 20px;border-radius:100px;border:2px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;color:var(--text2)}
+.inst-tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.inst-steps{display:flex;flex-direction:column;gap:10px}
+.inst-step{display:flex;align-items:flex-start;gap:14px;padding:14px 18px;border-radius:14px;border:1.5px solid transparent;background:var(--off);transition:all .3s;opacity:.45}
+.inst-step.active{border-color:var(--blue);background:#eef2ff;opacity:1;transform:translateX(6px)}
+.inst-step-num{width:28px;height:28px;border-radius:50%;background:#d1d5db;color:#6b7280;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s}
+.inst-step.active .inst-step-num{background:var(--blue);color:#fff}
+.inst-step-text{font-size:14px;font-weight:700;color:var(--text1);line-height:1.3}
+.inst-step-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.inst-phone-wrap{display:flex;justify-content:center;align-items:center}
+.inst-phone{width:230px;height:472px;background:#1c1c1e;border-radius:46px;padding:10px;box-shadow:0 48px 100px rgba(0,0,0,.35),0 0 0 1.5px rgba(255,255,255,.12) inset,0 0 0 7px #2a2a2c;position:relative;flex-shrink:0}
+.inst-notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:76px;height:20px;background:#1c1c1e;border-radius:0 0 12px 12px;z-index:20}
+.inst-screen{width:100%;height:100%;border-radius:38px;overflow:hidden;background:#f2f2f7;display:flex;flex-direction:column;position:relative}
+.inst-status{height:40px;display:flex;align-items:flex-end;padding:0 16px 5px;font-size:10px;font-weight:700;color:#1c1c1e;flex-shrink:0}
+.inst-urlbar{margin:0 10px 5px;background:#e5e5ea;border-radius:10px;padding:6px 12px;font-size:10px;color:#555;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.inst-page-preview{flex:1;padding:10px 12px;overflow:hidden}
+.inst-preview-line{background:#e5e5ea;border-radius:3px;margin-bottom:6px}
+.inst-bottombar{height:50px;border-top:0.5px solid #c6c6c8;display:flex;align-items:center;justify-content:space-around;padding:0 6px;background:rgba(249,249,249,.98);flex-shrink:0;position:relative;z-index:5}
+.inst-bottom-icon{font-size:18px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;transition:background .15s}
+.inst-share-btn{font-size:20px;transition:transform .2s}
+.inst-sheet{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:13px 13px 0 0;transform:translateY(100%);transition:transform .44s cubic-bezier(.32,.72,0,1);z-index:10;box-shadow:0 -4px 28px rgba(0,0,0,.18)}
+.inst-sheet.open{transform:translateY(0)}
+.inst-sheet-handle{width:36px;height:4px;background:#c7c7cc;border-radius:2px;margin:8px auto 10px}
+.inst-sheet-app{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:0.5px solid #f2f2f7}
+.inst-sheet-app-icon{width:36px;height:36px;border-radius:9px;background:#1a3a8f;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;flex-shrink:0}
+.inst-sheet-row{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:11px;font-weight:600;color:#1c1c1e;transition:background .2s}
+.inst-sheet-row.hl{background:#eef2ff;color:var(--blue)}
+.inst-sheet-ico{width:24px;height:24px;border-radius:6px;background:#f2f2f7;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.inst-homescreen{position:absolute;inset:0;background:linear-gradient(155deg,#0a1f5c 0%,#1a3a8f 55%,#2563eb 100%);display:flex;flex-direction:column;align-items:center;padding-top:80px;opacity:0;transition:opacity .4s;z-index:15}
+.inst-homescreen.show{opacity:1}
+.inst-hs-icon{width:62px;height:62px;border-radius:15px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:26px;color:var(--blue);box-shadow:0 8px 24px rgba(0,0,0,.4);transform:scale(0);transition:transform .55s cubic-bezier(.34,1.56,.64,1)}
+.inst-homescreen.show .inst-hs-icon{transform:scale(1)}
+.inst-hs-label{color:rgba(255,255,255,.9);font-size:11px;font-weight:600;margin-top:8px;opacity:0;transition:opacity .4s .3s}
+.inst-homescreen.show .inst-hs-label{opacity:1}
+.inst-hs-check{font-size:28px;margin-top:20px;opacity:0;transform:scale(0);transition:all .45s .5s}
+.inst-homescreen.show .inst-hs-check{opacity:1;transform:scale(1)}
+@media(max-width:900px){.inst-phone-wrap{order:-1}.inst-phone{width:200px;height:410px}}
+
+/* ── CTA ── */
+.cta-section{padding:100px 40px;text-align:center;background:var(--black);color:#fff}
+.cta-h2{font-size:48px;font-weight:900;letter-spacing:-1.5px;margin-bottom:16px}
+.cta-h2 em{font-style:normal;color:var(--gold)}
+.cta-p{font-size:17px;color:rgba(255,255,255,.5);margin-bottom:40px}
+.cta-login-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:40px;max-width:380px;margin:0 auto}
+.cta-login-box h3{font-size:20px;font-weight:800;margin-bottom:6px}
+.cta-login-box p{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px}
+.cta-lf-group{margin-bottom:12px;text-align:left}
+.cta-lf-label{display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:5px}
+.cta-lf-input{width:100%;padding:11px 13px;font-size:14px;font-family:inherit;border:1.5px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.07);color:#fff;outline:none;transition:border-color .15s,background .15s}
+.cta-lf-input::placeholder{color:rgba(255,255,255,.25)}
+.cta-lf-input:focus{border-color:var(--gold);background:rgba(255,255,255,.1)}
+.cta-lf-err{background:rgba(220,38,38,.15);color:#fca5a5;border:1px solid rgba(220,38,38,.3);border-radius:9px;padding:9px 13px;font-size:12px;margin-bottom:12px;display:none}
+.cta-btn{width:100%;padding:13px;font-size:15px;font-weight:700;font-family:inherit;background:#1a3a8f;color:#fff;border:none;border-radius:10px;cursor:pointer;margin-top:4px;transition:opacity .15s,transform .1s}
+.cta-btn:hover:not(:disabled){opacity:.9}
+.cta-btn:active:not(:disabled){transform:scale(.99)}
+.cta-btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .hero{padding:90px 28px 70px}
+  .hero-h1{font-size:48px;letter-spacing:-2px}
+  .section-inner{grid-template-columns:1fr;gap:40px;padding:0 24px}
+  .section-inner.flip{direction:ltr}
+  .section{padding:64px 0}
+  .extras-grid{grid-template-columns:1fr 1fr}
+  .extras-inner{padding:0 24px}
+  .nav{padding:0 20px}
+}
+@media(max-width:600px){
+  .hero{padding:80px 20px 60px}
+  .hero-h1{font-size:36px;letter-spacing:-1.5px}
+  .hero-sub{font-size:16px}
+  .section-h2{font-size:28px}
+  .extras-grid{grid-template-columns:1fr}
+  .cta-h2{font-size:32px}
+}
+
+/* scroll-reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+
+<!-- HERO -->
+<section class="hero">
+  <h1 class="hero-h1">Mehr Deals.<br><em>Weniger Aufwand.</em></h1>
+  <p class="hero-sub">Von Instagram-Screenshot bis HubSpot-Deal in Sekunden — dein komplettes Sales-Werkzeug, immer dabei.</p>
+  <div class="hero-ctas">
+    <button class="hero-cta-p" onclick="document.getElementById('cta-login').scrollIntoView({behavior:'smooth'})">Jetzt anmelden →</button>
+    <button class="hero-cta-s" onclick="document.getElementById('f1').scrollIntoView({behavior:'smooth'})">Features entdecken</button>
+  </div>
+  <div class="hero-chips">
+    <div class="hero-chip"><span class="hero-chip-icon">📸</span> Screenshot → Lead<span class="chip-save">3 Min → 10 Sek</span></div>
+    <div class="hero-chip"><span class="hero-chip-icon">🔍</span> Instagram Suche<span class="chip-save">1 Min → 5 Sek</span></div>
+    <div class="hero-chip"><span class="hero-chip-icon">📞</span> Callliste<span class="chip-save">1 Std → 1 Min</span></div>
+    <div class="hero-chip"><span class="hero-chip-icon">✅</span> Duplikat-Check<span class="chip-save">Automatisch</span></div>
+    <div class="hero-chip"><span class="hero-chip-icon">🎯</span> HubSpot in 15 Sek<span class="chip-save">10 Min → 15 Sek</span></div>
+    <div class="hero-chip"><span class="hero-chip-icon">👥</span> Team auf einen Blick</div>
+  </div>
+  <div class="hero-scroll"><div class="hero-scroll-line"></div>Scroll</div>
+</section>
+
+<!-- FEATURE 1: Screenshot → Lead -->
+<section class="section reveal" id="f1">
+  <div class="section-inner">
+    <div>
+      <div class="section-tag">📸 Feature 01</div>
+      <h2 class="section-h2">Screenshot hochladen — Lead fertig.</h2>
+      <p class="section-p">Mach einen Screenshot von einem Instagram-Profil, lad ihn hoch — unsere KI (Claude) erkennt automatisch Unternehmensname, @Username und Website. Kein Abtippen mehr.</p>
+      <div class="time-pill"><span class="time-before">3 Minuten</span><span class="time-arrow">→</span><span class="time-after">10 Sekunden</span></div>
+    </div>
+    <div class="mockup-shell" id="m1">
+      <div class="mockup-bar"><div class="m-dot m-dot-r"></div><div class="m-dot m-dot-y"></div><div class="m-dot m-dot-g"></div><span class="mockup-bar-title">Insta Lead hinzufügen</span></div>
+      <div class="mockup-body">
+        <div class="m1-upload" id="m1Upload">
+          <div class="m1-upload-icon">📱</div>
+          <div class="m1-upload-text">Screenshot hier ablegen oder klicken</div>
+        </div>
+        <div class="m1-analyzing" id="m1Analyzing">
+          <div class="m1-spin"></div>
+          <div class="m1-analyzing-text">KI analysiert Screenshot…</div>
+          <div class="m1-analyzing-sub">Name, @Username und Website werden erkannt</div>
+        </div>
+        <div class="m1-result" id="m1Result">
+          <div class="m1-result-card">
+            <div class="m1-avatar">🍝</div>
+            <div>
+              <div class="m1-info-name">Trattoria Milano</div>
+              <div class="m1-info-user">@trattoriamilano.koeln</div>
+              <div class="m1-info-web">trattoria-milano-koeln.de</div>
+              <div class="m1-badge">✓ KI erkannt</div>
+            </div>
+          </div>
+          <div class="m1-btns">
+            <button class="m1-btn m1-btn-p">In HubSpot anlegen →</button>
+            <button class="m1-btn m1-btn-s">Neu scannen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE 2: Instagram Suche -->
+<section class="section reveal" id="f2">
+  <div class="section-inner flip">
+    <div>
+      <div class="section-tag">🔍 Feature 02</div>
+      <h2 class="section-h2">Accounts suchen wie auf Instagram.</h2>
+      <p class="section-p">Tippe einen Namen oder @Username ein — du siehst sofort echte Accounts mit Profilbild, Followerzahl und Verified-Badge. Profil prüfen, auswählen, fertig.</p>
+      <div class="time-pill"><span class="time-before">1 Minute</span><span class="time-arrow">→</span><span class="time-after">5 Sekunden</span></div>
+    </div>
+    <div class="mockup-shell" id="m2">
+      <div class="mockup-bar"><div class="m-dot m-dot-r"></div><div class="m-dot m-dot-y"></div><div class="m-dot m-dot-g"></div><span class="mockup-bar-title">Instagram Suche</span></div>
+      <div class="mockup-body">
+        <div class="m2-search-wrap">
+          <span class="m2-search-icon">🔍</span>
+          <input class="m2-search" id="m2Input" placeholder="Name oder @Username…" readonly>
+        </div>
+        <div class="m2-dropdown" id="m2Drop">
+          <div class="m2-item">
+            <div class="m2-av" style="background:linear-gradient(135deg,#f093fb,#f5576c)">S</div>
+            <div><div class="m2-iname">@sushihaus.berlin</div><div class="m2-ifull">Sushi Haus Berlin</div></div>
+            <div class="m2-iright"><div class="m2-ver">✓ Verifiziert</div><div class="m2-foll">8,4K Follower</div></div>
+          </div>
+          <div class="m2-item">
+            <div class="m2-av" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">S</div>
+            <div><div class="m2-iname">@sushibar_hh</div><div class="m2-ifull">Sushi Bar Hamburg</div></div>
+            <div class="m2-iright"><div class="m2-foll">2,1K Follower</div></div>
+          </div>
+          <div class="m2-item">
+            <div class="m2-av" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">S</div>
+            <div><div class="m2-iname">@sushi_munich</div><div class="m2-ifull">Sushi München</div></div>
+            <div class="m2-iright"><div class="m2-foll">934 Follower</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE 3: Callliste -->
+<section class="section reveal" id="f3">
+  <div class="section-inner">
+    <div>
+      <div class="section-tag">📞 Feature 03</div>
+      <h2 class="section-h2">Callliste in einer Minute statt einer Stunde.</h2>
+      <p class="section-p">Wähle einen Salesperson aus — B Mobile zieht automatisch alle zugewiesenen Kontakte mit Telefonnummer aus HubSpot, filtert Closed-Lost raus und zeigt dir eine sofort abrufbare Anrufliste.</p>
+      <div class="time-pill"><span class="time-before">1 Stunde</span><span class="time-arrow">→</span><span class="time-after">1 Minute</span></div>
+    </div>
+    <div class="mockup-shell" id="m3">
+      <div class="mockup-bar"><div class="m-dot m-dot-r"></div><div class="m-dot m-dot-y"></div><div class="m-dot m-dot-g"></div><span class="mockup-bar-title">Callliste</span></div>
+      <div class="mockup-body">
+        <div class="m3-header">
+          <div><div class="m3-title">Heute anrufen</div><div class="m3-sub" id="m3Sub">Wähle Salesperson…</div></div>
+          <button class="m3-gen-btn" id="m3Btn">Generieren</button>
+        </div>
+        <div id="m3List"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE 4: Duplikat-Check -->
+<section class="section reveal" id="f4">
+  <div class="section-inner flip">
+    <div>
+      <div class="section-tag">✅ Feature 04</div>
+      <h2 class="section-h2">Kein Lead doppelt anlegen — je wieder.</h2>
+      <p class="section-p">Beim Hinzufügen eines Accounts wird sofort automatisch gegen HubSpot geprüft, ob die Company schon existiert — inklusive wem sie gehört. Kein manuelles Suchen, kein Ärger.</p>
+      <div class="time-pill"><span class="time-before">Manuell suchen</span><span class="time-arrow">→</span><span class="time-after">Automatisch</span></div>
+    </div>
+    <div class="mockup-shell" id="m4">
+      <div class="mockup-bar"><div class="m-dot m-dot-r"></div><div class="m-dot m-dot-y"></div><div class="m-dot m-dot-g"></div><span class="mockup-bar-title">Duplikat-Check</span></div>
+      <div class="mockup-body">
+        <div class="m4-form">
+          <div class="m4-input-row">
+            <input class="m4-inp" id="m4Inp" value="Trattoria Milano" readonly>
+            <button class="m4-check-btn" id="m4Btn">In HubSpot prüfen</button>
+          </div>
+        </div>
+        <div class="m4-searching" id="m4Searching"><div class="m4-searching-spin"></div>HubSpot wird durchsucht…</div>
+        <div class="m4-found" id="m4Found">
+          <div class="m4-found-head"><span class="m4-found-icon">⚠️</span><span class="m4-found-title">Bereits in HubSpot vorhanden</span></div>
+          <div class="m4-found-sub">Dieser Lead wurde bereits angelegt. Möchtest du ihn trotzdem bearbeiten?</div>
+          <div class="m4-found-meta"><span class="m4-chip">👤 Lisa Müller</span><span class="m4-chip">📋 Qualification</span><span class="m4-chip">📅 vor 3 Tagen</span></div>
+        </div>
+        <div class="m4-new" id="m4New">
+          <div class="m4-new-head"><span class="m4-new-icon">✅</span><span class="m4-new-title">Neuer Lead — noch nicht in HubSpot</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE 5: HubSpot in Sekunden -->
+<section class="section reveal" id="f5">
+  <div class="section-inner">
+    <div>
+      <div class="section-tag">🎯 Feature 05</div>
+      <h2 class="section-h2">Company + Deal in HubSpot in 15 Sekunden.</h2>
+      <p class="section-p">Ein Klick — und B Mobile legt die Company in HubSpot an, erstellt den Deal in der richtigen Pipeline, weist den Salesperson zu und liefert dir direkt den Link. Kein HubSpot-Tab mehr öffnen.</p>
+      <div class="time-pill"><span class="time-before">10 Minuten</span><span class="time-arrow">→</span><span class="time-after">15 Sekunden</span></div>
+    </div>
+    <div class="mockup-shell" id="m5">
+      <div class="mockup-bar"><div class="m-dot m-dot-r"></div><div class="m-dot m-dot-y"></div><div class="m-dot m-dot-g"></div><span class="mockup-bar-title">In HubSpot anlegen</span></div>
+      <div class="mockup-body">
+        <div class="m5-steps" id="m5Steps">
+          <div class="m5-step" id="m5s1"><div class="m5-step-icon done">🏢</div><div class="m5-step-name">Company anlegen</div><div class="m5-step-badge done">✓ Fertig</div></div>
+          <div class="m5-step" id="m5s2"><div class="m5-step-icon done">📋</div><div class="m5-step-name">Deal erstellen (INSTA)</div><div class="m5-step-badge done">✓ Fertig</div></div>
+          <div class="m5-step" id="m5s3"><div class="m5-step-icon done">👤</div><div class="m5-step-name">Salesperson zuweisen</div><div class="m5-step-badge done">✓ Fertig</div></div>
+        </div>
+        <div class="m5-link-row" id="m5Link">
+          <a class="m5-link" href="#">
+            <span class="m5-link-icon">🟠</span>
+            <div><div class="m5-link-text">In HubSpot öffnen</div><div class="m5-link-sub">Trattoria Milano (INSTA) · Qualification</div></div>
+            <span class="m5-link-arr">→</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXTRAS GRID -->
+<section class="extras-section reveal">
+  <div class="extras-inner">
+    <div class="extras-label">Weitere Features</div>
+    <h2 class="extras-h2">Alles an einem Ort.</h2>
+    <div class="extras-grid">
+      <div class="extra-card">
+        <div class="extra-icon">👥</div>
+        <div class="extra-title">Team-Übersicht</div>
+        <div class="extra-desc">Alle Kollegen, Kontaktdaten und Positionen sofort abrufbar — kein Suchen mehr.</div>
+        <div class="extra-time">Früher: Telefonliste suchen → <strong>Jetzt: Instant</strong></div>
+      </div>
+      <div class="extra-card">
+        <div class="extra-icon">📚</div>
+        <div class="extra-title">Wissensdatenbank</div>
+        <div class="extra-desc">Antworten auf häufige Fragen direkt in der App — kein E-Mail-Ping-Pong mehr.</div>
+        <div class="extra-time">Früher: 30 Min suchen → <strong>Jetzt: 10 Sekunden</strong></div>
+      </div>
+      <div class="extra-card">
+        <div class="extra-icon">🚀</div>
+        <div class="extra-title">Strukturiertes Onboarding</div>
+        <div class="extra-desc">Neue Mitarbeiter werden Schritt für Schritt durch den Start geführt — ohne Chaos.</div>
+        <div class="extra-time">Früher: Tage Unklarheit → <strong>Jetzt: Klarer Plan</strong></div>
+      </div>
+      <div class="extra-card">
+        <div class="extra-icon">📋</div>
+        <div class="extra-title">Aufgaben & Tasks</div>
+        <div class="extra-desc">Tasks zentral verwalten, zuweisen und tracken — kein Excel, kein Notion extra nötig.</div>
+        <div class="extra-time">Früher: Überall verteilt → <strong>Jetzt: Alles hier</strong></div>
+      </div>
+      <div class="extra-card">
+        <div class="extra-icon">📣</div>
+        <div class="extra-title">Team-Neuigkeiten</div>
+        <div class="extra-desc">Ankündigungen und Updates an einem Ort — kein E-Mail-Chaos, kein Verpassen.</div>
+        <div class="extra-time">Früher: E-Mail-Flut → <strong>Jetzt: Ein Feed</strong></div>
+      </div>
+      <div class="extra-card">
+        <div class="extra-icon">🎯</div>
+        <div class="extra-title">Commitment-Tracking</div>
+        <div class="extra-desc">Monatliche Ziele (Kunden, Umsatz) setzen und Fortschritt sichtbar machen.</div>
+        <div class="extra-time">Früher: Bauchgefühl → <strong>Jetzt: Zahlen</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL / PWA SECTION -->
+<section class="section reveal" id="install">
+  <div class="section-inner">
+    <div>
+      <div class="section-tag">📱 Überall dabei</div>
+      <h2 class="section-h2">Als App auf dem<br>Homescreen speichern.</h2>
+      <p class="section-p">Kein App Store. Speichere das Portal wie eine echte App auf deinem Gerät — ein Tippen, und du bist sofort drin.</p>
+      <div class="inst-tabs">
+        <button class="inst-tab active" id="instTabIos" onclick="instSwitchOs('ios')">🍎 iPhone / iPad</button>
+        <button class="inst-tab" id="instTabAndroid" onclick="instSwitchOs('android')">🤖 Android</button>
+      </div>
+      <div id="instStepList" class="inst-steps"></div>
+    </div>
+    <div class="inst-phone-wrap">
+      <div class="inst-phone">
+        <div class="inst-notch"></div>
+        <div class="inst-screen">
+          <div class="inst-status"><span>22:33</span><span style="margin-left:auto;letter-spacing:1px">▲ ▲ ▐</span></div>
+          <div class="inst-urlbar">
+            <span style="color:#1a3a8f;font-size:9px">🔒</span>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">up.railway.app</span>
+          </div>
+          <div class="inst-page-preview">
+            <div class="inst-preview-line" style="width:55%;height:9px;background:#1a3a8f;margin-bottom:10px"></div>
+            <div class="inst-preview-line" style="width:90%;height:6px"></div>
+            <div class="inst-preview-line" style="width:75%;height:6px"></div>
+            <div class="inst-preview-line" style="width:85%;height:6px"></div>
+            <div style="margin-top:14px;display:flex;gap:6px">
+              <div style="flex:1;height:52px;background:#e5e5ea;border-radius:8px"></div>
+              <div style="flex:1;height:52px;background:#e5e5ea;border-radius:8px"></div>
+            </div>
+          </div>
+          <div class="inst-bottombar">
+            <div class="inst-bottom-icon">◀</div>
+            <div class="inst-bottom-icon">▶</div>
+            <div class="inst-share-btn" id="instShareBtn">⬆️</div>
+            <div class="inst-bottom-icon">📚</div>
+            <div class="inst-bottom-icon">⋯</div>
+          </div>
+          <!-- Share sheet -->
+          <div class="inst-sheet" id="instSheet">
+            <div class="inst-sheet-handle"></div>
+            <div class="inst-sheet-app">
+              <div class="inst-sheet-app-icon">B</div>
+              <div><div style="font-size:11px;font-weight:700" id="instSheetName">B Mobile – Mitarbeiter-Portal</div><div style="font-size:10px;color:#888;margin-top:1px">up.railway.app</div></div>
+            </div>
+            <div class="inst-sheet-row" id="instHomeRow">
+              <div class="inst-sheet-ico">⊞</div>Zum Home-Bildschirm
+            </div>
+            <div class="inst-sheet-row">
+              <div class="inst-sheet-ico">★</div>Zu Lesezeichen hinzufügen
+            </div>
+            <div class="inst-sheet-row">
+              <div class="inst-sheet-ico">📋</div>Zur Leseliste hinzufügen
+            </div>
+          </div>
+          <!-- Home screen -->
+          <div class="inst-homescreen" id="instHome">
+            <div class="inst-hs-icon">B</div>
+            <div class="inst-hs-label" id="instHsLabel">B Mobile</div>
+            <div class="inst-hs-check">✅</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA / LOGIN BOTTOM -->
+<section class="cta-section" id="cta-login">
+  <h2 class="cta-h2">Bereit zu starten?<br><em>Los geht's.</em></h2>
+  <p class="cta-p">Melde dich an und spare ab heute täglich Stunden.</p>
+  <div class="cta-login-box">
+    <h3>Anmelden</h3>
+    <p>Mit deinen TBC-Zugangsdaten einloggen.</p>
+    <div class="cta-lf-err" id="ctaErr"></div>
+    <form id="ctaForm">
+      <div class="cta-lf-group"><label class="cta-lf-label">E-Mail</label><input class="cta-lf-input" id="ctaEmail" type="email" placeholder="deine@tbc-deutschland.de" required autocomplete="email"></div>
+      <div class="cta-lf-group"><label class="cta-lf-label">Passwort</label><input class="cta-lf-input" id="ctaPw" type="password" placeholder="••••••••" required autocomplete="current-password"></div>
+      <button class="cta-btn" type="submit" id="ctaBtn">Jetzt anmelden →</button>
+    </form>
+  </div>
+</section>
+
+<script>
+// ── Auth check ──
+if (localStorage.getItem('tbc_token')) window.location.href = '/app/dashboard';
+
+
+// ── Login handler ──
+async function doLogin(email, password, errEl, btnEl, defaultLabel) {
+  btnEl.disabled = true;
+  btnEl.textContent = 'Anmelden…';
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login fehlgeschlagen');
+    localStorage.setItem('tbc_token', data.token);
+    localStorage.setItem('tbc_user', JSON.stringify(data.user));
+    window.location.href = '/app/dashboard';
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btnEl.disabled = false;
+    btnEl.textContent = defaultLabel;
+  }
+}
+
+document.getElementById('ctaForm').addEventListener('submit', e => {
+  e.preventDefault();
+  doLogin(document.getElementById('ctaEmail').value, document.getElementById('ctaPw').value,
+    document.getElementById('ctaErr'), document.getElementById('ctaBtn'), 'Jetzt anmelden →');
+});
+
+// ── Load app name ──
+fetch('/api/brand/name').then(r=>r.json()).then(({name})=>{
+  if (!name) return;
+  document.title = name + ' – Dein Sales-Portal';
+  document.querySelectorAll('.app-name').forEach(el => el.textContent = name);
+  const sheetName = document.getElementById('instSheetName');
+  if (sheetName) sheetName.textContent = name + ' – Mitarbeiter-Portal';
+  const hsLabel = document.getElementById('instHsLabel');
+  if (hsLabel) hsLabel.textContent = name;
+}).catch(()=>{});
+
+// ── Scroll reveal ──
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+// ── Mockup animations (trigger once when in view) ──
+
+// M1: Screenshot → Lead
+let m1done = false;
+const m1Obs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !m1done) {
+    m1done = true;
+    m1Obs.disconnect();
+    // After 1s: show analyzing
+    setTimeout(() => {
+      document.getElementById('m1Upload').style.display = 'none';
+      const a = document.getElementById('m1Analyzing');
+      a.style.display = 'block';
+    }, 900);
+    // After 2.6s: show result
+    setTimeout(() => {
+      document.getElementById('m1Analyzing').style.display = 'none';
+      const r = document.getElementById('m1Result');
+      r.style.display = 'block';
+      requestAnimationFrame(() => r.classList.add('show'));
+    }, 2600);
+    // Loop after 5s
+    setTimeout(() => { m1done = false; resetM1(); m1Obs.observe(document.getElementById('m1')); }, 6000);
+  }
+}, { threshold: 0.4 });
+function resetM1() {
+  document.getElementById('m1Upload').style.display = 'block';
+  const a = document.getElementById('m1Analyzing'); a.style.display = 'none';
+  const r = document.getElementById('m1Result'); r.style.display = 'none'; r.classList.remove('show');
+}
+m1Obs.observe(document.getElementById('m1'));
+
+// M2: Instagram Suche
+let m2done = false;
+const m2Obs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !m2done) {
+    m2done = true; m2Obs.disconnect();
+    const input = document.getElementById('m2Input');
+    const drop = document.getElementById('m2Drop');
+    const text = 'Sushi';
+    let i = 0;
+    input.value = '';
+    const type = setInterval(() => {
+      if (i < text.length) { input.value = text.slice(0, ++i); }
+      else { clearInterval(type); setTimeout(() => drop.classList.add('show'), 400); }
+    }, 120);
+    setTimeout(() => { m2done = false; input.value = ''; drop.classList.remove('show'); m2Obs.observe(document.getElementById('m2')); }, 7000);
+  }
+}, { threshold: 0.4 });
+m2Obs.observe(document.getElementById('m2'));
+
+// M3: Callliste
+const m3Data = [
+  { icon: '🍝', bg: '#fff3e0', name: 'Trattoria Milano', phone: '+49 221 4901234' },
+  { icon: '🍣', bg: '#e8f5e9', name: 'Sushi House Köln', phone: '+49 221 8823001' },
+  { icon: '🥗', bg: '#e3f2fd', name: 'Green Bowl', phone: '+49 211 3340099' },
+  { icon: '🍕', bg: '#fce4ec', name: 'Bella Napoli', phone: '+49 89 4430218' },
+];
+let m3done = false;
+const m3Obs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !m3done) {
+    m3done = true; m3Obs.disconnect();
+    setTimeout(runM3, 600);
+    setTimeout(() => { m3done = false; resetM3(); m3Obs.observe(document.getElementById('m3')); }, 8000);
+  }
+}, { threshold: 0.4 });
+function resetM3() {
+  document.getElementById('m3List').innerHTML = '';
+  document.getElementById('m3Sub').textContent = 'Wähle Salesperson…';
+}
+function runM3() {
+  document.getElementById('m3Sub').textContent = 'Max Mustermann · 4 Einträge';
+  const list = document.getElementById('m3List');
+  list.innerHTML = '';
+  m3Data.forEach((d, i) => {
+    const el = document.createElement('div');
+    el.className = 'm3-item';
+    el.innerHTML = `<div class="m3-item-av" style="background:${d.bg}">${d.icon}</div><div><div class="m3-item-name">${d.name}</div><div class="m3-item-phone">${d.phone}</div></div><div class="m3-item-call">📞 Anrufen</div>`;
+    list.appendChild(el);
+    setTimeout(() => el.classList.add('show'), i * 200);
+  });
+}
+m3Obs.observe(document.getElementById('m3'));
+
+// M4: Duplikat-Check
+let m4done = false;
+const m4Obs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !m4done) {
+    m4done = true; m4Obs.disconnect();
+    setTimeout(runM4, 700);
+    setTimeout(() => { m4done = false; resetM4(); m4Obs.observe(document.getElementById('m4')); }, 8000);
+  }
+}, { threshold: 0.4 });
+function resetM4() {
+  document.getElementById('m4Searching').classList.remove('show');
+  document.getElementById('m4Found').classList.remove('show');
+  document.getElementById('m4Found').style.display = 'none';
+  document.getElementById('m4New').classList.remove('show');
+  document.getElementById('m4New').style.display = 'none';
+}
+function runM4() {
+  const s = document.getElementById('m4Searching');
+  const f = document.getElementById('m4Found');
+  s.classList.add('show');
+  setTimeout(() => {
+    s.classList.remove('show');
+    f.style.display = 'block';
+    requestAnimationFrame(() => f.classList.add('show'));
+  }, 1600);
+}
+m4Obs.observe(document.getElementById('m4'));
+
+// M5: HubSpot steps
+let m5done = false;
+const m5Obs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !m5done) {
+    m5done = true; m5Obs.disconnect();
+    const steps = ['m5s1','m5s2','m5s3'];
+    steps.forEach((id, i) => setTimeout(() => document.getElementById(id).classList.add('show'), 400 + i * 500));
+    setTimeout(() => {
+      const l = document.getElementById('m5Link');
+      l.style.display = 'flex';
+      requestAnimationFrame(() => l.classList.add('show'));
+    }, 2200);
+    setTimeout(() => {
+      m5done = false;
+      steps.forEach(id => document.getElementById(id).classList.remove('show'));
+      const l = document.getElementById('m5Link'); l.classList.remove('show'); l.style.display = 'none';
+      m5Obs.observe(document.getElementById('m5'));
+    }, 7000);
+  }
+}, { threshold: 0.4 });
+document.getElementById('m5s1').style.display = 'flex';
+document.getElementById('m5s2').style.display = 'flex';
+document.getElementById('m5s3').style.display = 'flex';
+m5Obs.observe(document.getElementById('m5'));
+
+// ── Install / PWA section ──
+const INST_IOS = [
+  { text: 'Safari öffnen', sub: 'App-URL im Browser aufrufen' },
+  { text: 'Teilen-Symbol antippen ⬆️', sub: 'Symbol unten in der Mitte der Toolbar' },
+  { text: '„Zum Home-Bildschirm" wählen', sub: 'Im Share-Sheet nach unten scrollen' },
+  { text: '„Hinzufügen" tippen — fertig 🎉', sub: 'Die App erscheint auf deinem Homescreen' },
+];
+const INST_ANDROID = [
+  { text: 'Chrome öffnen', sub: 'App-URL im Browser aufrufen' },
+  { text: 'Menü-Symbol antippen ⋮', sub: 'Drei Punkte oben rechts in Chrome' },
+  { text: '„Zum Startbildschirm" wählen', sub: 'In der Chrome-Menüliste auswählen' },
+  { text: '„Hinzufügen" tippen — fertig 🎉', sub: 'Die App erscheint auf deinem Homescreen' },
+];
+
+let instOs = 'ios', instPhase = 0, instTimer = null;
+
+function instSwitchOs(os) {
+  instOs = os;
+  instPhase = 0;
+  document.getElementById('instTabIos').classList.toggle('active', os === 'ios');
+  document.getElementById('instTabAndroid').classList.toggle('active', os === 'android');
+  instUpdate();
+  clearInterval(instTimer);
+  instTimer = setInterval(instTick, 2600);
+}
+
+function instTick() {
+  const steps = instOs === 'ios' ? INST_IOS : INST_ANDROID;
+  instPhase = (instPhase + 1) % steps.length;
+  instUpdate();
+}
+
+function instUpdate() {
+  const steps = instOs === 'ios' ? INST_IOS : INST_ANDROID;
+  document.getElementById('instStepList').innerHTML = steps.map((s, i) => `
+    <div class="inst-step${i === instPhase ? ' active' : ''}">
+      <div class="inst-step-num">${i + 1}</div>
+      <div><div class="inst-step-text">${s.text}</div><div class="inst-step-sub">${s.sub}</div></div>
+    </div>`).join('');
+
+  const sheet = document.getElementById('instSheet');
+  const home  = document.getElementById('instHome');
+  const row   = document.getElementById('instHomeRow');
+  const share = document.getElementById('instShareBtn');
+
+  sheet.classList.remove('open');
+  home.classList.remove('show');
+  row.classList.remove('hl');
+  share.style.transform = '';
+
+  if (instPhase === 1) {
+    share.style.transform = 'scale(1.35)';
+    setTimeout(() => sheet.classList.add('open'), 320);
+  } else if (instPhase === 2) {
+    sheet.classList.add('open');
+    setTimeout(() => row.classList.add('hl'), 180);
+  } else if (instPhase === 3) {
+    home.classList.add('show');
+  }
+}
+
+const instObs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) {
+    instUpdate();
+    instTimer = setInterval(instTick, 2600);
+    instObs.disconnect();
+  }
+}, { threshold: 0.35 });
+instObs.observe(document.getElementById('install'));
+</script>
+</body>
+</html>
