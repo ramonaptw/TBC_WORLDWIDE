@@ -341,6 +341,37 @@ async function loadDashboard() {
     kpiEl.style.display = 'none';
   }
 
+  // ── CS Design Intake this month ──
+  const csIntakeCard = document.getElementById('dashCsIntakeCard');
+  if (hasIntakeCommit) {
+    const myIntakes = kunden.filter(k =>
+      k.assigned_cs_user_id === currentUser.id &&
+      Array.isArray(k.phase_history) &&
+      k.phase_history.some(h => h.phase === 'design' && (h.at || '').startsWith(currentMonth))
+    );
+    if (myIntakes.length) {
+      csIntakeCard.style.display = '';
+      document.getElementById('dashCsIntake').innerHTML = myIntakes.map(k => {
+        const onbBadge = k.nb_onboarding_done
+          ? '<span style="font-size:11px;font-weight:700;color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:99px;padding:2px 8px">✓ NB-Onb. erledigt</span>'
+          : '<span style="font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:99px;padding:2px 8px">⚠ Onb. offen</span>';
+        return `<div onclick="editKunde(${k.id})" style="padding:11px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .12s" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px">${k.firma}</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">von ${k.mitarbeiter_name}${k.onboarding_phase ? ` · Phase ${k.onboarding_phase}` : ''}</div>
+          </div>
+          ${onbBadge}
+          <span style="font-size:12px;color:var(--text-light);flex-shrink:0">→</span>
+        </div>`;
+      }).join('');
+    } else {
+      csIntakeCard.style.display = '';
+      document.getElementById('dashCsIntake').innerHTML = '<div class="empty-state" style="padding:24px"><div class="empty-icon">📥</div><p>Diesen Monat noch keine Design Intakes.</p></div>';
+    }
+  } else {
+    csIntakeCard.style.display = 'none';
+  }
+
   // ── Recently won customers ──
   document.getElementById('dashRecentCard').style.display = hasRecent ? '' : 'none';
   // Tasks is now the left column of the grid; collapse to 1fr when tasks hidden so News fills the row
@@ -1092,9 +1123,15 @@ async function loadDatenbank() {
 
     let statusBadge;
     if (isUebergeben) {
+      const nbDoneChip = k.nb_onboarding_done
+        ? '<span style="font-size:10px;font-weight:700;color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;padding:2px 7px">NB-Onb. ✓</span>'
+        : '<span style="font-size:10px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:2px 7px">NB-Onb. ⚠ offen</span>';
       statusBadge = `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
         <span style="font-size:11px;font-weight:700;color:var(--success);background:#F0FDF4;border:1px solid #22C55E;border-radius:99px;padding:2px 8px">📤 Übergeben an ${csLabel}</span>
-        ${phaseLabel ? `<span style="font-size:10px;font-weight:700;color:#6D28D9;background:#F3E8FF;border:1px solid #DDD6FE;border-radius:6px;padding:2px 7px">Phase: ${phaseLabel}</span>` : ''}
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${phaseLabel ? `<span style="font-size:10px;font-weight:700;color:#6D28D9;background:#F3E8FF;border:1px solid #DDD6FE;border-radius:6px;padding:2px 7px">Phase: ${phaseLabel}</span>` : ''}
+          ${nbDoneChip}
+        </div>
       </div>`;
     } else {
       statusBadge = `<div><span style="font-size:11px;font-weight:700;color:#92400E;background:#FFF8E1;border:1px solid #F59E0B;border-radius:99px;padding:2px 8px">🏆 Gewonnen</span>${uebergabeDeadlineBadge(k.created_at)}</div>`;
@@ -1199,7 +1236,8 @@ async function editKunde(id) {
   document.getElementById('kEditOnboardingSection').style.display = '';
   await loadCsUsersInto(document.getElementById('kEditAssignCS'), k.assigned_cs_user_id);
   document.getElementById('kEditPhase').value = k.onboarding_phase || '';
-  _kundeEditOriginal = { cs: k.assigned_cs_user_id || null, phase: k.onboarding_phase || '' };
+  document.getElementById('kEditNbOnboardingDone').checked = !!k.nb_onboarding_done;
+  _kundeEditOriginal = { cs: k.assigned_cs_user_id || null, phase: k.onboarding_phase || '', nbDone: !!k.nb_onboarding_done };
   openModal('modalKunde');
 }
 
@@ -1226,24 +1264,32 @@ async function saveKunde() {
 
   if (id) {
     await api.put('/kunden/' + id, data);
-    // Optional: change CS-Empfänger / Phase from the edit-only section
-    const newCs    = parseInt(document.getElementById('kEditAssignCS').value) || null;
-    const newPhase = document.getElementById('kEditPhase').value || '';
-    const orig = _kundeEditOriginal || { cs: null, phase: '' };
-    const csChanged    = (orig.cs ?? null) !== newCs;
-    const phaseChanged = (orig.phase || '') !== newPhase;
-    if (csChanged || phaseChanged) {
+    // Optional: change CS-Empfänger / Phase / NB-onboarding-done from the edit-only section
+    const newCs     = parseInt(document.getElementById('kEditAssignCS').value) || null;
+    const newPhase  = document.getElementById('kEditPhase').value || '';
+    const newNbDone = !!document.getElementById('kEditNbOnboardingDone').checked;
+    const orig = _kundeEditOriginal || { cs: null, phase: '', nbDone: false };
+    const csChanged     = (orig.cs ?? null) !== newCs;
+    const phaseChanged  = (orig.phase || '') !== newPhase;
+    const nbDoneChanged = !!orig.nbDone !== newNbDone;
+    if (csChanged || phaseChanged || nbDoneChanged) {
       const body = {};
-      if (csChanged)    body.assigned_cs_user_id = newCs;
+      if (csChanged)     body.assigned_cs_user_id = newCs;
       if (phaseChanged && newPhase) body.onboarding_phase = newPhase;
+      if (nbDoneChanged) body.nb_onboarding_done = newNbDone;
       try { await api.patch('/kunden/' + id + '/status', body); } catch {}
     }
   } else {
     const created = await api.post('/kunden', data);
     if (alreadyOnboarded) {
-      // NB did the onboarding themselves — skip the auto-task, but still hand over to CS
-      // for Design Intake. phase='design' triggers status='übergeben' + push notify in backend.
-      await api.patch('/kunden/' + created.id + '/status', { onboarding_phase: 'design', assigned_cs_user_id: assignedCsId }).catch(() => {});
+      // NB did the onboarding themselves — still hand over to CS for Design Intake.
+      // phase='design' triggers status='übergeben', push, and Onboarding-task on the backend.
+      // nb_onboarding_done=true makes the auto-task description reflect that NB already onboarded.
+      await api.patch('/kunden/' + created.id + '/status', {
+        onboarding_phase: 'design',
+        assigned_cs_user_id: assignedCsId,
+        nb_onboarding_done: true,
+      }).catch(() => {});
     } else {
       // Auto-create Pre-Onboarding task for the creator
       const due = new Date(); due.setDate(due.getDate() + 1);
@@ -3214,42 +3260,18 @@ async function obRun() {
   btn.onclick = () => obResetAll();
   btn.disabled = false;
 
-  // Mark kunde as übergeben and create onboarding task
+  // Mark kunde as übergeben — backend auto-creates the CS handover task + push notify
   if (obPendingKundeId) {
     const pendingId = obPendingKundeId;
-    const firma = obPendingKundeFirma || obDeal.name;
     obPendingKundeId = null;
     obPendingKundeFirma = null;
-
     const assignedCsId = parseInt(document.getElementById('obAssignCS')?.value) || null;
-    // Phase 'design' triggers auto status='übergeben' + push-notify of the CS user on the backend
-    api.patch('/kunden/' + pendingId + '/status', { onboarding_phase: 'design', assigned_cs_user_id: assignedCsId }).catch(() => {});
-
-    const currentUser = JSON.parse(localStorage.getItem('tbc_user') || '{}');
-    try {
-      const users = await api.get('/employees');
-      const receiver = assignedCsId
-        ? users.find(u => u.id === assignedCsId)
-        : users.find(u => u.name.toLowerCase().includes(OB_ONBOARDING_PERSON.name.split(' ')[0].toLowerCase()));
-      const due = new Date(); due.setDate(due.getDate() + 3);
-      await api.post('/tasks', {
-        title: `Onboarding starten: ${firma}`,
-        description: `${currentUser.name} hat den Member "${firma}" übergeben. Bitte Onboarding durchführen.`,
-        assigned_to: receiver ? receiver.id : 1,
-        priority: 'high',
-        status: 'open',
-        due_date: due.toISOString().slice(0, 10),
-        project: 'Onboarding',
-        kunde_id: pendingId,
-        checklist: [
-          { label: 'HubSpot aktualisiert', done: false },
-          { label: 'WhatsApp-Gruppe erstellt', done: false },
-          { label: 'Erstgespräch geführt', done: false },
-          { label: 'Design-Brief erstellt', done: false },
-          { label: 'Onboarding abgeschlossen', done: false },
-        ],
-      });
-    } catch (e) { /* task creation non-critical */ }
+    // Phase 'design' triggers auto status='übergeben', push-notify, and Onboarding-task on the backend
+    api.patch('/kunden/' + pendingId + '/status', {
+      onboarding_phase: 'design',
+      assigned_cs_user_id: assignedCsId,
+      nb_onboarding_done: false,
+    }).catch(() => {});
   }
 }
 

@@ -25,7 +25,7 @@ router.get('/', authenticate, (req, res) => {
 });
 
 router.post('/', authenticate, (req, res) => {
-  const { firma, telefon, kanal, abschlussdatum, umsatz, marge, hubspot_company_id, assigned_cs_user_id } = req.body;
+  const { firma, telefon, kanal, abschlussdatum, umsatz, marge, hubspot_company_id, assigned_cs_user_id, nb_onboarding_done } = req.body;
   if (!firma || !kanal || !abschlussdatum) return res.status(400).json({ error: 'Pflichtfelder fehlen' });
   const row = db.insert('kunden', {
     firma, telefon: telefon || null, kanal, abschlussdatum,
@@ -34,13 +34,14 @@ router.post('/', authenticate, (req, res) => {
     status: 'gewonnen',
     created_by: req.user.id,
     assigned_cs_user_id: assigned_cs_user_id ? Number(assigned_cs_user_id) : null,
+    nb_onboarding_done: !!nb_onboarding_done,
     phase_history: [],
   });
   res.status(201).json(row);
 });
 
 router.put('/:id', authenticate, (req, res) => {
-  const { firma, telefon, kanal, abschlussdatum, umsatz, marge, status, hubspot_company_id, assigned_cs_user_id } = req.body;
+  const { firma, telefon, kanal, abschlussdatum, umsatz, marge, status, hubspot_company_id, assigned_cs_user_id, nb_onboarding_done } = req.body;
   const patch = {
     firma, telefon: telefon || null, kanal, abschlussdatum,
     umsatz: Number(umsatz) || 0, marge: Number(marge) || 0,
@@ -50,6 +51,7 @@ router.put('/:id', authenticate, (req, res) => {
   if (assigned_cs_user_id !== undefined) {
     patch.assigned_cs_user_id = assigned_cs_user_id ? Number(assigned_cs_user_id) : null;
   }
+  if (nb_onboarding_done !== undefined) patch.nb_onboarding_done = !!nb_onboarding_done;
   const updated = db.update('kunden', Number(req.params.id), patch);
   if (!updated) return res.status(404).json({ error: 'Nicht gefunden' });
   res.json(updated);
@@ -57,7 +59,7 @@ router.put('/:id', authenticate, (req, res) => {
 
 // PATCH status and/or onboarding_phase
 router.patch('/:id/status', authenticate, (req, res) => {
-  const { status, onboarding_phase, assigned_cs_user_id } = req.body;
+  const { status, onboarding_phase, assigned_cs_user_id, nb_onboarding_done } = req.body;
   const id = Number(req.params.id);
   const before = db.findOne('kunden', k => k.id === id);
   if (!before) return res.status(404).json({ error: 'Nicht gefunden' });
@@ -70,6 +72,7 @@ router.patch('/:id/status', authenticate, (req, res) => {
   if (assigned_cs_user_id !== undefined) {
     updates.assigned_cs_user_id = assigned_cs_user_id ? Number(assigned_cs_user_id) : null;
   }
+  if (nb_onboarding_done !== undefined) updates.nb_onboarding_done = !!nb_onboarding_done;
 
   let phaseEnteredDesign = false;
   if (onboarding_phase) {
@@ -88,13 +91,45 @@ router.patch('/:id/status', authenticate, (req, res) => {
 
   const updated = db.update('kunden', id, updates);
 
-  // Notify the assigned CS user when the kunde just entered design (= handover)
+  // On handover: notify the CS user + create a single Onboarding-Übergabe task (idempotent)
   if (phaseEnteredDesign && updated.assigned_cs_user_id) {
     notifyUser(updated.assigned_cs_user_id, {
       title: 'Neuer Member zugewiesen',
       body: updated.firma,
       url: '/app/datenbank',
     }).catch(err => console.error('[kunden] push notify failed:', err.message));
+
+    const existingOpen = db.findOne('tasks', t =>
+      t.kunde_id === id &&
+      t.project === 'Onboarding' &&
+      t.assigned_to === updated.assigned_cs_user_id &&
+      t.status !== 'done'
+    );
+    if (!existingOpen) {
+      const nbName = (db.findOne('users', u => u.id === updated.created_by)?.name) || 'New Business';
+      const due = new Date(); due.setDate(due.getDate() + 3);
+      const nbDone = !!updated.nb_onboarding_done;
+      db.insert('tasks', {
+        title: 'Onboarding-Übergabe: ' + updated.firma,
+        description: nbDone
+          ? `${nbName} hat den Onboarding-Teil schon erledigt — bitte WhatsApp-Kontakt aufnehmen und übernehmen.`
+          : `${nbName} hat den Member "${updated.firma}" übergeben. Bitte komplettes Onboarding durchführen.`,
+        status: 'open',
+        priority: 'high',
+        assigned_to: updated.assigned_cs_user_id,
+        created_by: req.user.id,
+        due_date: due.toISOString().slice(0, 10),
+        project: 'Onboarding',
+        kunde_id: id,
+        sourcing: null,
+        checklist: [
+          { label: 'WhatsApp kontaktiert',  done: false },
+          { label: 'Erstgespräch geführt',  done: false },
+          { label: 'Design-Brief erstellt', done: false },
+          { label: 'Onboarding abgeschlossen', done: false },
+        ],
+      });
+    }
   }
 
   res.json(updated);
