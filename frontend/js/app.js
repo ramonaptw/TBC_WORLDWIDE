@@ -182,6 +182,7 @@ function showPage(page, pushState = true) {
   }
   if (page === 'tasks') {
     addActionBtn(actions, '+ Aufgabe', () => openNewTaskModal());
+    addActionBtn(actions, '📦 Sourcing-Anfrage', () => openSourcingModal());
   }
 
   const loaders = {
@@ -1920,7 +1921,17 @@ async function openTaskDetail(id) {
   const t = await api.get('/tasks/' + id);
 
   document.getElementById('tdTitle').textContent = t.title.replace(/^Pre-Onboarding\s*\/\s*Onboarding starten:\s*/i, 'Onboarding starten: ');
-  document.getElementById('tdDescription').textContent = t.description || '';
+  // Sourcing block — replace plaintext description with structured table when present
+  const srcEl = document.getElementById('tdSourcing');
+  if (t.sourcing) {
+    srcEl.innerHTML = renderSourcingDetail(t.sourcing);
+    srcEl.style.display = '';
+    document.getElementById('tdDescription').textContent = '';
+  } else {
+    srcEl.style.display = 'none';
+    srcEl.innerHTML = '';
+    document.getElementById('tdDescription').textContent = t.description || '';
+  }
   document.getElementById('tdBadgeRow').innerHTML = badge(t.status) + ' ' + badge(t.priority);
   document.getElementById('tdMeta').innerHTML = [
     t.project ? `<span>📁 ${t.project}</span>` : '',
@@ -2054,6 +2065,96 @@ async function saveTask() {
   closeModal('modalTask');
   showToast(id ? 'Aufgabe aktualisiert!' : 'Aufgabe erstellt!');
   loadTasks();
+}
+
+// ── Sourcing-Anfrage ──
+const SOURCING_FIELDS = [
+  ['customer',    'Customer'],
+  ['supplier',    'Supplier'],
+  ['productType', 'Product type'],
+  ['model',       'Model'],
+  ['size',        'Size of product'],
+  ['quantity',    'Quantity for quote'],
+  ['printing',    'Printing'],
+  ['material',    'Material'],
+  ['varnishes',   'Varnishes'],
+  ['targetPrice', 'Target price'],
+  ['examples',    'Examples'],
+];
+
+async function openSourcingModal() {
+  ['srcCustomer','srcSupplier','srcProductType','srcSize','srcQuantity','srcPrinting','srcMaterial','srcVarnishes','srcTargetPrice','srcExamples','srcDue'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('srcModel').value = '';
+
+  // Populate assignee dropdown — preselect first sellsupport user if available
+  const users = await api.get('/employees').catch(() => []);
+  const sel = document.getElementById('srcAssigned');
+  sel.innerHTML = '<option value="">– wählen –</option>';
+  let firstSellsupport = null;
+  users.forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u.id;
+    opt.textContent = `${u.name}${u.role === 'sellsupport' ? ' (Sales Support)' : ''}`;
+    sel.appendChild(opt);
+    if (u.role === 'sellsupport' && firstSellsupport === null) firstSellsupport = u.id;
+  });
+  if (firstSellsupport !== null) sel.value = firstSellsupport;
+
+  openModal('modalSourcing');
+}
+
+async function saveSourcingTask() {
+  const sourcing = {
+    customer:    document.getElementById('srcCustomer').value.trim(),
+    supplier:    document.getElementById('srcSupplier').value.trim(),
+    productType: document.getElementById('srcProductType').value.trim(),
+    model:       document.getElementById('srcModel').value,
+    size:        document.getElementById('srcSize').value.trim(),
+    quantity:    document.getElementById('srcQuantity').value.trim(),
+    printing:    document.getElementById('srcPrinting').value.trim(),
+    material:    document.getElementById('srcMaterial').value.trim(),
+    varnishes:   document.getElementById('srcVarnishes').value.trim(),
+    targetPrice: document.getElementById('srcTargetPrice').value.trim(),
+    examples:    document.getElementById('srcExamples').value.trim(),
+  };
+  const assigned = document.getElementById('srcAssigned').value;
+  const due = document.getElementById('srcDue').value;
+
+  if (!sourcing.customer)    return showToast('Customer erforderlich', 'error');
+  if (!sourcing.productType) return showToast('Product type erforderlich', 'error');
+  if (!sourcing.quantity)    return showToast('Quantity for quote erforderlich', 'error');
+  if (!assigned)             return showToast('Bitte Empfänger wählen', 'error');
+
+  const title = `Sourcing: ${sourcing.customer} — ${sourcing.productType}`;
+  const description = SOURCING_FIELDS
+    .map(([k, label]) => sourcing[k] ? `${label}: ${sourcing[k]}` : null)
+    .filter(Boolean).join('\n');
+
+  await api.post('/tasks', {
+    title, description,
+    priority: 'medium',
+    project: 'Sourcing',
+    assigned_to: assigned,
+    due_date: due || null,
+    sourcing,
+  });
+  closeModal('modalSourcing');
+  showToast('Sourcing-Anfrage gesendet!');
+  loadTasks();
+}
+
+function renderSourcingDetail(s) {
+  if (!s || typeof s !== 'object') return '';
+  const rows = SOURCING_FIELDS
+    .filter(([k]) => s[k])
+    .map(([k, label]) => `
+      <tr>
+        <td style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text-secondary);background:var(--bg);width:42%;border-bottom:1px solid var(--border-light)">${label}</td>
+        <td style="padding:8px 12px;font-size:13px;border-bottom:1px solid var(--border-light)">${s[k]}</td>
+      </tr>`).join('');
+  return `
+    <div style="padding:10px 14px;background:var(--bg);font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary);border-bottom:1px solid var(--border)">📦 Sourcing-Anfrage</div>
+    <table style="width:100%;border-collapse:collapse">${rows}</table>`;
 }
 
 async function deleteTask(id) {
