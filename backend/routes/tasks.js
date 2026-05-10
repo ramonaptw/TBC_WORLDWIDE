@@ -34,7 +34,7 @@ router.get('/', authenticate, (req, res) => {
 });
 
 router.post('/', authenticate, (req, res) => {
-  const { title, description, priority, assigned_to, due_date, project, checklist } = req.body;
+  const { title, description, priority, assigned_to, due_date, project, checklist, sourcing } = req.body;
   if (!title) return res.status(400).json({ error: 'Titel erforderlich' });
 
   const task = db.insert('tasks', {
@@ -46,17 +46,20 @@ router.post('/', authenticate, (req, res) => {
     project: project || '',
     checklist: Array.isArray(checklist) ? checklist : [],
     kunde_id: req.body.kunde_id ? Number(req.body.kunde_id) : null,
+    sourcing: sourcing && typeof sourcing === 'object' ? sourcing : null,
   });
   res.status(201).json(task);
 });
 
 router.put('/:id', authenticate, (req, res) => {
-  const { title, description, status, priority, assigned_to, due_date, project } = req.body;
-  db.update('tasks', Number(req.params.id), {
+  const { title, description, status, priority, assigned_to, due_date, project, sourcing } = req.body;
+  const updates = {
     title, description, status, priority,
     assigned_to: assigned_to ? Number(assigned_to) : null,
     due_date, project
-  });
+  };
+  if (sourcing !== undefined) updates.sourcing = sourcing && typeof sourcing === 'object' ? sourcing : null;
+  db.update('tasks', Number(req.params.id), updates);
   res.json({ success: true });
 });
 

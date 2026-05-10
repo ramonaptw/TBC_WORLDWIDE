@@ -818,6 +818,53 @@
   </div>
 </div>
 
+<!-- Sourcing-Anfrage Modal -->
+<div class="modal-overlay" id="modalSourcing" style="display:none">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <h3>📦 Sourcing-Anfrage erstellen</h3>
+      <button class="modal-close" onclick="closeModal('modalSourcing')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px">
+        Wird als Aufgabe an Sales Support gesendet. Pflichtfelder mit *.
+      </p>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Customer *</label><input class="form-control" id="srcCustomer" placeholder="z.B. Fischerei Hodann GmbH"></div>
+        <div class="form-group"><label class="form-label">Supplier</label><input class="form-control" id="srcSupplier" placeholder="??? oder spezifisch"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Product type *</label><input class="form-control" id="srcProductType" placeholder="z.B. Paper Bag L Pocket"></div>
+        <div class="form-group"><label class="form-label">Model</label>
+          <select class="form-control" id="srcModel"><option value="">– wählen –</option><option value="Auto">Auto</option><option value="Manual">Manual</option><option value="XXX">XXX</option></select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Size of product</label><input class="form-control" id="srcSize" placeholder="z.B. 15x20cm"></div>
+        <div class="form-group"><label class="form-label">Quantity for quote *</label><input class="form-control" id="srcQuantity" placeholder="z.B. 40.000 Pieces / 100.000 Pieces"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Printing (A/B side, 1/2/3 colours, full colour)</label><input class="form-control" id="srcPrinting" placeholder="z.B. 1 Color, A-Side"></div>
+      <div class="form-group"><label class="form-label">Material (grms/m², white/brown)</label><input class="form-control" id="srcMaterial" placeholder="z.B. 40gsm, white"></div>
+      <div class="form-group"><label class="form-label">Varnishes (laminate, varnish, UV lacquer)</label><input class="form-control" id="srcVarnishes" placeholder="z.B. Greaseproof Paper"></div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Target price (optional)</label><input class="form-control" id="srcTargetPrice" placeholder="z.B. 0,12 € / Stk."></div>
+        <div class="form-group"><label class="form-label">Examples (optional)</label><input class="form-control" id="srcExamples" placeholder="Links / Referenzen"></div>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Zugewiesen an *</label>
+          <select class="form-control" id="srcAssigned"><option value="">– wählen –</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Fälligkeitsdatum</label><input class="form-control" type="date" id="srcDue"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalSourcing')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveSourcingTask()">Anfrage senden</button>
+    </div>
+  </div>
+</div>
+
 <!-- Announcement Modal -->
 <div class="modal-overlay" id="modalNews" style="display:none">
   <div class="modal">
@@ -853,6 +900,8 @@
       <button class="modal-close" onclick="closeModal('modalTaskDetail')" style="align-self:flex-start;margin-left:12px">✕</button>
     </div>
     <div class="modal-body" style="padding-top:16px">
+      <!-- Sourcing-Anfrage strukturierte Ansicht (nur wenn vorhanden) -->
+      <div id="tdSourcing" style="display:none;margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden"></div>
       <div id="tdDescription" style="font-size:14px;line-height:1.7;color:var(--text-secondary);margin-bottom:16px;white-space:pre-wrap"></div>
       <!-- Checklist (Onboarding tasks) -->
       <div id="tdChecklist" style="display:none;margin-bottom:16px">
