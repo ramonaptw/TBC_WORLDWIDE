@@ -542,19 +542,38 @@
             <button class="btn btn-secondary" style="font-size:12px;padding:5px 14px" onclick="exportUsersCSV()">⬇ Export Excel</button>
           </div>
           <div id="adminKpi" class="admin-kpi-row" style="margin-bottom:20px"></div>
+
+          <!-- 12-Monats-Umsatz als Balkendiagramm -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header" style="padding:14px 18px 10px;display:flex;justify-content:space-between;align-items:center">
+              <h2 style="font-size:14px">📈 Umsatz – letzte 12 Monate</h2>
+              <span style="font-size:11px;color:var(--text-light)" id="adminMonthlyTotal"></span>
+            </div>
+            <div id="adminMonthly" style="padding:14px 18px 18px"></div>
+          </div>
+
+          <!-- Pipeline + Tasks -->
           <div class="admin-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
             <div class="card">
-              <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">📈 Umsatz nach Monat</h2></div>
-              <div id="adminMonthly" style="padding:0"></div>
+              <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🔄 Member-Pipeline</h2></div>
+              <div id="adminPipeline" style="padding:0"></div>
             </div>
+            <div class="card">
+              <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">✅ Aufgaben-Status</h2></div>
+              <div id="adminTaskStats" style="padding:0"></div>
+            </div>
+          </div>
+
+          <!-- Channels + Top -->
+          <div class="admin-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
             <div class="card">
               <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🏆 Beste Vertriebskanäle</h2></div>
               <div id="adminChannels" style="padding:0"></div>
             </div>
-          </div>
-          <div class="card">
-            <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🥇 Top Performer</h2></div>
-            <div id="adminTopPerformers" style="padding:0"></div>
+            <div class="card">
+              <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🥇 Top Performer</h2></div>
+              <div id="adminTopPerformers" style="padding:0"></div>
+            </div>
           </div>
         </div>
 

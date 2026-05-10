@@ -14,6 +14,7 @@ const EMPTY = {
   onboarding_progress: [], prospects: [], tasks: [], tools: [], commitments: [], kunden: [], wiki_articles: [], feedback: [],
   password_reset_tokens: [],
   push_subscriptions: [],
+  calllist_week: [],
   _counters: {}
 };
 

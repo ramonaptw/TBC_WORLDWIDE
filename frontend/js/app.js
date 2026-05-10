@@ -1722,50 +1722,115 @@ async function loadAdminOverview() {
   const stats = _adminStats || await api.get('/admin/stats');
   _adminStats = stats;
 
-  const fmt = n => '€' + Number(n).toLocaleString('de-DE');
+  const fmt   = n => '€' + Number(n).toLocaleString('de-DE');
+  const fmtN  = n => Number(n).toLocaleString('de-DE');
+  const delta = (cur, prev) => {
+    if (!prev) return cur > 0 ? `<span style="color:var(--success);font-weight:700">▲ neu</span>` : '<span style="color:var(--text-light)">–</span>';
+    const pct = Math.round(((cur - prev) / prev) * 100);
+    if (pct === 0) return `<span style="color:var(--text-light)">±0%</span>`;
+    const up = pct > 0;
+    return `<span style="color:${up ? 'var(--success)' : 'var(--danger)'};font-weight:700">${up ? '▲' : '▼'} ${Math.abs(pct)}%</span>`;
+  };
 
-  // KPI row
+  // KPI row — with month-over-month deltas
   document.getElementById('adminKpi').innerHTML = `
     <div class="dash-kpi">
       <div class="dash-kpi-label">Nutzer</div>
       <div class="dash-kpi-value">${stats.totalUsers}</div>
+      <div class="dash-kpi-sub">${stats.newUsersThisMonth ? `+${stats.newUsersThisMonth} ds. Monat` : 'unverändert'}</div>
     </div>
     <div class="dash-kpi">
-      <div class="dash-kpi-label">Umsatz</div>
-      <div class="dash-kpi-value admin-kpi-euro">${fmt(stats.totalUmsatz)}</div>
-      <div class="dash-kpi-sub">Marge: ${fmt(stats.totalMarge)}</div>
+      <div class="dash-kpi-label">Umsatz Monat</div>
+      <div class="dash-kpi-value admin-kpi-euro">${fmt(stats.thisMonth.umsatz)}</div>
+      <div class="dash-kpi-sub">${delta(stats.thisMonth.umsatz, stats.prevMonth.umsatz)} vs Vormonat</div>
     </div>
     <div class="dash-kpi">
-      <div class="dash-kpi-label">Member</div>
-      <div class="dash-kpi-value">${stats.totalKunden}</div>
-      <div class="dash-kpi-sub">${stats.kundenThisMonth} Member diesen Monat</div>
+      <div class="dash-kpi-label">Marge Monat</div>
+      <div class="dash-kpi-value admin-kpi-euro">${fmt(stats.thisMonth.marge)}</div>
+      <div class="dash-kpi-sub">${delta(stats.thisMonth.marge, stats.prevMonth.marge)} vs Vormonat</div>
     </div>
     <div class="dash-kpi">
+      <div class="dash-kpi-label">Member Monat</div>
+      <div class="dash-kpi-value">${stats.kundenThisMonth}</div>
+      <div class="dash-kpi-sub">Ø ${fmt(stats.avgDealValue)} / Member · ${delta(stats.thisMonth.count, stats.prevMonth.count)}</div>
+    </div>
+    <div class="dash-kpi">
+      <div class="dash-kpi-label">Sourcing</div>
+      <div class="dash-kpi-value">${stats.sourcingThisMonth}</div>
+      <div class="dash-kpi-sub">Anfragen ds. Monat</div>
+    </div>
+    <div class="dash-kpi${stats.overdueTasks > 0 ? ' dash-kpi--warn' : ''}">
       <div class="dash-kpi-label">Aufgaben</div>
       <div class="dash-kpi-value">${stats.openTasks}</div>
-      <div class="dash-kpi-sub">${stats.overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${stats.overdueTasks}</span>` : 'keine überfällig'}</div>
+      <div class="dash-kpi-sub">${stats.overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${stats.overdueTasks} überfällig</span>` : 'keine überfällig'}</div>
     </div>
     <div class="dash-kpi">
       <div class="dash-kpi-label">Feedback Ø</div>
       <div class="dash-kpi-value">${stats.avgRating ? stats.avgRating + ' ★' : '–'}</div>
       <div class="dash-kpi-sub">${stats.totalFeedback} Einträge</div>
     </div>
+    <div class="dash-kpi">
+      <div class="dash-kpi-label">Umsatz gesamt</div>
+      <div class="dash-kpi-value admin-kpi-euro">${fmt(stats.totalUmsatz)}</div>
+      <div class="dash-kpi-sub">Marge: ${fmt(stats.totalMarge)}</div>
+    </div>
   `;
 
-  // Monthly revenue table
+  // Monthly revenue — bar chart over 12 months
   const monthNames = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-  document.getElementById('adminMonthly').innerHTML = stats.monthlyRevenue.map(m => {
-    const mon = monthNames[parseInt(m.month.split('-')[1]) - 1];
-    return `<div style="display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid var(--border-light);font-size:13px">
-      <span style="width:32px;color:var(--text-secondary);font-size:12px">${mon}</span>
-      <span style="font-weight:600;flex:1">${fmt(m.umsatz)}</span>
-      <span style="color:var(--success);font-size:12px">${fmt(m.marge)}</span>
-      <span style="font-size:11px;color:var(--text-light);width:40px;text-align:right">${m.count} Kd.</span>
+  const maxRev = Math.max(1, ...stats.monthlyRevenue.map(m => m.umsatz));
+  const totalRev = stats.monthlyRevenue.reduce((s, m) => s + m.umsatz, 0);
+  document.getElementById('adminMonthlyTotal').textContent = `Σ ${fmt(totalRev)}`;
+  document.getElementById('adminMonthly').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;align-items:end;height:160px;margin-bottom:8px">
+      ${stats.monthlyRevenue.map(m => {
+        const pct = Math.round((m.umsatz / maxRev) * 100);
+        const isThis = m.month === new Date().toISOString().slice(0,7);
+        return `<div style="display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%" title="${m.month}: ${fmt(m.umsatz)} (${m.count} Member)">
+          <div style="font-size:10px;color:var(--text-light);font-weight:600;${pct < 30 ? 'opacity:0' : ''}">${m.umsatz > 0 ? '€'+Math.round(m.umsatz/1000)+'k' : ''}</div>
+          <div style="width:100%;height:${Math.max(2, pct)}%;background:${isThis ? 'var(--tbc-blue)' : 'var(--text-light)'};border-radius:4px 4px 0 0;transition:height .4s"></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;font-size:10px;color:var(--text-secondary);text-align:center">
+      ${stats.monthlyRevenue.map(m => `<span>${monthNames[parseInt(m.month.split('-')[1]) - 1]}</span>`).join('')}
     </div>`;
-  }).join('') || '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px">Keine Daten</div>';
+
+  // Pipeline
+  const maxPipe = Math.max(1, ...stats.pipeline.map(p => p.count));
+  document.getElementById('adminPipeline').innerHTML = stats.pipeline.map(p => `
+    <div style="padding:9px 18px;border-bottom:1px solid var(--border-light)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:13px">
+        <span style="font-weight:600">${p.label}</span>
+        <span style="color:var(--text-secondary);font-size:12px">${p.count} Member</span>
+      </div>
+      <div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden">
+        <div style="height:100%;background:#8B5CF6;border-radius:4px;width:${Math.round(p.count/maxPipe*100)}%;transition:width .4s"></div>
+      </div>
+    </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px">Keine Daten</div>';
+
+  // Task stats
+  const ts = stats.taskStats;
+  const taskTotal = ts.open + ts.in_progress + ts.done;
+  const seg = (n, color) => taskTotal ? `<div style="height:100%;background:${color};width:${(n/taskTotal*100).toFixed(1)}%"></div>` : '';
+  document.getElementById('adminTaskStats').innerHTML = `
+    <div style="padding:14px 18px">
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--border);margin-bottom:14px">
+        ${seg(ts.open, '#3B82F6')}${seg(ts.in_progress, '#F59E0B')}${seg(ts.done, '#22C55E')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3B82F6;margin-right:6px"></span>Offen <strong>${fmtN(ts.open)}</strong></div>
+        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B;margin-right:6px"></span>In Arbeit <strong>${fmtN(ts.in_progress)}</strong></div>
+        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22C55E;margin-right:6px"></span>Erledigt <strong>${fmtN(ts.done)}</strong></div>
+        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#EF4444;margin-right:6px"></span>Überfällig <strong>${fmtN(ts.overdue)}</strong></div>
+      </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);font-size:12px;color:var(--text-secondary)">
+        Diesen Monat erledigt: <strong style="color:var(--text-primary)">${fmtN(ts.doneThisMonth)}</strong>
+      </div>
+    </div>`;
 
   // Channels
-  const maxCount = Math.max(1, ...stats.channels.map(c => c.count));
+  const maxCh = Math.max(1, ...stats.channels.map(c => c.count));
   document.getElementById('adminChannels').innerHTML = stats.channels.map(c => `
     <div style="padding:9px 18px;border-bottom:1px solid var(--border-light)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:13px;gap:8px">
@@ -1773,19 +1838,18 @@ async function loadAdminOverview() {
         <span style="color:var(--text-secondary);flex-shrink:0;font-size:12px">${c.count} · ${fmt(c.umsatz)}</span>
       </div>
       <div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden">
-        <div style="height:100%;background:var(--tbc-blue);border-radius:4px;width:${Math.round(c.count/maxCount*100)}%;transition:width .4s"></div>
+        <div style="height:100%;background:var(--tbc-blue);border-radius:4px;width:${Math.round(c.count/maxCh*100)}%;transition:width .4s"></div>
       </div>
     </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px">Keine Daten</div>';
 
   // Top performers
   document.getElementById('adminTopPerformers').innerHTML = stats.topPerformers.length
-    ? stats.topPerformers.map((p, i) => `
+    ? stats.topPerformers.slice(0, 5).map((p, i) => `
       <div style="display:flex;align-items:center;gap:14px;padding:11px 18px;border-bottom:1px solid var(--border-light);font-size:13px">
         <span style="font-size:16px;width:24px;text-align:center">${['🥇','🥈','🥉'][i] || '·'}</span>
-        <span style="font-weight:600;flex:1">${p.name}</span>
-        <span style="color:var(--text-secondary)">${p.kunden} Kunden</span>
+        <span style="font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+        <span style="color:var(--text-secondary);font-size:12px">${p.kunden} Kd.</span>
         <span style="font-weight:600;min-width:90px;text-align:right">${fmt(p.umsatz)}</span>
-        <span style="color:var(--success);font-size:12px;min-width:80px;text-align:right">${fmt(p.marge)}</span>
       </div>`).join('')
     : '<div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px">Noch keine Member eingetragen</div>';
 }
