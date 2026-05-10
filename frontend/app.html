@@ -1274,6 +1274,15 @@
         <input class="form-control" id="kHubspotId" placeholder="z.B. 12345678">
         <div style="font-size:11px;color:var(--text-light);margin-top:4px">Zu finden in HubSpot in der URL des Unternehmens: …/company/<strong>12345678</strong></div>
       </div>
+      <div class="form-group" id="kAlreadyOnboardedRow" style="margin-top:4px">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+          <input type="checkbox" id="kAlreadyOnboarded" style="margin-top:2px">
+          <span>
+            <strong style="font-size:13px">Onboarding bereits erfolgt</strong>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">Markiert den Member sofort als „Fertig", es wird keine Onboarding-Aufgabe erstellt.</div>
+          </span>
+        </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modalKunde')">Abbrechen</button>

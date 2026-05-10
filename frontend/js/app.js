@@ -1136,6 +1136,8 @@ function openNewKundeModal() {
   document.getElementById('kKanal').value = '';
   document.getElementById('kAbschluss').value = new Date().toISOString().slice(0, 10);
   document.getElementById('kHubspotId').value = '';
+  document.getElementById('kAlreadyOnboarded').checked = false;
+  document.getElementById('kAlreadyOnboardedRow').style.display = '';
   openModal('modalKunde');
 }
 
@@ -1152,6 +1154,9 @@ async function editKunde(id) {
   document.getElementById('kUmsatz').value = k.umsatz;
   document.getElementById('kMarge').value = k.marge;
   document.getElementById('kHubspotId').value = k.hubspot_company_id || '';
+  // The "already onboarded" checkbox is only meaningful at create-time
+  document.getElementById('kAlreadyOnboarded').checked = false;
+  document.getElementById('kAlreadyOnboardedRow').style.display = 'none';
   openModal('modalKunde');
 }
 
@@ -1172,18 +1177,24 @@ async function saveKunde() {
   if (id) {
     await api.put('/kunden/' + id, data);
   } else {
-    await api.post('/kunden', data);
-    // Auto-create Pre-Onboarding task for the creator
-    const due = new Date(); due.setDate(due.getDate() + 1);
-    api.post('/tasks', {
-      title: `Onboarding starten: ${data.firma}`,
-      description: `Member "${data.firma}" innerhalb von 24h übergeben. Bitte Deal übergeben abschließen.`,
-      assigned_to: currentUser.id,
-      priority: 'high',
-      status: 'open',
-      due_date: due.toISOString().slice(0, 10),
-      project: 'Onboarding'
-    }).catch(() => {});
+    const created = await api.post('/kunden', data);
+    const alreadyOnboarded = document.getElementById('kAlreadyOnboarded').checked;
+    if (alreadyOnboarded) {
+      // Mark as completed immediately — no Onboarding-Task, no handover flow
+      await api.patch('/kunden/' + created.id + '/status', { status: 'übergeben', onboarding_phase: 'fertig' }).catch(() => {});
+    } else {
+      // Auto-create Pre-Onboarding task for the creator
+      const due = new Date(); due.setDate(due.getDate() + 1);
+      api.post('/tasks', {
+        title: `Onboarding starten: ${data.firma}`,
+        description: `Member "${data.firma}" innerhalb von 24h übergeben. Bitte Deal übergeben abschließen.`,
+        assigned_to: currentUser.id,
+        priority: 'high',
+        status: 'open',
+        due_date: due.toISOString().slice(0, 10),
+        project: 'Onboarding'
+      }).catch(() => {});
+    }
   }
   closeModal('modalKunde');
   showToast(id ? 'Kunde aktualisiert!' : 'Kunde angelegt!');
