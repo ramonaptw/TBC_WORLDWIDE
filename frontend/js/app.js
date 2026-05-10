@@ -462,12 +462,12 @@ async function loadDashboard() {
   }
 }
 
-// Role-aware commitment field schema. CS tracks intakes; everyone else tracks members + revenue.
+// Role-aware commitment field schema. CS tracks intakes in €; everyone else tracks members + revenue.
 function commitFieldsForRole(role) {
   if (role === 'customersuccess') {
     return [
-      { key: 'targetProductionIntake', label: 'Production Intake-Ziel', short: 'Production Intake', placeholder: 'z.B. 8', kind: 'count' },
-      { key: 'targetDesignIntake',     label: 'Design Intake-Ziel',     short: 'Design Intake',     placeholder: 'z.B. 6', kind: 'count' },
+      { key: 'targetDesignIntake',     label: 'Design Intake-Ziel (€)',     short: 'Design Intake',     placeholder: 'z.B. 50000',  kind: 'euro' },
+      { key: 'targetProductionIntake', label: 'Production Intake-Ziel (€)', short: 'Production Intake', placeholder: 'z.B. 100000', kind: 'euro' },
     ];
   }
   return [
@@ -1345,10 +1345,29 @@ async function deleteKunde(id) {
 let obPendingKundeId = null;
 let obPendingKundeFirma = null;
 
-// Click handler for CS dashboard intake rows: open the matching Onboarding-Task
-// (so Henry sees the checklist) — fall back to the kunde edit modal if no open task.
-async function openCsIntakeDetail(kundeId) {
-  // Prefer cached allTasks (loaded by dashboard); refresh if missing
+// Click handler for CS dashboard intake rows: open the dedicated CS member overview
+function openCsIntakeDetail(kundeId) {
+  openCsMemberOverview(kundeId);
+}
+
+/* ─── CS Member Overview (Henry's dedicated view per member) ─── */
+const _csmPhases = [
+  { key: 'design',     label: 'Design',     bg: '#F3E8FF', cl: '#6D28D9' },
+  { key: 'production', label: 'Production', bg: '#E0F2FE', cl: '#0369A1' },
+  { key: 'fertig',     label: 'Fertig',     bg: '#DCFCE7', cl: '#15803D' },
+];
+let _csmTaskId = null;
+let _csmKundeId = null;
+
+async function openCsMemberOverview(kundeId) {
+  _csmKundeId = kundeId;
+  const [kunden, repeats] = await Promise.all([
+    api.get('/kunden').catch(() => []),
+    api.get('/repeat-orders?kunde_id=' + kundeId).catch(() => []),
+  ]);
+  const k = kunden.find(x => x.id === kundeId);
+  if (!k) return showToast('Member nicht gefunden', 'error');
+
   if (!Array.isArray(allTasks) || !allTasks.length) {
     try { allTasks = await api.get('/tasks'); } catch {}
   }
@@ -1358,11 +1377,106 @@ async function openCsIntakeDetail(kundeId) {
     t.assigned_to === currentUser.id &&
     t.status !== 'done'
   );
-  if (task) {
-    openTaskDetail(task.id);
+  _csmTaskId = task?.id || null;
+
+  // Header
+  document.getElementById('csmTitle').textContent = k.firma;
+  const phaseLabel = k.onboarding_phase ? (_csmPhases.find(p => p.key === k.onboarding_phase)?.label || k.onboarding_phase) : null;
+  const nbDoneChip = k.nb_onboarding_done
+    ? '<span style="font-size:11px;font-weight:700;color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:99px;padding:2px 8px">NB-Onb. ✓</span>'
+    : '<span style="font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:99px;padding:2px 8px">NB-Onb. ⚠ offen</span>';
+  const phaseChip = phaseLabel
+    ? `<span style="font-size:11px;font-weight:700;color:#6D28D9;background:#F3E8FF;border:1px solid #DDD6FE;border-radius:99px;padding:2px 8px">Phase: ${phaseLabel}</span>`
+    : '';
+  document.getElementById('csmBadgeRow').innerHTML = phaseChip + nbDoneChip;
+  document.getElementById('csmMeta').innerHTML = [
+    `<span>👤 von ${k.mitarbeiter_name || '–'}</span>`,
+    k.kanal ? `<span>📥 ${k.kanal}</span>` : '',
+    `<span style="font-weight:700;color:var(--text-primary)">€${Number(k.umsatz || 0).toLocaleString('de-DE')}</span>`,
+    k.abschlussdatum ? `<span>📅 ${formatDate(k.abschlussdatum)}</span>` : '',
+  ].filter(Boolean).join('');
+
+  // Phase buttons
+  document.getElementById('csmPhaseRow').innerHTML = _csmPhases.map(p => {
+    const isCurrent = k.onboarding_phase === p.key;
+    return `<button onclick="csmSetPhase('${p.key}', this)"
+      style="padding:8px 16px;border-radius:10px;border:1.5px solid ${isCurrent ? p.cl : 'var(--border)'};background:${isCurrent ? p.bg : 'var(--bg)'};color:${isCurrent ? p.cl : 'var(--text-primary)'};font-size:13px;font-weight:${isCurrent ? 700 : 600};cursor:pointer;transition:all .15s">${p.label}</button>`;
+  }).join('');
+
+  // Move to production big button (only when currently in design)
+  const moveRow = document.getElementById('csmMoveRow');
+  if (k.onboarding_phase === 'design' && _csmTaskId) {
+    moveRow.style.display = '';
+    moveRow.innerHTML = `<button class="btn btn-primary" style="width:100%;padding:12px;font-size:14px;font-weight:700" onclick="csmMoveToProduction()">→ Member in Production verschieben</button>`;
   } else {
-    editKunde(kundeId);
+    moveRow.style.display = 'none';
+    moveRow.innerHTML = '';
   }
+
+  // Checklist (from the open task)
+  const clCard = document.getElementById('csmChecklistCard');
+  if (task && Array.isArray(task.checklist) && task.checklist.length) {
+    clCard.style.display = '';
+    document.getElementById('csmChecklist').innerHTML = task.checklist.map((item, i) => `
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;${i ? 'border-top:1px solid var(--border-light);' : ''}cursor:pointer">
+        <input type="checkbox" ${item.done ? 'checked' : ''} onchange="csmToggleChecklist(${i}, this.checked)" style="width:16px;height:16px;cursor:pointer">
+        <span style="font-size:13px;${item.done ? 'text-decoration:line-through;color:var(--text-light)' : ''}">${item.label}</span>
+      </label>`).join('');
+  } else {
+    clCard.style.display = 'none';
+  }
+
+  // Repeat orders
+  const rl = document.getElementById('csmRepeatList');
+  if (repeats.length) {
+    rl.innerHTML = repeats.map(r => `
+      <div style="display:flex;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid var(--border-light);font-size:13px">
+        <span style="flex:1">${formatDate(r.date)}${r.notes ? ` · <span style="color:var(--text-secondary);font-size:12px">${r.notes}</span>` : ''}</span>
+        <span style="font-weight:700">€${Number(r.umsatz || 0).toLocaleString('de-DE')}</span>
+      </div>`).join('');
+  } else {
+    rl.innerHTML = '<div style="padding:14px;color:var(--text-light);font-size:13px;text-align:center">Noch keine Repeat Orders.</div>';
+  }
+
+  // Button wiring
+  document.getElementById('csmAddRoBtn').onclick = () => openRepeatOrderModal(k.id, k.firma);
+  document.getElementById('csmEditBtn').onclick = () => { closeModal('modalCsMember'); editKunde(k.id); };
+
+  openModal('modalCsMember');
+}
+
+async function csmSetPhase(phase, btn) {
+  try {
+    await api.patch('/kunden/' + _csmKundeId + '/status', { onboarding_phase: phase });
+    showToast('Phase aktualisiert: ' + phase);
+    openCsMemberOverview(_csmKundeId);
+    // refresh dashboard data lazily in background
+    if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
+    if (document.getElementById('page-datenbank')?.classList.contains('active')) loadDatenbank();
+  } catch (e) { showToast('Fehler: ' + e.message, 'error'); }
+}
+
+async function csmToggleChecklist(index, done) {
+  if (!_csmTaskId) return;
+  try {
+    const res = await api.patch('/tasks/' + _csmTaskId + '/checklist', { index, done });
+    // update local cache
+    const t = allTasks.find(x => x.id === _csmTaskId);
+    if (t && res.checklist) t.checklist = res.checklist;
+  } catch (e) { showToast('Fehler: ' + e.message, 'error'); }
+}
+
+async function csmMoveToProduction() {
+  if (!_csmKundeId || !_csmTaskId) return;
+  if (!confirm('Member in die Production-Phase verschieben und diese Aufgabe als erledigt markieren?')) return;
+  try {
+    await api.patch('/kunden/' + _csmKundeId + '/status', { onboarding_phase: 'production' });
+    const t = allTasks.find(x => x.id === _csmTaskId);
+    if (t) await api.put('/tasks/' + _csmTaskId, { ...t, status: 'done' });
+    closeModal('modalCsMember');
+    showToast('Member in Production verschoben!');
+    loadDashboard();
+  } catch (e) { showToast('Fehler: ' + e.message, 'error'); }
 }
 
 /* ─── Repeat Orders (Customer Success) ─── */
