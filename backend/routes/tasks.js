@@ -88,8 +88,16 @@ router.put('/:id', authenticate, (req, res) => {
   res.json({ success: true });
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'management'), (req, res) => {
-  db.delete('tasks', req.params.id);
+router.delete('/:id', authenticate, (req, res) => {
+  const id = Number(req.params.id);
+  const task = db.findOne('tasks', t => t.id === id);
+  if (!task) return res.status(404).json({ error: 'Nicht gefunden' });
+  const role = req.user.role;
+  const isOwner = task.created_by === req.user.id || task.assigned_to === req.user.id;
+  if (role !== 'admin' && role !== 'management' && !isOwner) {
+    return res.status(403).json({ error: 'Keine Berechtigung' });
+  }
+  db.delete('tasks', id);
   res.json({ success: true });
 });
 
