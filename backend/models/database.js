@@ -12,6 +12,7 @@ fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 const EMPTY = {
   users: [], announcements: [], onboarding_steps: [],
   onboarding_progress: [], prospects: [], tasks: [], tools: [], commitments: [], kunden: [], wiki_articles: [], feedback: [],
+  password_reset_tokens: [],
   _counters: {}
 };
 
