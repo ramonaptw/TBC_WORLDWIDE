@@ -9,7 +9,7 @@ const { authenticate, JWT_SECRET } = require('../middleware/auth');
 const ALLOWED_DOMAIN = (process.env.ALLOWED_DOMAIN || 'thebrandingclub.com').toLowerCase();
 const APP_URL = process.env.APP_URL || '';
 const RESET_TOKEN_TTL_MIN = 30;
-const RESEND_FROM = process.env.RESEND_FROM || `noreply@${ALLOWED_DOMAIN}`;
+const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
