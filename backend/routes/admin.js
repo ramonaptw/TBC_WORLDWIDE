@@ -2,7 +2,7 @@ const router = require('express').Router();
 const db = require('../models/database');
 const { authenticate, requireRole } = require('../middleware/auth');
 
-router.use(authenticate, requireRole('admin', 'manager'));
+router.use(authenticate, requireRole('admin', 'management'));
 
 // Full task list with feedback, all users
 router.get('/tasks', (req, res) => {

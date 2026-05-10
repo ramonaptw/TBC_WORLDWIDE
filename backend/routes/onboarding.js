@@ -43,7 +43,7 @@ router.post('/progress/:userId/:stepId', authenticate, (req, res) => {
   res.json({ success: true });
 });
 
-router.get('/overview', authenticate, requireRole('admin', 'manager'), (req, res) => {
+router.get('/overview', authenticate, requireRole('admin', 'management'), (req, res) => {
   const users = db.find('users', u => u.role === 'employee');
   const totalSteps = db.count('onboarding_steps');
 

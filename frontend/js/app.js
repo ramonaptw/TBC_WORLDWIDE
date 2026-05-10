@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (currentUser.role === 'admin') {
     document.getElementById('userMenuAdmin').style.display = 'block';
   }
-  if (['admin', 'manager', 'sellsupport', 'hr'].includes(currentUser.role)) {
+  if (['admin', 'management', 'sellsupport'].includes(currentUser.role)) {
     document.getElementById('btnAddNews').style.display = 'inline-flex';
   }
 
@@ -174,7 +174,7 @@ function showPage(page, pushState = true) {
   const actions = document.getElementById('topbarActions');
   actions.innerHTML = '';
 
-  if (page === 'employees' && ['admin', 'manager'].includes(currentUser.role)) {
+  if (page === 'employees' && ['admin', 'management'].includes(currentUser.role)) {
     addActionBtn(actions, '+ Mitarbeiter', () => openModal('modalEmployee'));
   }
   if (page === 'datenbank') {
@@ -247,10 +247,10 @@ async function loadDashboard() {
 
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  // Role capabilities
-  const hasSales   = ['admin', 'employee', 'newbusiness'].includes(currentUser.role);
-  const hasRecent  = ['admin', 'employee', 'newbusiness', 'customersuccess'].includes(currentUser.role);
-  const hasTasks   = ['admin', 'manager', 'employee', 'newbusiness', 'customersuccess', 'sellsupport', 'hr'].includes(currentUser.role);
+  // Role capabilities (5-role system: admin, management, sellsupport, customersuccess, newbusiness)
+  const hasSales   = ['admin', 'newbusiness', 'management'].includes(currentUser.role);
+  const hasRecent  = ['admin', 'newbusiness', 'customersuccess', 'management'].includes(currentUser.role);
+  const hasTasks   = ['admin', 'management', 'sellsupport', 'customersuccess', 'newbusiness'].includes(currentUser.role);
 
   const [news, tasks, kunden, commit] = await Promise.all([
     api.get('/news'),
@@ -525,7 +525,7 @@ async function deleteEmployee(id) {
 /* ─── Onboarding ─── */
 async function loadOnboarding() {
   const container = document.getElementById('onboardingContent');
-  const isAdminOrManager = ['admin', 'manager'].includes(currentUser.role);
+  const isAdminOrManager = ['admin', 'management'].includes(currentUser.role);
 
   if (isAdminOrManager) {
     const overview = await api.get('/onboarding/overview');
@@ -615,7 +615,7 @@ function statMonthInit() {
 
 async function loadStatistik() {
   statMonthInit();
-  const isAdmin = ['admin', 'manager'].includes(currentUser.role);
+  const isAdmin = ['admin', 'management'].includes(currentUser.role);
   const allKunden = await api.get('/kunden');
   // Non-admins see only their own customers
   const kunden = isAdmin ? allKunden : allKunden.filter(k => k.created_by === currentUser.id);
@@ -1600,7 +1600,7 @@ function openAdminNewUser() {
   document.getElementById('empModalTitle').textContent = 'Nutzer anlegen';
   document.getElementById('empPasswordLabel').textContent = 'Passwort *';
   ['empName','empEmail','empPassword','empDept','empPosition','empPhone'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('empRole').value = 'employee';
+  document.getElementById('empRole').value = 'newbusiness';
   document.getElementById('empDoesOnboarding').checked = false;
   openModal('modalEmployee');
 }
@@ -1615,7 +1615,7 @@ async function openAdminEditUser(id) {
   document.getElementById('empName').value = u.name;
   document.getElementById('empEmail').value = u.email;
   document.getElementById('empPassword').value = '';
-  document.getElementById('empRole').value = u.role || 'employee';
+  document.getElementById('empRole').value = u.role || 'newbusiness';
   document.getElementById('empDept').value = u.department || '';
   document.getElementById('empPosition').value = u.position || '';
   document.getElementById('empPhone').value = u.phone || '';
@@ -1736,7 +1736,7 @@ function fbSetStars(n) {
 }
 
 async function loadFeedbackTopic() {
-  const isAdmin = ['admin', 'manager'].includes(currentUser.role);
+  const isAdmin = ['admin', 'management'].includes(currentUser.role);
   const listCard = document.getElementById('fbListCard');
   if (listCard) listCard.style.display = isAdmin ? '' : 'none';
   if (!isAdmin) return;
@@ -1849,7 +1849,7 @@ function renderTasks(tasks) {
         ${dueBadge(t.due_date, t.status)}
         ${isOnboarding ? `<button class="btn btn-primary" style="font-size:12px;padding:7px 14px;white-space:nowrap" onclick="event.stopPropagation();startOnboardingFromTask(${t.id})">🚀 Onboarding starten</button>` : ''}
         <button class="btn-icon" onclick="event.stopPropagation();editTask(${t.id})" title="Bearbeiten">✏️</button>
-        ${['admin','manager'].includes(currentUser.role) ? `<button class="btn-icon" onclick="event.stopPropagation();deleteTask(${t.id})" title="Löschen">🗑️</button>` : ''}
+        ${['admin','management'].includes(currentUser.role) ? `<button class="btn-icon" onclick="event.stopPropagation();deleteTask(${t.id})" title="Löschen">🗑️</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -2022,7 +2022,7 @@ async function loadTools() {
       <div class="tool-desc">${t.description || ''}</div>
     </a>`;
 
-  const isAdminUser = ['admin', 'manager'].includes(currentUser.role);
+  const isAdminUser = ['admin', 'management'].includes(currentUser.role);
 
   const wikiHtml = `
     <div class="card" style="margin-bottom:20px;display:flex;align-items:center;gap:16px;padding:18px 20px">
@@ -2059,8 +2059,8 @@ async function loadTools() {
       <div class="tools-grid">${items.map(toolCard).join('')}</div>
     </div>`).join('');
 
-  const canSeeCalllist = ['admin', 'manager', 'employee', 'newbusiness'].includes(currentUser.role);
-  const canSeeMember   = ['admin', 'employee', 'newbusiness', 'customersuccess'].includes(currentUser.role);
+  const canSeeCalllist = ['admin', 'management', 'newbusiness'].includes(currentUser.role);
+  const canSeeMember   = ['admin', 'newbusiness', 'customersuccess', 'management'].includes(currentUser.role);
 
   const calllistHtml = canSeeCalllist ? `
     <div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:16px;padding:18px 20px">
@@ -2202,6 +2202,7 @@ async function loadCalllist() {
       </table></div></div>`;
   } catch (e) {
     status.innerHTML = `<div style="color:var(--danger);padding:12px 0">❌ ${e.message}</div>`;
+    results.innerHTML = `<div class="card" style="padding:16px"><button class="btn btn-primary" onclick="loadCalllist()">🔄 Erneut versuchen</button></div>`;
   }
   btn.disabled = false;
 }
@@ -2767,15 +2768,23 @@ async function leadApiCall(action, payload) {
   if (bodyStr.length > 800000) {
     throw new Error('Bild konnte nicht klein genug komprimiert werden – bitte Screenshot zuschneiden und erneut versuchen');
   }
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30000);
   let res;
   try {
     res = await fetch('/api/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('tbc_token')}` },
-      body: bodyStr
+      body: bodyStr,
+      signal: ctrl.signal
     });
   } catch (fetchErr) {
+    if (fetchErr.name === 'AbortError') {
+      throw new Error('HubSpot antwortet nicht (>30s) – bitte erneut versuchen');
+    }
     throw new Error('Netzwerkfehler – bitte Verbindung prüfen und erneut versuchen');
+  } finally {
+    clearTimeout(timer);
   }
   let data;
   try {

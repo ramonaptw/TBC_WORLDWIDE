@@ -42,6 +42,7 @@ function hsRequest(method, path, body, token) {
         resolve(parsed);
       });
     });
+    req.setTimeout(15000, () => req.destroy(new Error('HubSpot Timeout (15s)')));
     req.on('error', reject);
     if (bodyStr) req.write(bodyStr);
     req.end();
