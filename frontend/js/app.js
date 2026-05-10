@@ -1129,6 +1129,28 @@ async function loadDatenbank() {
   }).join('');
 }
 
+// Shared loader for the customersuccess user dropdowns
+let _csUsersCache = null;
+async function loadCsUsersInto(selectEl, currentValue) {
+  if (!_csUsersCache) {
+    try {
+      const users = await api.get('/employees');
+      _csUsersCache = users.filter(u => u.role === 'customersuccess');
+    } catch { _csUsersCache = []; }
+  }
+  const placeholder = selectEl.querySelector('option[value=""]');
+  selectEl.innerHTML = '';
+  if (placeholder) selectEl.appendChild(placeholder);
+  _csUsersCache.forEach(u => {
+    const o = document.createElement('option');
+    o.value = u.id; o.textContent = u.name;
+    selectEl.appendChild(o);
+  });
+  if (currentValue) selectEl.value = String(currentValue);
+}
+
+let _kundeEditOriginal = null;
+
 function openNewKundeModal() {
   document.getElementById('kundeModalTitle').textContent = 'Member anlegen';
   document.getElementById('kundeId').value = '';
@@ -1140,6 +1162,8 @@ function openNewKundeModal() {
   document.getElementById('kAlreadyOnboardedRow').style.display = '';
   document.getElementById('kAssignCSRow').style.display = 'none';
   document.getElementById('kAssignCS').value = '';
+  document.getElementById('kEditOnboardingSection').style.display = 'none';
+  _kundeEditOriginal = null;
   openModal('modalKunde');
 }
 
@@ -1149,15 +1173,8 @@ async function toggleAlreadyOnboarded() {
   row.style.display = checked ? '' : 'none';
   if (checked) {
     const sel = document.getElementById('kAssignCS');
-    if (sel.dataset.loaded !== '1') {
-      try {
-        const users = await api.get('/employees');
-        const csUsers = users.filter(u => u.role === 'customersuccess');
-        sel.innerHTML = '<option value="">– wählen –</option>' + csUsers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-        if (csUsers.length === 1) sel.value = String(csUsers[0].id);
-        sel.dataset.loaded = '1';
-      } catch {}
-    }
+    await loadCsUsersInto(sel);
+    if (!sel.value && _csUsersCache && _csUsersCache.length === 1) sel.value = String(_csUsersCache[0].id);
   }
 }
 
@@ -1178,6 +1195,11 @@ async function editKunde(id) {
   document.getElementById('kAlreadyOnboarded').checked = false;
   document.getElementById('kAlreadyOnboardedRow').style.display = 'none';
   document.getElementById('kAssignCSRow').style.display = 'none';
+  // Edit-only section: assign CS + change phase on existing member
+  document.getElementById('kEditOnboardingSection').style.display = '';
+  await loadCsUsersInto(document.getElementById('kEditAssignCS'), k.assigned_cs_user_id);
+  document.getElementById('kEditPhase').value = k.onboarding_phase || '';
+  _kundeEditOriginal = { cs: k.assigned_cs_user_id || null, phase: k.onboarding_phase || '' };
   openModal('modalKunde');
 }
 
@@ -1204,6 +1226,18 @@ async function saveKunde() {
 
   if (id) {
     await api.put('/kunden/' + id, data);
+    // Optional: change CS-Empfänger / Phase from the edit-only section
+    const newCs    = parseInt(document.getElementById('kEditAssignCS').value) || null;
+    const newPhase = document.getElementById('kEditPhase').value || '';
+    const orig = _kundeEditOriginal || { cs: null, phase: '' };
+    const csChanged    = (orig.cs ?? null) !== newCs;
+    const phaseChanged = (orig.phase || '') !== newPhase;
+    if (csChanged || phaseChanged) {
+      const body = {};
+      if (csChanged)    body.assigned_cs_user_id = newCs;
+      if (phaseChanged && newPhase) body.onboarding_phase = newPhase;
+      try { await api.patch('/kunden/' + id + '/status', body); } catch {}
+    }
   } else {
     const created = await api.post('/kunden', data);
     if (alreadyOnboarded) {
@@ -2389,7 +2423,7 @@ function renderTasks(tasks) {
         ${dueBadge(t.due_date, t.status)}
         ${isOnboarding ? `<button class="btn btn-primary" style="font-size:12px;padding:7px 14px;white-space:nowrap" onclick="event.stopPropagation();startOnboardingFromTask(${t.id})">🚀 Onboarding starten</button>` : ''}
         <button class="btn-icon" onclick="event.stopPropagation();editTask(${t.id})" title="Bearbeiten">✏️</button>
-        ${['admin','management'].includes(currentUser.role) ? `<button class="btn-icon" onclick="event.stopPropagation();deleteTask(${t.id})" title="Löschen">🗑️</button>` : ''}
+        ${(['admin','management'].includes(currentUser.role) || t.created_by === currentUser.id || t.assigned_to === currentUser.id) ? `<button class="btn-icon" onclick="event.stopPropagation();deleteTask(${t.id})" title="Löschen">🗑️</button>` : ''}
       </div>
     </div>`;
   }).join('');
