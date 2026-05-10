@@ -2604,6 +2604,7 @@ const CL_PERSONS = [
   { id: '46604320', name: 'Tim Zimmer',    initials: 'TZ', bg: '#dde8f5', cl: '#4a7ab5' },
   { id: '45653587', name: 'Leon Scheffs',  initials: 'LS', bg: '#fde8e0', cl: '#c05c3a' },
   { id: '34040626', name: 'Justus Kemper', initials: 'JK', bg: '#ede8fd', cl: '#5a3ab5' },
+  { id: '30089244', name: 'Henry Salazar', initials: 'HS', bg: '#fdf5d7', cl: '#8a6a13' },
 ];
 let calllistOwnerId = null;
 
@@ -3338,6 +3339,13 @@ async function leadRun() {
   }
 }
 
+function ownerLabel(ownerId) {
+  if (!ownerId) return '<span style="color:var(--text-light)">kein Owner</span>';
+  const p = CL_PERSONS.find(x => x.id === String(ownerId));
+  if (p) return `<span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${p.bg};color:${p.cl};font-size:9px;font-weight:800">${p.initials}</span>${p.name}</span>`;
+  return `<span style="color:var(--text-secondary)">Owner #${ownerId}</span>`;
+}
+
 async function leadDoHubSpotSearch(name) {
   try {
     const hs = await leadApiCall('search', { query: name, website: leadDetectedWebsite, instagram: leadDetectedInstagram });
@@ -3349,9 +3357,11 @@ async function leadDoHubSpotSearch(name) {
         const city = c.properties.city || '';
         const domain = c.properties.domain || '';
         const meta = [city, domain].filter(Boolean).join(' · ');
+        const ownerHtml = ownerLabel(c.properties.hubspot_owner_id);
         return `<div class="lead-match-item" id="lmatch-${c.id}" onclick="leadSelectMatch('${c.id}','${(c.properties.name||'').replace(/'/g,"\\'")}',this)">
           <div class="mi-name">${c.properties.name || '—'}</div>
           <div class="mi-meta">${meta}</div>
+          <div class="mi-owner" style="font-size:12px;margin-top:4px;display:flex;align-items:center;gap:6px"><span style="color:var(--text-light);font-weight:600">Owner:</span> ${ownerHtml}</div>
           <a class="mi-link" href="${hsUrl}" target="_blank" onclick="event.stopPropagation()">HubSpot öffnen →</a>
         </div>`;
       }).join('');
