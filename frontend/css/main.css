@@ -118,7 +118,9 @@ body {
   width: 36px; height: 36px;
   border-radius: 8px;
   flex-shrink: 0;
-  object-fit: cover;
+  object-fit: contain;
+  background: #fff;
+  padding: 3px;
 }
 
 .logo-text { line-height: 1.2; }

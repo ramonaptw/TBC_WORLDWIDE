@@ -24,7 +24,7 @@ router.get('/logo', (req, res) => {
 });
 
 // POST /api/brand/logo – upload new logo (admin only)
-router.post('/logo', authenticate, requireRole('admin', 'manager'), (req, res) => {
+router.post('/logo', authenticate, requireRole('admin', 'management'), (req, res) => {
   const { imageBase64, imageMime } = req.body;
   if (!imageBase64) return res.status(400).json({ error: 'Kein Bild übermittelt' });
 
@@ -56,7 +56,7 @@ router.get('/name', (req, res) => {
 });
 
 // POST /api/brand/name (admin only)
-router.post('/name', authenticate, requireRole('admin', 'manager'), (req, res) => {
+router.post('/name', authenticate, requireRole('admin', 'management'), (req, res) => {
   const { name } = req.body;
   if (!name || !name.trim()) return res.status(400).json({ error: 'Name darf nicht leer sein' });
   fs.writeFileSync(NAME_FILE, name.trim());

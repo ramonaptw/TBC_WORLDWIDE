@@ -73,7 +73,7 @@ router.post('/password-reset/request', async (req, res) => {
   if (!user) {
     const name = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     user = db.insert('users', {
-      name, email, password: null, role: 'employee',
+      name, email, password: null, role: 'newbusiness',
       department: '', position: '', phone: '',
     });
   }

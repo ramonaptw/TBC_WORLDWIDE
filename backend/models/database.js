@@ -145,6 +145,22 @@ for (const email of ADMIN_EMAILS) {
   }
 }
 
+// One-time, idempotent role consolidation: 5-role system going forward.
+// manager → management, hr → sellsupport, employee → newbusiness.
+// Anything else (other than the 5 valid roles) gets ROLE_DEFAULT_FALLBACK.
+const ROLE_MIGRATIONS = { manager: 'management', hr: 'sellsupport', employee: 'newbusiness' };
+const VALID_ROLES = ['admin', 'management', 'sellsupport', 'customersuccess', 'newbusiness'];
+const ROLE_FALLBACK = process.env.ROLE_DEFAULT_FALLBACK || 'newbusiness';
+db.find('users').forEach(u => {
+  if (ROLE_MIGRATIONS[u.role]) {
+    db.update('users', u.id, { role: ROLE_MIGRATIONS[u.role] });
+    console.log(`[DB] Rolle migriert: ${u.email} ${u.role} → ${ROLE_MIGRATIONS[u.role]}`);
+  } else if (!VALID_ROLES.includes(u.role)) {
+    db.update('users', u.id, { role: ROLE_FALLBACK });
+    console.log(`[DB] Unbekannte Rolle ${u.role} → ${ROLE_FALLBACK}: ${u.email}`);
+  }
+});
+
 // Seed tools + onboarding steps only on first-ever run
 if (isFirstRun) {
   const steps = [

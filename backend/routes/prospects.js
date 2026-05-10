@@ -52,7 +52,7 @@ router.put('/:id', authenticate, (req, res) => {
   res.json({ success: true });
 });
 
-router.delete('/:id', authenticate, requireRole('admin', 'manager'), (req, res) => {
+router.delete('/:id', authenticate, requireRole('admin', 'management'), (req, res) => {
   db.delete('prospects', req.params.id);
   res.json({ success: true });
 });

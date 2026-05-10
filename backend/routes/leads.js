@@ -12,6 +12,8 @@ function cacheGet(key) {
 function cacheSet(key, value, ttlMs) {
   _cache[key] = { value, expires: Date.now() + ttlMs };
 }
+const HS_TIMEOUT_MS = 15000;
+
 function httpsRequest(options, bodyObj) {
   return new Promise((resolve, reject) => {
     const bodyStr = JSON.stringify(bodyObj);
@@ -24,6 +26,7 @@ function httpsRequest(options, bodyObj) {
         catch { resolve({ status: res.statusCode, body: { raw: data } }); }
       });
     });
+    req.setTimeout(HS_TIMEOUT_MS, () => req.destroy(new Error(`HubSpot Timeout (${HS_TIMEOUT_MS / 1000}s)`)));
     req.on('error', reject);
     req.write(bodyStr);
     req.end();
@@ -37,6 +40,7 @@ function httpsGet(options) {
       res.on('data', c => chunks.push(c));
       res.on('end', () => resolve({ status: res.statusCode, buffer: Buffer.concat(chunks), headers: res.headers }));
     });
+    req.setTimeout(HS_TIMEOUT_MS, () => req.destroy(new Error(`HubSpot Timeout (${HS_TIMEOUT_MS / 1000}s)`)));
     req.on('error', reject);
     req.end();
   });

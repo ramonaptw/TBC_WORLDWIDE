@@ -19,7 +19,7 @@ router.get('/:id', authenticate, (req, res) => {
   res.json(safeUser(user));
 });
 
-router.post('/', authenticate, requireRole('admin', 'manager'), (req, res) => {
+router.post('/', authenticate, requireRole('admin', 'management'), (req, res) => {
   const { name, email, password, role, department, position, phone, does_onboarding } = req.body;
   if (!name || !email || !password) return res.status(400).json({ error: 'Name, E-Mail und Passwort erforderlich' });
 
@@ -27,7 +27,7 @@ router.post('/', authenticate, requireRole('admin', 'manager'), (req, res) => {
   if (exists) return res.status(409).json({ error: 'E-Mail bereits vergeben' });
 
   const hash = bcrypt.hashSync(password, 10);
-  const user = db.insert('users', { name, email, password: hash, role: role || 'employee', department: department || '', position: position || '', phone: phone || '', does_onboarding: does_onboarding || false });
+  const user = db.insert('users', { name, email, password: hash, role: role || 'newbusiness', department: department || '', position: position || '', phone: phone || '', does_onboarding: does_onboarding || false });
   res.status(201).json(safeUser(user));
 });
 
