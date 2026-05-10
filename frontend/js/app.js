@@ -2151,16 +2151,17 @@ const SOURCING_FIELDS = [
   ['productType', 'Product type'],
   ['model',       'Model'],
   ['size',        'Size of product'],
-  ['quantity',    'Quantity for quote'],
   ['printing',    'Printing'],
   ['material',    'Material'],
   ['varnishes',   'Varnishes'],
+  ['quantity',    'Quantity for quote'],
   ['targetPrice', 'Target price'],
   ['examples',    'Examples'],
+  ['note',        'Notiz'],
 ];
 
 async function openSourcingModal() {
-  ['srcCustomer','srcSupplier','srcProductType','srcSize','srcQuantity','srcPrinting','srcMaterial','srcVarnishes','srcTargetPrice','srcExamples','srcDue'].forEach(id => document.getElementById(id).value = '');
+  ['srcCustomer','srcSupplier','srcProductType','srcSize','srcQuantity','srcPrinting','srcMaterial','srcVarnishes','srcTargetPrice','srcExamples','srcNote','srcDue'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('srcModel').value = '';
 
   // Populate assignee dropdown — preselect first sellsupport user if available
@@ -2187,12 +2188,13 @@ async function saveSourcingTask() {
     productType: document.getElementById('srcProductType').value.trim(),
     model:       document.getElementById('srcModel').value,
     size:        document.getElementById('srcSize').value.trim(),
-    quantity:    document.getElementById('srcQuantity').value.trim(),
     printing:    document.getElementById('srcPrinting').value.trim(),
     material:    document.getElementById('srcMaterial').value.trim(),
     varnishes:   document.getElementById('srcVarnishes').value.trim(),
+    quantity:    document.getElementById('srcQuantity').value.trim(),
     targetPrice: document.getElementById('srcTargetPrice').value.trim(),
     examples:    document.getElementById('srcExamples').value.trim(),
+    note:        document.getElementById('srcNote').value.trim(),
   };
   const assigned = document.getElementById('srcAssigned').value;
   const due = document.getElementById('srcDue').value;
