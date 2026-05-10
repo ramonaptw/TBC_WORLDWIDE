@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const db = require('../models/database');
 const { authenticate, requireRole } = require('../middleware/auth');
-const { notifyUser } = require('../lib/push-notify');
 
 const PRIORITY_ORDER = { high: 1, medium: 2, low: 3 };
 
@@ -49,17 +48,6 @@ router.post('/', authenticate, (req, res) => {
     kunde_id: req.body.kunde_id ? Number(req.body.kunde_id) : null,
     sourcing: sourcing && typeof sourcing === 'object' ? sourcing : null,
   });
-
-  // Push notify the assignee (don't await; don't block the response)
-  if (task.assigned_to && task.assigned_to !== req.user.id) {
-    notifyUser(task.assigned_to, {
-      title: 'Neue Aufgabe für dich',
-      body: task.title,
-      url: '/app/tasks',
-      taskId: task.id,
-    }).catch(err => console.error('[tasks] push notify failed:', err.message));
-  }
-
   res.status(201).json(task);
 });
 
@@ -74,17 +62,6 @@ router.put('/:id', authenticate, (req, res) => {
   };
   if (sourcing !== undefined) updates.sourcing = sourcing && typeof sourcing === 'object' ? sourcing : null;
   db.update('tasks', taskId, updates);
-
-  // Notify if assignment changed to a new user (and that user isn't the actor)
-  if (updates.assigned_to && updates.assigned_to !== before?.assigned_to && updates.assigned_to !== req.user.id) {
-    notifyUser(updates.assigned_to, {
-      title: 'Aufgabe dir zugewiesen',
-      body: title || before?.title || 'Neue Aufgabe',
-      url: '/app/tasks',
-      taskId,
-    }).catch(err => console.error('[tasks] push notify failed:', err.message));
-  }
-
   res.json({ success: true });
 });
 

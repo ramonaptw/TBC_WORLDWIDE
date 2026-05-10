@@ -23,8 +23,6 @@ app.use('/api/wiki', require('./routes/wiki'));
 app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/brand', require('./routes/brand'));
-app.use('/api/push', require('./routes/push'));
-app.use('/api/repeat-orders', require('./routes/repeat-orders'));
 
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {
@@ -42,9 +40,6 @@ app.get('/app/*', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
-
-// 24h SLA monitor for CS handovers
-require('./lib/sla-monitor').start();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
