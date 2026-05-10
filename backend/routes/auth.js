@@ -2,13 +2,16 @@ const router = require('express').Router();
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const db = require('../models/database');
 const { authenticate, JWT_SECRET } = require('../middleware/auth');
 
 const ALLOWED_DOMAIN = (process.env.ALLOWED_DOMAIN || 'thebrandingclub.com').toLowerCase();
 const APP_URL = process.env.APP_URL || '';
 const RESET_TOKEN_TTL_MIN = 30;
+const RESEND_FROM = process.env.RESEND_FROM || `noreply@${ALLOWED_DOMAIN}`;
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -19,16 +22,6 @@ function isAllowedEmail(email) {
   if (!e.includes('@')) return false;
   const domain = e.split('@')[1];
   return domain === ALLOWED_DOMAIN;
-}
-
-function buildMailer() {
-  if (!process.env.SMTP_HOST) return null;
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: String(process.env.SMTP_SECURE || 'false') === 'true',
-    auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
-  });
 }
 
 function issueToken(user) {
@@ -94,20 +87,20 @@ router.post('/password-reset/request', async (req, res) => {
   db.insert('password_reset_tokens', { user_id: user.id, token_hash: tokenHash, expires_at: expiresAt, used: false });
 
   const link = `${appBaseUrl(req)}/reset-password.html?token=${rawToken}`;
-  const mailer = buildMailer();
-  if (!mailer) {
-    console.error('[auth] SMTP not configured — reset link:', link);
+  if (!resend) {
+    console.error('[auth] RESEND_API_KEY not configured — reset link:', link);
     return res.json({ ok: true });
   }
 
   try {
-    await mailer.sendMail({
-      from: process.env.SMTP_FROM || `noreply@${ALLOWED_DOMAIN}`,
+    const { error } = await resend.emails.send({
+      from: RESEND_FROM,
       to: email,
       subject: 'Passwort setzen für dein TBC-Konto',
       text: `Hallo,\n\nklicke auf den folgenden Link, um dein Passwort zu setzen oder zurückzusetzen:\n\n${link}\n\nDer Link ist ${RESET_TOKEN_TTL_MIN} Minuten gültig.\n\nWenn du keinen Reset angefordert hast, kannst du diese Mail ignorieren.`,
       html: `<p>Hallo,</p><p>klicke auf den folgenden Link, um dein Passwort zu setzen oder zurückzusetzen:</p><p><a href="${link}">${link}</a></p><p>Der Link ist ${RESET_TOKEN_TTL_MIN} Minuten gültig.</p><p>Wenn du keinen Reset angefordert hast, kannst du diese Mail ignorieren.</p>`,
     });
+    if (error) throw new Error(error.message || 'Resend error');
   } catch (err) {
     console.error('[auth] mail send failed:', err.message);
     return res.status(500).json({ error: 'E-Mail konnte nicht versendet werden' });
