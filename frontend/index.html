@@ -589,13 +589,17 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
   <p class="cta-p">Melde dich an und spare ab heute täglich Stunden.</p>
   <div class="cta-login-box">
     <h3>Anmelden</h3>
-    <p>Mit deinen TBC-Zugangsdaten einloggen.</p>
+    <p>Mit deiner @thebrandingclub.com-Adresse einloggen.</p>
     <div class="cta-lf-err" id="ctaErr"></div>
+    <div class="cta-lf-ok" id="ctaOk" style="display:none;background:rgba(22,163,74,.15);color:#86efac;border:1px solid rgba(22,163,74,.3);border-radius:9px;padding:9px 13px;font-size:12px;margin-bottom:12px"></div>
     <form id="ctaForm">
-      <div class="cta-lf-group"><label class="cta-lf-label">E-Mail</label><input class="cta-lf-input" id="ctaEmail" type="email" placeholder="deine@tbc-deutschland.de" required autocomplete="email"></div>
+      <div class="cta-lf-group"><label class="cta-lf-label">E-Mail</label><input class="cta-lf-input" id="ctaEmail" type="email" placeholder="vorname@thebrandingclub.com" required autocomplete="email"></div>
       <div class="cta-lf-group"><label class="cta-lf-label">Passwort</label><input class="cta-lf-input" id="ctaPw" type="password" placeholder="••••••••" required autocomplete="current-password"></div>
       <button class="cta-btn" type="submit" id="ctaBtn">Jetzt anmelden →</button>
     </form>
+    <div style="margin-top:14px;text-align:center">
+      <a href="#" id="ctaForgot" style="color:rgba(255,255,255,.55);font-size:12px;text-decoration:underline;cursor:pointer">Passwort vergessen / Erstanmeldung</a>
+    </div>
   </div>
 </section>
 
@@ -632,6 +636,35 @@ document.getElementById('ctaForm').addEventListener('submit', e => {
   e.preventDefault();
   doLogin(document.getElementById('ctaEmail').value, document.getElementById('ctaPw').value,
     document.getElementById('ctaErr'), document.getElementById('ctaBtn'), 'Jetzt anmelden →');
+});
+
+// ── Forgot password / first-time setup ──
+document.getElementById('ctaForgot').addEventListener('click', async e => {
+  e.preventDefault();
+  const errEl = document.getElementById('ctaErr');
+  const okEl = document.getElementById('ctaOk');
+  const email = (document.getElementById('ctaEmail').value || '').trim();
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+  if (!email) {
+    errEl.textContent = 'Bitte zuerst deine @thebrandingclub.com-Adresse eintragen.';
+    errEl.style.display = 'block';
+    return;
+  }
+  try {
+    const res = await fetch('/api/auth/password-reset/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Anfrage fehlgeschlagen');
+    okEl.textContent = 'E-Mail gesendet. Prüfe dein Postfach (Link 30 Min gültig).';
+    okEl.style.display = 'block';
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  }
 });
 
 // ── Load app name ──
