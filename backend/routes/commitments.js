@@ -10,14 +10,20 @@ router.get('/', authenticate, (req, res) => {
   res.json(row || null);
 });
 
-// POST /api/commitments  { month, targetKunden, targetUmsatz }
+// POST /api/commitments  { month, targetKunden, targetUmsatz, targetProductionIntake, targetDesignIntake }
 router.post('/', authenticate, (req, res) => {
-  const { month, targetKunden, targetUmsatz } = req.body;
+  const { month, targetKunden, targetUmsatz, targetProductionIntake, targetDesignIntake } = req.body;
   if (!month) return res.status(400).json({ error: 'month fehlt' });
   const row = db.upsert(
     'commitments',
     r => r.user_id === req.user.id && r.month === month,
-    { user_id: req.user.id, month, targetKunden: Number(targetKunden) || 0, targetUmsatz: Number(targetUmsatz) || 0 }
+    {
+      user_id: req.user.id, month,
+      targetKunden: Number(targetKunden) || 0,
+      targetUmsatz: Number(targetUmsatz) || 0,
+      targetProductionIntake: Number(targetProductionIntake) || 0,
+      targetDesignIntake: Number(targetDesignIntake) || 0,
+    }
   );
   res.json(row);
 });

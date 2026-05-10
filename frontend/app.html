@@ -1206,10 +1206,7 @@
       </div>
       <div style="border-top:1px solid var(--border);margin:16px 0 14px"></div>
       <div style="font-size:13px;font-weight:700;margin-bottom:12px">Commitment diesen Monat</div>
-      <div class="grid-2">
-        <div class="form-group"><label class="form-label">Member-Ziel</label><input class="form-control" id="profCommitKunden" type="number" min="0" placeholder="z.B. 5"></div>
-        <div class="form-group"><label class="form-label">Umsatz-Ziel (€)</label><input class="form-control" id="profCommitUmsatz" type="number" min="0" placeholder="z.B. 10000"></div>
-      </div>
+      <div class="grid-2" id="profCommitFields"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modalProfile')">Abbrechen</button>
@@ -1284,14 +1281,7 @@
     </div>
     <div class="modal-body">
       <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Trage dein persönliches Ziel für diesen Monat ein. Deadline ist der 5. des Monats.</p>
-      <div class="form-group">
-        <label class="form-label">Member-Ziel (Anzahl) *</label>
-        <input class="form-control" type="number" id="commitKunden" min="0" placeholder="z.B. 10">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Umsatz-Ziel (€) *</label>
-        <input class="form-control" type="number" id="commitUmsatz" min="0" placeholder="z.B. 15000">
-      </div>
+      <div id="commitFields"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modalCommit')">Abbrechen</button>
