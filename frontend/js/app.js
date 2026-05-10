@@ -1361,35 +1361,87 @@ function wikiEditorInput() {
   ed.dataset.empty = empty ? 'true' : 'false';
 }
 
-function wikiInsertImageFile(input) {
+// Shrink an image File to fit within maxWidth, return data URL
+async function wikiShrinkImage(file, maxWidth = 1200) {
+  const dataUrl = await new Promise(res => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.readAsDataURL(file);
+  });
+  // SVG can't be canvas-rasterized losslessly; embed as-is
+  if (file.type === 'image/svg+xml') return dataUrl;
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      res(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => res(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+async function wikiInsertImageFile(input) {
   const file = input.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('wikiEditor').focus();
-    document.execCommand('insertHTML', false, `<img src="${e.target.result}" alt="${file.name}"><p><br></p>`);
-    wikiEditorInput();
-  };
-  reader.readAsDataURL(file);
+  const dataUrl = await wikiShrinkImage(file);
+  document.getElementById('wikiEditor').focus();
+  document.execCommand('insertHTML', false, `<img src="${dataUrl}" alt="${file.name}"><p><br></p>`);
+  wikiEditorInput();
   input.value = '';
 }
 
-function wikiHandlePaste(e) {
+async function wikiHandlePaste(e) {
   const items = e.clipboardData?.items;
   if (!items) return;
   for (const item of items) {
     if (item.type.startsWith('image/')) {
       e.preventDefault();
       const file = item.getAsFile();
-      const reader = new FileReader();
-      reader.onload = ev => {
-        document.execCommand('insertHTML', false, `<img src="${ev.target.result}" alt="Screenshot"><p><br></p>`);
-        wikiEditorInput();
-      };
-      reader.readAsDataURL(file);
+      const dataUrl = await wikiShrinkImage(file);
+      document.execCommand('insertHTML', false, `<img src="${dataUrl}" alt="Screenshot"><p><br></p>`);
+      wikiEditorInput();
       return;
     }
   }
+}
+
+// Insert plain text (e.g. an arrow) at the editor caret
+function wikiInsert(text) {
+  document.getElementById('wikiEditor').focus();
+  document.execCommand('insertText', false, text);
+  wikiEditorInput();
+}
+
+// Track which image is currently selected (clicked) inside the editor
+let _wikiSelectedImg = null;
+document.addEventListener('click', e => {
+  const editor = document.getElementById('wikiEditor');
+  if (!editor) return;
+  if (editor.contains(e.target) && e.target.tagName === 'IMG') {
+    if (_wikiSelectedImg) _wikiSelectedImg.classList.remove('selected');
+    _wikiSelectedImg = e.target;
+    _wikiSelectedImg.classList.add('selected');
+  } else if (_wikiSelectedImg) {
+    _wikiSelectedImg.classList.remove('selected');
+    _wikiSelectedImg = null;
+  }
+});
+
+function wikiResizeImg(percent) {
+  if (!_wikiSelectedImg) {
+    alert('Bitte zuerst ein Bild im Artikel anklicken.');
+    return;
+  }
+  _wikiSelectedImg.style.width = percent + '%';
+  _wikiSelectedImg.style.maxWidth = '100%';
+  wikiEditorInput();
 }
 
 async function deleteWikiArticle(id) {
