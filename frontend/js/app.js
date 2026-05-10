@@ -1917,6 +1917,57 @@ async function loadTasks() {
   renderTasks(allTasks);
 }
 
+// Live countdown for the task detail view — adapts units (D/h/m/s)
+function formatCountdown(dueDate, status) {
+  if (!dueDate || status === 'done') return '';
+  let due = new Date(dueDate);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) due.setHours(23, 59, 59, 999);
+  const diffMs = due - new Date();
+
+  let icon, color, bg, text;
+  if (diffMs <= 0) {
+    icon = '⏰'; color = '#DC2626'; bg = '#FEE2E2';
+    const oh = Math.floor(-diffMs / 3600000);
+    const od = Math.floor(-diffMs / 86400000);
+    text = od >= 1 ? `${od}T überfällig` : oh >= 1 ? `${oh}h überfällig` : `${Math.floor(-diffMs / 60000)}m überfällig`;
+  } else {
+    const d = Math.floor(diffMs / 86400000);
+    const h = Math.floor((diffMs % 86400000) / 3600000);
+    const m = Math.floor((diffMs % 3600000) / 60000);
+    const s = Math.floor((diffMs % 60000) / 1000);
+    icon = '⏳';
+    if (d > 0) { text = `${d}T ${h}h`; color = '#16A34A'; bg = '#F0FDF4'; }
+    else if (h > 0) { text = `${h}h ${m}m ${String(s).padStart(2,'0')}s`; color = '#D97706'; bg = '#FEF3C7'; }
+    else if (m > 0) { text = `${m}m ${String(s).padStart(2,'0')}s`; color = '#DC2626'; bg = '#FEE2E2'; }
+    else { text = `${s}s`; color = '#DC2626'; bg = '#FEE2E2'; }
+  }
+  return `<span style="display:inline-flex;align-items:center;gap:6px;background:${bg};color:${color};font-size:14px;font-weight:700;padding:8px 14px;border-radius:10px;font-variant-numeric:tabular-nums">${icon} ${text}</span>`;
+}
+
+let _tdCountdownInterval = null;
+function startTdCountdown(taskId, dueDate, status) {
+  if (_tdCountdownInterval) clearInterval(_tdCountdownInterval);
+  const row = document.getElementById('tdCountdownRow');
+  const update = () => {
+    const modal = document.getElementById('modalTaskDetail');
+    if (!modal || modal.style.display === 'none' || tdCurrentTaskId !== taskId) {
+      clearInterval(_tdCountdownInterval); _tdCountdownInterval = null; return;
+    }
+    row.innerHTML = formatCountdown(dueDate, status);
+  };
+  update();
+  if (status !== 'done' && dueDate) _tdCountdownInterval = setInterval(update, 1000);
+}
+
+async function markTaskDone(taskId) {
+  const t = allTasks.find(x => x.id === taskId);
+  if (!t) return;
+  await api.put('/tasks/' + taskId, { ...t, status: 'done' });
+  closeModal('modalTaskDetail');
+  showToast('Aufgabe als erledigt markiert!');
+  loadTasks();
+}
+
 function dueBadge(due_date, status) {
   if (!due_date || status === 'done') return '';
   const now = new Date();
@@ -2013,8 +2064,21 @@ async function openTaskDetail(id) {
   document.getElementById('tdMeta').innerHTML = [
     t.project ? `<span>📁 ${t.project}</span>` : '',
     t.due_date ? `<span>📅 ${formatDate(t.due_date)}</span>` : '',
-    dueBadge(t.due_date, t.status),
   ].filter(Boolean).join('');
+
+  // Live countdown
+  startTdCountdown(t.id, t.due_date, t.status);
+
+  // "Als erledigt markieren" — visible to assignee or creator if not yet done
+  const canMark = t.status !== 'done' && (t.assigned_to === currentUser.id || t.created_by === currentUser.id);
+  const mdRow = document.getElementById('tdMarkDoneRow');
+  if (canMark) {
+    mdRow.style.display = '';
+    mdRow.innerHTML = `<button class="btn btn-primary" style="width:100%;padding:12px;font-size:14px;font-weight:700" onclick="markTaskDone(${t.id})">✓ Als erledigt markieren</button>`;
+  } else {
+    mdRow.style.display = 'none';
+    mdRow.innerHTML = '';
+  }
 
   const isOnboardingTask = t.project === 'Onboarding';
   const firma = isOnboardingTask
