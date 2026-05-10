@@ -1410,15 +1410,16 @@ async function loadAdmin() {
 }
 
 function switchAdminTab(tab) {
-  ['overview','users','tasks','feedback','settings'].forEach(t => {
+  ['overview','users','tasks','onboarding','feedback','settings'].forEach(t => {
     document.getElementById('adminTab-' + t).classList.toggle('active', t === tab);
     document.getElementById('adminPanel-' + t).style.display = t === tab ? '' : 'none';
   });
-  if (tab === 'overview')  loadAdminOverview();
-  if (tab === 'users')     loadAdminUsers();
-  if (tab === 'tasks')     loadAdminTasks();
-  if (tab === 'feedback')  loadAdminFeedback();
-  if (tab === 'settings')  loadAdminSettings();
+  if (tab === 'overview')   loadAdminOverview();
+  if (tab === 'users')      loadAdminUsers();
+  if (tab === 'tasks')      loadAdminTasks();
+  if (tab === 'onboarding') loadOnboarding();
+  if (tab === 'feedback')   loadAdminFeedback();
+  if (tab === 'settings')   loadAdminSettings();
 }
 
 /* ─── Logo Upload (Admin Settings) ─── */
