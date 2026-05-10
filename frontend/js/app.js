@@ -2604,6 +2604,7 @@ const CL_PERSONS = [
   { id: '46604320', name: 'Tim Zimmer',    initials: 'TZ', bg: '#dde8f5', cl: '#4a7ab5' },
   { id: '45653587', name: 'Leon Scheffs',  initials: 'LS', bg: '#fde8e0', cl: '#c05c3a' },
   { id: '34040626', name: 'Justus Kemper', initials: 'JK', bg: '#ede8fd', cl: '#5a3ab5' },
+  { id: '30089244', name: 'Henry Salazar', initials: 'HS', bg: '#fdf5d7', cl: '#8a6a13' },
 ];
 let calllistOwnerId = null;
 
