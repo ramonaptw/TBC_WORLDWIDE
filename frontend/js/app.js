@@ -252,21 +252,23 @@ async function loadDashboard() {
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   // Role capabilities (5-role system: admin, management, sellsupport, customersuccess, newbusiness)
-  const hasSales   = ['admin', 'newbusiness', 'management'].includes(currentUser.role);
-  const hasRecent  = ['admin', 'newbusiness', 'customersuccess', 'management'].includes(currentUser.role);
-  const hasTasks   = ['admin', 'management', 'sellsupport', 'customersuccess', 'newbusiness'].includes(currentUser.role);
+  const hasSales       = ['admin', 'newbusiness', 'management'].includes(currentUser.role);
+  const hasIntakeCommit = currentUser.role === 'customersuccess';
+  const hasCommit      = hasSales || hasIntakeCommit;
+  const hasRecent      = ['admin', 'newbusiness', 'customersuccess', 'management'].includes(currentUser.role);
+  const hasTasks       = ['admin', 'management', 'sellsupport', 'customersuccess', 'newbusiness'].includes(currentUser.role);
 
   const [news, tasks, kunden, commit] = await Promise.all([
     api.get('/news'),
     hasTasks  ? api.get('/tasks')  : Promise.resolve([]),
     hasRecent ? api.get('/kunden') : Promise.resolve([]),
-    hasSales  ? api.get('/commitments?month=' + currentMonth).catch(() => null) : Promise.resolve(null),
+    hasCommit ? api.get('/commitments?month=' + currentMonth).catch(() => null) : Promise.resolve(null),
   ]);
   allTasks = tasks;
 
   // ── Commitment Banner ──
   const bannerEl = document.getElementById('commitBanner');
-  if (hasSales && !commit) {
+  if (hasCommit && !commit) {
     const dayOfMonth = now.getDate();
     const monthName = now.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
     const isDeadlinePassed = dayOfMonth > 5;
@@ -307,6 +309,22 @@ async function loadDashboard() {
         <div class="dash-kpi-value dash-kpi-value--euro">€${actualUmsatz.toLocaleString('de-DE')}</div>
         ${targetUmsatz ? `<div class="dash-kpi-bar"><div class="dash-kpi-bar-fill ${barClass(umsatzPct)}" style="width:${umsatzPct}%"></div></div><div class="dash-kpi-sub">${umsatzPct}% von €${targetUmsatz.toLocaleString('de-DE')}</div>` : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>
+      <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
+        <div class="dash-kpi-label">Aufgaben</div>
+        <div class="dash-kpi-value">${myOpenTasks}</div>
+        <div class="dash-kpi-sub">${overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${overdueTasks} überfällig</span>` : myOpenTasks === 0 ? '✓ alle erledigt' : 'offen'}</div>
+      </div>`;
+  } else if (hasIntakeCommit) {
+    // Customer Success: Production Intake + Design Intake targets (no live progress yet)
+    const targetPI = commit?.targetProductionIntake || 0;
+    const targetDI = commit?.targetDesignIntake || 0;
+    const tile = (label, target) => `
+      <div class="dash-kpi">
+        <div class="dash-kpi-label">${label}</div>
+        <div class="dash-kpi-value">${target ? `<span class="dash-kpi-target">Ziel ${target}</span>` : '–'}</div>
+        ${target ? '' : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
+      </div>`;
+    kpiEl.innerHTML = tile('Production Intake', targetPI) + tile('Design Intake', targetDI) + `
       <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
         <div class="dash-kpi-label">Aufgaben</div>
         <div class="dash-kpi-value">${myOpenTasks}</div>
@@ -399,18 +417,49 @@ async function loadDashboard() {
   }
 }
 
+// Role-aware commitment field schema. CS tracks intakes; everyone else tracks members + revenue.
+function commitFieldsForRole(role) {
+  if (role === 'customersuccess') {
+    return [
+      { key: 'targetProductionIntake', label: 'Production Intake-Ziel', short: 'Production Intake', placeholder: 'z.B. 8', kind: 'count' },
+      { key: 'targetDesignIntake',     label: 'Design Intake-Ziel',     short: 'Design Intake',     placeholder: 'z.B. 6', kind: 'count' },
+    ];
+  }
+  return [
+    { key: 'targetKunden', label: 'Member-Ziel (Anzahl)', short: 'Member', placeholder: 'z.B. 10',    kind: 'count' },
+    { key: 'targetUmsatz', label: 'Umsatz-Ziel (€)',      short: 'Umsatz', placeholder: 'z.B. 15000', kind: 'euro' },
+  ];
+}
+
+function renderCommitFields(containerId, idPrefix, current) {
+  const fields = commitFieldsForRole(currentUser.role);
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = fields.map(f => `
+    <div class="form-group">
+      <label class="form-label">${f.label}${f.kind === 'euro' ? '' : ''}</label>
+      <input class="form-control" type="number" min="0" id="${idPrefix}${f.key}" placeholder="${f.placeholder}" value="${current?.[f.key] || ''}">
+    </div>`).join('');
+}
+
+function readCommitFields(idPrefix) {
+  const fields = commitFieldsForRole(currentUser.role);
+  const out = {};
+  fields.forEach(f => {
+    out[f.key] = parseInt(document.getElementById(idPrefix + f.key).value) || 0;
+  });
+  return { fields, values: out };
+}
+
 function openCommitModal() {
-  document.getElementById('commitKunden').value = '';
-  document.getElementById('commitUmsatz').value = '';
+  renderCommitFields('commitFields', 'commit', null);
   openModal('modalCommit');
 }
 
 async function saveCommit() {
-  const targetKunden = parseInt(document.getElementById('commitKunden').value) || 0;
-  const targetUmsatz = parseInt(document.getElementById('commitUmsatz').value) || 0;
-  if (!targetKunden && !targetUmsatz) return showToast('Bitte mindestens einen Wert eintragen', 'error');
+  const { fields, values } = readCommitFields('commit');
+  if (fields.every(f => !values[f.key])) return showToast('Bitte mindestens einen Wert eintragen', 'error');
   const _n = new Date(); const month = `${_n.getFullYear()}-${String(_n.getMonth() + 1).padStart(2, '0')}`;
-  await api.post('/commitments', { month, targetKunden, targetUmsatz });
+  await api.post('/commitments', { month, ...values });
   closeModal('modalCommit');
   showToast('Commitment gespeichert!');
   loadDashboard();
@@ -1135,8 +1184,7 @@ async function openProfileModal() {
   document.getElementById('profEmail').value = user.email || '';
   document.getElementById('profPhone').value = user.phone || '';
   document.getElementById('profPassword').value = '';
-  document.getElementById('profCommitKunden').value = commit?.targetKunden || '';
-  document.getElementById('profCommitUmsatz').value = commit?.targetUmsatz || '';
+  renderCommitFields('profCommitFields', 'profCommit', commit);
   // Instagram connection status
   const igConnected = !!user.instagram_session;
   document.getElementById('igConnectedBadge').style.display = igConnected ? 'flex' : 'none';
@@ -1178,12 +1226,11 @@ async function saveProfile() {
   if (!data.name || !data.email) return showToast('Name und E-Mail erforderlich', 'error');
 
   // Save commitment if values provided
-  const targetKunden = parseInt(document.getElementById('profCommitKunden').value) || 0;
-  const targetUmsatz = parseInt(document.getElementById('profCommitUmsatz').value) || 0;
-  if (targetKunden || targetUmsatz) {
+  const { fields: commitFs, values: commitVals } = readCommitFields('profCommit');
+  if (commitFs.some(f => commitVals[f.key])) {
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-    api.post('/commitments', { month, targetKunden, targetUmsatz }).catch(() => {});
+    api.post('/commitments', { month, ...commitVals }).catch(() => {});
   }
 
   const result = await api.put('/auth/profile', data);
