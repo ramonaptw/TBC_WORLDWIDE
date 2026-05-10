@@ -2164,6 +2164,8 @@ function calllistFormatLastContact(dateStr) {
   return `<span style="font-size:12px;color:var(--warning,#d97706);font-weight:600">Vor ${Math.floor(diffDays/30)} Monat${Math.floor(diffDays/30)>1?'en':''}</span>`;
 }
 
+let _calllistEntries = [];
+
 async function loadCalllist() {
   const limit = parseInt(document.getElementById('calllistLimit')?.value) || 20;
   const status = document.getElementById('calllistStatus');
@@ -2185,13 +2187,44 @@ async function loadCalllist() {
       btn.disabled = false;
       return;
     }
+    _calllistEntries = data.entries;
     status.innerHTML = `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">${data.entries.length} Einträge${data.total ? ` · ${data.total} Unternehmen gefunden` : ''} · sortiert nach letztem Kontakt</div>`;
-    results.innerHTML = `<div class="card"><div class="calllist-table-wrap">
-      <table class="data-table calllist-table">
-        <thead><tr><th>Unternehmen</th><th>Kontakt</th><th>Telefon</th><th>Zuletzt angerufen</th><th></th></tr></thead>
-        <tbody>${data.entries.map(e => {
-          const entryJson = JSON.stringify({ companyId: e.companyId, companyName: e.companyName, contactName: e.contactName, phone: e.phone, hsUrl: e.hsUrl }).replace(/'/g, '&#39;');
-          return `<tr>
+    results.innerHTML = `
+      <div class="card" style="padding:14px 14px 0">
+        <input type="text" id="calllistFilter" placeholder="🔍 Suche nach Unternehmen oder Kontakt (z.B. Smash, Kaffee)…"
+               oninput="renderCalllistTable(this.value)"
+               style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--bg);outline:none;margin-bottom:12px">
+      </div>
+      <div id="calllistTableHost"></div>`;
+    renderCalllistTable('');
+  } catch (e) {
+    status.innerHTML = `<div style="color:var(--danger);padding:12px 0">❌ ${e.message}</div>`;
+    results.innerHTML = `<div class="card" style="padding:16px"><button class="btn btn-primary" onclick="loadCalllist()">🔄 Erneut versuchen</button></div>`;
+  }
+  btn.disabled = false;
+}
+
+function renderCalllistTable(filterStr) {
+  const host = document.getElementById('calllistTableHost');
+  if (!host) return;
+  const q = (filterStr || '').trim().toLowerCase();
+  const rows = q
+    ? _calllistEntries.filter(e =>
+        (e.companyName || '').toLowerCase().includes(q) ||
+        (e.contactName || '').toLowerCase().includes(q))
+    : _calllistEntries;
+
+  if (!rows.length) {
+    host.innerHTML = `<div class="card" style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px">Keine Treffer für „${filterStr}"</div>`;
+    return;
+  }
+
+  host.innerHTML = `<div class="card"><div class="calllist-table-wrap">
+    <table class="data-table calllist-table">
+      <thead><tr><th>Unternehmen</th><th>Kontakt</th><th>Telefon</th><th>Zuletzt angerufen</th><th></th></tr></thead>
+      <tbody>${rows.map(e => {
+        const entryJson = JSON.stringify({ companyId: e.companyId, companyName: e.companyName, contactName: e.contactName, phone: e.phone, hsUrl: e.hsUrl }).replace(/'/g, '&#39;');
+        return `<tr>
           <td data-label="Unternehmen"><span style="font-weight:600">${e.companyName || '–'}</span></td>
           <td data-label="Kontakt" style="font-size:13px;color:var(--text-secondary)">${e.contactName || '–'}</td>
           <td data-label="Telefon"><a href="tel:${e.phone}" style="color:var(--primary);font-weight:600;font-size:14px">${e.phone}</a></td>
@@ -2201,12 +2234,7 @@ async function loadCalllist() {
             <button class="btn btn-sm btn-secondary" style="font-size:11px;padding:4px 10px" onclick='addToCalllistWeek(${entryJson})'>⭐ Wochenliste</button>
           </td>
         </tr>`;}).join('')}</tbody>
-      </table></div></div>`;
-  } catch (e) {
-    status.innerHTML = `<div style="color:var(--danger);padding:12px 0">❌ ${e.message}</div>`;
-    results.innerHTML = `<div class="card" style="padding:16px"><button class="btn btn-primary" onclick="loadCalllist()">🔄 Erneut versuchen</button></div>`;
-  }
-  btn.disabled = false;
+    </table></div></div>`;
 }
 
 async function loadCalllistWeek() {
