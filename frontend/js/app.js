@@ -1138,7 +1138,27 @@ function openNewKundeModal() {
   document.getElementById('kHubspotId').value = '';
   document.getElementById('kAlreadyOnboarded').checked = false;
   document.getElementById('kAlreadyOnboardedRow').style.display = '';
+  document.getElementById('kAssignCSRow').style.display = 'none';
+  document.getElementById('kAssignCS').value = '';
   openModal('modalKunde');
+}
+
+async function toggleAlreadyOnboarded() {
+  const checked = document.getElementById('kAlreadyOnboarded').checked;
+  const row = document.getElementById('kAssignCSRow');
+  row.style.display = checked ? '' : 'none';
+  if (checked) {
+    const sel = document.getElementById('kAssignCS');
+    if (sel.dataset.loaded !== '1') {
+      try {
+        const users = await api.get('/employees');
+        const csUsers = users.filter(u => u.role === 'customersuccess');
+        sel.innerHTML = '<option value="">– wählen –</option>' + csUsers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+        if (csUsers.length === 1) sel.value = String(csUsers[0].id);
+        sel.dataset.loaded = '1';
+      } catch {}
+    }
+  }
 }
 
 async function editKunde(id) {
@@ -1157,6 +1177,7 @@ async function editKunde(id) {
   // The "already onboarded" checkbox is only meaningful at create-time
   document.getElementById('kAlreadyOnboarded').checked = false;
   document.getElementById('kAlreadyOnboardedRow').style.display = 'none';
+  document.getElementById('kAssignCSRow').style.display = 'none';
   openModal('modalKunde');
 }
 
@@ -1174,14 +1195,21 @@ async function saveKunde() {
   if (!data.firma) return showToast('Firma ist erforderlich', 'error');
   if (!data.kanal) return showToast('Kanal ist erforderlich', 'error');
   if (!data.abschlussdatum) return showToast('Abschlussdatum ist erforderlich', 'error');
+  const alreadyOnboarded = !id && document.getElementById('kAlreadyOnboarded').checked;
+  let assignedCsId = null;
+  if (alreadyOnboarded) {
+    assignedCsId = parseInt(document.getElementById('kAssignCS').value) || null;
+    if (!assignedCsId) return showToast('Bitte Customer Success Empfänger wählen', 'error');
+  }
+
   if (id) {
     await api.put('/kunden/' + id, data);
   } else {
     const created = await api.post('/kunden', data);
-    const alreadyOnboarded = document.getElementById('kAlreadyOnboarded').checked;
     if (alreadyOnboarded) {
-      // Mark as completed immediately — no Onboarding-Task, no handover flow
-      await api.patch('/kunden/' + created.id + '/status', { status: 'übergeben', onboarding_phase: 'fertig' }).catch(() => {});
+      // NB did the onboarding themselves — skip the auto-task, but still hand over to CS
+      // for Design Intake. phase='design' triggers status='übergeben' + push notify in backend.
+      await api.patch('/kunden/' + created.id + '/status', { onboarding_phase: 'design', assigned_cs_user_id: assignedCsId }).catch(() => {});
     } else {
       // Auto-create Pre-Onboarding task for the creator
       const due = new Date(); due.setDate(due.getDate() + 1);
