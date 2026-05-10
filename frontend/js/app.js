@@ -315,16 +315,30 @@ async function loadDashboard() {
         <div class="dash-kpi-sub">${overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${overdueTasks} überfällig</span>` : myOpenTasks === 0 ? '✓ alle erledigt' : 'offen'}</div>
       </div>`;
   } else if (hasIntakeCommit) {
-    // Customer Success: Production Intake + Design Intake targets (no live progress yet)
+    // Customer Success KPIs: € sum of revenue of kunden that entered design/production this month
+    const fmtEur = n => '€' + Number(n).toLocaleString('de-DE');
+    const sumPhase = phase => kunden
+      .filter(k => k.assigned_cs_user_id === currentUser.id &&
+        Array.isArray(k.phase_history) &&
+        k.phase_history.some(h => h.phase === phase && (h.at || '').startsWith(currentMonth)))
+      .reduce((s, k) => s + (Number(k.umsatz) || 0), 0);
+    const designEur     = sumPhase('design');
+    const productionEur = sumPhase('production');
+    const targetDI = commit?.targetDesignIntake     || 0;
     const targetPI = commit?.targetProductionIntake || 0;
-    const targetDI = commit?.targetDesignIntake || 0;
-    const tile = (label, target) => `
+    const moneyTile = (label, actual, target) => {
+      const pct = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
+      const barClass = pct >= 100 ? 'ok' : pct >= 50 ? '' : 'warn';
+      return `
       <div class="dash-kpi">
         <div class="dash-kpi-label">${label}</div>
-        <div class="dash-kpi-value">${target ? `<span class="dash-kpi-target">Ziel ${target}</span>` : '–'}</div>
-        ${target ? '' : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
+        <div class="dash-kpi-value dash-kpi-value--euro">${fmtEur(actual)}</div>
+        ${target
+          ? `<div class="dash-kpi-bar"><div class="dash-kpi-bar-fill ${barClass}" style="width:${pct}%"></div></div><div class="dash-kpi-sub">${pct}% von ${fmtEur(target)}</div>`
+          : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>`;
-    kpiEl.innerHTML = tile('Production Intake', targetPI) + tile('Design Intake', targetDI) + `
+    };
+    kpiEl.innerHTML = moneyTile('Design Intake', designEur, targetDI) + moneyTile('Production Intake', productionEur, targetPI) + `
       <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
         <div class="dash-kpi-label">Aufgaben</div>
         <div class="dash-kpi-value">${myOpenTasks}</div>
@@ -355,10 +369,10 @@ async function loadDashboard() {
         const onbBadge = k.nb_onboarding_done
           ? '<span style="font-size:11px;font-weight:700;color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:99px;padding:2px 8px">✓ NB-Onb. erledigt</span>'
           : '<span style="font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:99px;padding:2px 8px">⚠ Onb. offen</span>';
-        return `<div onclick="editKunde(${k.id})" style="padding:11px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .12s" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">
+        return `<div onclick="openCsIntakeDetail(${k.id})" style="padding:11px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .12s" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:14px">${k.firma}</div>
-            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">von ${k.mitarbeiter_name}${k.onboarding_phase ? ` · Phase ${k.onboarding_phase}` : ''}</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">von ${k.mitarbeiter_name} · €${Number(k.umsatz || 0).toLocaleString('de-DE')}${k.onboarding_phase ? ` · Phase ${k.onboarding_phase}` : ''}</div>
           </div>
           ${onbBadge}
           <span style="font-size:12px;color:var(--text-light);flex-shrink:0">→</span>
@@ -818,6 +832,13 @@ async function loadStatistik() {
   const thisUmsatz = sum(thisMo, 'umsatz'), lastUmsatz = sum(lastMo, 'umsatz');
   const thisMarge = sum(thisMo, 'marge'), lastMarge = sum(lastMo, 'marge');
 
+  // Design Intake an CS — € value of MY kunden that entered design this/prev month
+  const enteredDesignIn = (k, m) => Array.isArray(k.phase_history) && k.phase_history.some(h => h.phase === 'design' && (h.at || '').startsWith(m));
+  const designHandedOff = kunden.filter(k => enteredDesignIn(k, selMonth));
+  const lastDesignHandedOff = kunden.filter(k => enteredDesignIn(k, prevMonth));
+  const thisDesignEur = sum(designHandedOff, 'umsatz');
+  const lastDesignEur = sum(lastDesignHandedOff, 'umsatz');
+
   // Kanal breakdown for selected month (all time if nothing this month, use all)
   const base = thisMo.length ? thisMo : kunden;
   const byKanal = {};
@@ -915,6 +936,7 @@ async function loadStatistik() {
       ${miniKpi('Member', thisKunden, diff(thisKunden, lastKunden), diffColor(thisKunden, lastKunden))}
       ${miniKpi('Umsatz', fmt(thisUmsatz), diff(thisUmsatz, lastUmsatz), diffColor(thisUmsatz, lastUmsatz))}
       ${miniKpi('Marge', fmt(thisMarge), diff(thisMarge, lastMarge), diffColor(thisMarge, lastMarge))}
+      ${miniKpi('Design Intake → CS', fmt(thisDesignEur), diff(thisDesignEur, lastDesignEur), diffColor(thisDesignEur, lastDesignEur))}
     </div>
 
     <div class="stat-cards-grid ${isAdmin ? 'stat-cards-3' : 'stat-cards-2'}"  style="gap:14px;margin-bottom:14px">
@@ -1002,8 +1024,12 @@ async function loadStatistikCS(allKunden) {
   const phaseInMonth = (k, phase, m) =>
     Array.isArray(k.phase_history) && k.phase_history.some(h => h.phase === phase && (h.at || '').startsWith(m));
 
-  const designCount = myKunden.filter(k => phaseInMonth(k, 'design', selMonth)).length;
-  const productionCount = myKunden.filter(k => phaseInMonth(k, 'production', selMonth)).length;
+  const designKunden     = myKunden.filter(k => phaseInMonth(k, 'design', selMonth));
+  const productionKunden = myKunden.filter(k => phaseInMonth(k, 'production', selMonth));
+  const designCount      = designKunden.length;
+  const productionCount  = productionKunden.length;
+  const designRevenue    = designKunden.reduce((s, k) => s + (Number(k.umsatz) || 0), 0);
+  const productionRevenue = productionKunden.reduce((s, k) => s + (Number(k.umsatz) || 0), 0);
 
   let repeats = [];
   try { repeats = await api.get('/repeat-orders?month=' + selMonth); } catch {}
@@ -1040,9 +1066,9 @@ async function loadStatistikCS(allKunden) {
 
   container.innerHTML = `
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-      ${miniKpi('Design Intake', designCount, 'eingegangen ' + selMonth)}
-      ${miniKpi('Production Intake', productionCount, 'eingegangen ' + selMonth)}
-      ${miniKpi('Repeat Orders', repeatCount, fmt(repeatRevenue))}
+      ${miniKpi('Design Intake', fmt(designRevenue), `${designCount} Member · ${selMonth}`)}
+      ${miniKpi('Production Intake', fmt(productionRevenue), `${productionCount} Member · ${selMonth}`)}
+      ${miniKpi('Repeat Orders', fmt(repeatRevenue), `${repeatCount} Aufträge`)}
     </div>
 
     <div class="card" style="margin-bottom:14px">
@@ -1318,6 +1344,26 @@ async function deleteKunde(id) {
 
 let obPendingKundeId = null;
 let obPendingKundeFirma = null;
+
+// Click handler for CS dashboard intake rows: open the matching Onboarding-Task
+// (so Henry sees the checklist) — fall back to the kunde edit modal if no open task.
+async function openCsIntakeDetail(kundeId) {
+  // Prefer cached allTasks (loaded by dashboard); refresh if missing
+  if (!Array.isArray(allTasks) || !allTasks.length) {
+    try { allTasks = await api.get('/tasks'); } catch {}
+  }
+  const task = allTasks.find(t =>
+    t.kunde_id === kundeId &&
+    t.project === 'Onboarding' &&
+    t.assigned_to === currentUser.id &&
+    t.status !== 'done'
+  );
+  if (task) {
+    openTaskDetail(task.id);
+  } else {
+    editKunde(kundeId);
+  }
+}
 
 /* ─── Repeat Orders (Customer Success) ─── */
 let _roCurrentKundeId = null;
@@ -2555,7 +2601,11 @@ async function openTaskDetail(id) {
 
   // Onboarding starten button (sales people only)
   const obBtn = document.getElementById('tdOnboardingBtn');
-  if (firma && t.status !== 'done' && !currentUser.does_onboarding) {
+  const isCSOnboardingHandoff = isOnboardingTask && t.kunde_id && currentUser.role === 'customersuccess' && t.assigned_to === currentUser.id && t.status !== 'done';
+  if (isCSOnboardingHandoff) {
+    obBtn.style.display = '';
+    obBtn.innerHTML = `<button class="btn btn-primary" style="width:100%;padding:12px;font-size:14px;font-weight:700" onclick="csMoveToProduction(${t.id}, ${t.kunde_id})">→ Member in Production verschieben</button>`;
+  } else if (firma && t.status !== 'done' && !currentUser.does_onboarding) {
     obBtn.style.display = '';
     window._tdTaskId = t.id;
     obBtn.innerHTML = `<button class="btn btn-primary" style="padding:10px 20px;font-size:14px" onclick="closeModal('modalTaskDetail');startOnboardingFromTask(${t.id})">🚀 Onboarding starten</button>`;
@@ -2564,6 +2614,20 @@ async function openTaskDetail(id) {
   }
 
   openModal('modalTaskDetail');
+}
+
+async function csMoveToProduction(taskId, kundeId) {
+  if (!confirm('Member in die Production-Phase verschieben und diese Aufgabe als erledigt markieren?')) return;
+  try {
+    await api.patch('/kunden/' + kundeId + '/status', { onboarding_phase: 'production' });
+    const t = allTasks.find(x => x.id === taskId);
+    if (t) await api.put('/tasks/' + taskId, { ...t, status: 'done' });
+    closeModal('modalTaskDetail');
+    showToast('Member in Production verschoben!');
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message || 'Fehlgeschlagen', 'error');
+  }
 }
 
 async function toggleChecklistItem(taskId, index, done) {
