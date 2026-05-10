@@ -2501,6 +2501,17 @@ async function loadTools() {
 
   const canSeeCalllist = ['admin', 'management', 'newbusiness'].includes(currentUser.role);
   const canSeeMember   = ['admin', 'newbusiness', 'customersuccess', 'management'].includes(currentUser.role);
+  const canSeeOnboarding = ['admin', 'newbusiness', 'customersuccess'].includes(currentUser.role);
+
+  const onboardingHtml = canSeeOnboarding ? `
+    <div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:16px;padding:18px 20px">
+      <span style="font-size:28px">🤝</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:15px">Onboarding starten</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">Pre-Onboarding-Prozess für einen Kunden anstoßen</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="showPage('deal')">Öffnen</button>
+    </div>` : '';
 
   const calllistHtml = canSeeCalllist ? `
     <div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:16px;padding:18px 20px">
@@ -2522,7 +2533,7 @@ async function loadTools() {
       <button class="btn btn-primary btn-sm" onclick="showPage('datenbank')">Öffnen</button>
     </div>` : '';
 
-  container.innerHTML = wikiHtml + calllistHtml + memberHtml + pinnedHtml + toolsHtml;
+  container.innerHTML = wikiHtml + onboardingHtml + calllistHtml + memberHtml + pinnedHtml + toolsHtml;
 }
 
 function renderWikiInTools(articles) {
