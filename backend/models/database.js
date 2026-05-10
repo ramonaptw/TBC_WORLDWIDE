@@ -120,6 +120,31 @@ if (!db.findOne('users', u => u.email === ADMIN_EMAIL)) {
   console.log(`[DB] Admin-Account angelegt: ${ADMIN_EMAIL}`);
 }
 
+// Promote any email listed in ADMIN_EMAILS (comma-separated) to admin on every startup.
+// Users are created on demand via the password-reset / register flow; this just ensures
+// the listed emails always have admin rights, even if they registered as 'employee' first.
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
+  .split(',')
+  .map(s => s.trim().toLowerCase())
+  .filter(Boolean);
+
+for (const email of ADMIN_EMAILS) {
+  const user = db.findOne('users', u => String(u.email).toLowerCase() === email);
+  if (user) {
+    if (user.role !== 'admin') {
+      db.update('users', user.id, { role: 'admin' });
+      console.log(`[DB] User auf Admin promoted: ${email}`);
+    }
+  } else {
+    db.insert('users', {
+      name: email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      email, password: null, role: 'admin',
+      department: '', position: '', phone: '',
+    });
+    console.log(`[DB] Admin-Platzhalter angelegt (Passwort via Reset/Registrieren setzen): ${email}`);
+  }
+}
+
 // Seed tools + onboarding steps only on first-ever run
 if (isFirstRun) {
   const steps = [
