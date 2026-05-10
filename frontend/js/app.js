@@ -318,9 +318,7 @@ async function loadDashboard() {
     // Customer Success KPIs: € sum of revenue of kunden that entered design/production this month
     const fmtEur = n => '€' + Number(n).toLocaleString('de-DE');
     const sumPhase = phase => kunden
-      .filter(k => k.assigned_cs_user_id === currentUser.id &&
-        Array.isArray(k.phase_history) &&
-        k.phase_history.some(h => h.phase === phase && (h.at || '').startsWith(currentMonth)))
+      .filter(k => k.assigned_cs_user_id === currentUser.id && countsForIntake(k, phase, currentMonth))
       .reduce((s, k) => s + (Number(k.umsatz) || 0), 0);
     const designEur     = sumPhase('design');
     const productionEur = sumPhase('production');
@@ -355,36 +353,10 @@ async function loadDashboard() {
     kpiEl.style.display = 'none';
   }
 
-  // ── CS Design Intake this month ──
+  // CS-Design-Intakes erscheinen jetzt direkt als Aufgaben in der Tasks-Karte;
+  // separates Widget ausgeblendet.
   const csIntakeCard = document.getElementById('dashCsIntakeCard');
-  if (hasIntakeCommit) {
-    const myIntakes = kunden.filter(k =>
-      k.assigned_cs_user_id === currentUser.id &&
-      Array.isArray(k.phase_history) &&
-      k.phase_history.some(h => h.phase === 'design' && (h.at || '').startsWith(currentMonth))
-    );
-    if (myIntakes.length) {
-      csIntakeCard.style.display = '';
-      document.getElementById('dashCsIntake').innerHTML = myIntakes.map(k => {
-        const onbBadge = k.nb_onboarding_done
-          ? '<span style="font-size:11px;font-weight:700;color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:99px;padding:2px 8px">✓ NB-Onb. erledigt</span>'
-          : '<span style="font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:99px;padding:2px 8px">⚠ Onb. offen</span>';
-        return `<div onclick="openCsIntakeDetail(${k.id})" style="padding:11px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .12s" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:14px">${k.firma}</div>
-            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">von ${k.mitarbeiter_name} · €${Number(k.umsatz || 0).toLocaleString('de-DE')}${k.onboarding_phase ? ` · Phase ${k.onboarding_phase}` : ''}</div>
-          </div>
-          ${onbBadge}
-          <span style="font-size:12px;color:var(--text-light);flex-shrink:0">→</span>
-        </div>`;
-      }).join('');
-    } else {
-      csIntakeCard.style.display = '';
-      document.getElementById('dashCsIntake').innerHTML = '<div class="empty-state" style="padding:24px"><div class="empty-icon">📥</div><p>Diesen Monat noch keine Design Intakes.</p></div>';
-    }
-  } else {
-    csIntakeCard.style.display = 'none';
-  }
+  if (csIntakeCard) csIntakeCard.style.display = 'none';
 
   // ── Recently won customers ──
   document.getElementById('dashRecentCard').style.display = hasRecent ? '' : 'none';
@@ -448,8 +420,13 @@ async function loadDashboard() {
             : isDueToday
               ? `<span style="color:#D97706;font-weight:700">⏰ Heute fällig</span>`
               : `Fällig: ${formatDate(t.due_date)}`;
+          // For CS users, Onboarding tasks open the dedicated member overview
+          const isCsHandover = currentUser.role === 'customersuccess' && t.project === 'Onboarding' && t.kunde_id;
+          const clickAction = isCsHandover
+            ? `openCsMemberOverview(${t.kunde_id})`
+            : `openTaskDetail(${t.id})`;
           return `
-          <div onclick="showPage('tasks')" style="padding:11px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .12s${isOverdue ? ';background:#FEF9F9' : ''}" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background='${isOverdue ? '#FEF9F9' : ''}'">
+          <div onclick="${clickAction}" style="padding:11px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .12s${isOverdue ? ';background:#FEF9F9' : ''}" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background='${isOverdue ? '#FEF9F9' : ''}'">
             <div style="flex:1">
               <div style="font-weight:600;font-size:13px">${t.title}</div>
               <div style="font-size:12px;color:var(--text-secondary);margin-top:1px">${t.project || '–'} · ${dueLine}</div>
@@ -460,6 +437,22 @@ async function loadDashboard() {
         }).join('')
       : '<div class="empty-state" style="padding:24px"><div class="empty-icon">🎉</div><p>Alle Aufgaben erledigt!</p></div>';
   }
+}
+
+// Phase ordering helpers — used to decide whether a kunde currently counts as
+// "reached" a phase. After a revert (e.g. Production → Design), the lower phase
+// is current and the higher-phase intake should drop. We treat intake as
+// "this month a phase entry was logged AND the current phase has not been
+// reverted to something below that phase".
+const _PHASE_RANK = { '': 0, 'übergeben': 0, pre_onboarding: 0, onboarding: 0, design: 1, production: 2, fertig: 3 };
+function _phaseReached(k, target) {
+  return (_PHASE_RANK[k.onboarding_phase || ''] || 0) >= (_PHASE_RANK[target] || 0);
+}
+function _enteredPhaseInMonth(k, phase, month) {
+  return Array.isArray(k.phase_history) && k.phase_history.some(h => h.phase === phase && (h.at || '').startsWith(month));
+}
+function countsForIntake(k, phase, month) {
+  return _phaseReached(k, phase) && _enteredPhaseInMonth(k, phase, month);
 }
 
 // Role-aware commitment field schema. CS tracks intakes in €; everyone else tracks members + revenue.
@@ -495,8 +488,12 @@ function readCommitFields(idPrefix) {
   return { fields, values: out };
 }
 
-function openCommitModal() {
-  renderCommitFields('commitFields', 'commit', null);
+async function openCommitModal() {
+  const _n = new Date();
+  const month = `${_n.getFullYear()}-${String(_n.getMonth() + 1).padStart(2, '0')}`;
+  let current = null;
+  try { current = await api.get('/commitments?month=' + month); } catch {}
+  renderCommitFields('commitFields', 'commit', current);
   openModal('modalCommit');
 }
 
@@ -507,7 +504,8 @@ async function saveCommit() {
   await api.post('/commitments', { month, ...values });
   closeModal('modalCommit');
   showToast('Commitment gespeichert!');
-  loadDashboard();
+  // Re-render dashboard with fresh commitment data
+  await loadDashboard();
 }
 
 function formatRelative(iso) {
@@ -832,10 +830,9 @@ async function loadStatistik() {
   const thisUmsatz = sum(thisMo, 'umsatz'), lastUmsatz = sum(lastMo, 'umsatz');
   const thisMarge = sum(thisMo, 'marge'), lastMarge = sum(lastMo, 'marge');
 
-  // Design Intake an CS — € value of MY kunden that entered design this/prev month
-  const enteredDesignIn = (k, m) => Array.isArray(k.phase_history) && k.phase_history.some(h => h.phase === 'design' && (h.at || '').startsWith(m));
-  const designHandedOff = kunden.filter(k => enteredDesignIn(k, selMonth));
-  const lastDesignHandedOff = kunden.filter(k => enteredDesignIn(k, prevMonth));
+  // Design Intake an CS — € value of MY kunden that reached design this/prev month (respecting reverts)
+  const designHandedOff = kunden.filter(k => countsForIntake(k, 'design', selMonth));
+  const lastDesignHandedOff = kunden.filter(k => countsForIntake(k, 'design', prevMonth));
   const thisDesignEur = sum(designHandedOff, 'umsatz');
   const lastDesignEur = sum(lastDesignHandedOff, 'umsatz');
 
@@ -1021,11 +1018,8 @@ async function loadStatistikCS(allKunden) {
   const selMonth = document.getElementById('statMonth')?.value || `${now2.getFullYear()}-${String(now2.getMonth() + 1).padStart(2, '0')}`;
   const [selYear, selMon] = selMonth.split('-').map(Number);
 
-  const phaseInMonth = (k, phase, m) =>
-    Array.isArray(k.phase_history) && k.phase_history.some(h => h.phase === phase && (h.at || '').startsWith(m));
-
-  const designKunden     = myKunden.filter(k => phaseInMonth(k, 'design', selMonth));
-  const productionKunden = myKunden.filter(k => phaseInMonth(k, 'production', selMonth));
+  const designKunden     = myKunden.filter(k => countsForIntake(k, 'design', selMonth));
+  const productionKunden = myKunden.filter(k => countsForIntake(k, 'production', selMonth));
   const designCount      = designKunden.length;
   const productionCount  = productionKunden.length;
   const designRevenue    = designKunden.reduce((s, k) => s + (Number(k.umsatz) || 0), 0);
@@ -1041,7 +1035,7 @@ async function loadStatistikCS(allKunden) {
   for (let i = 5; i >= 0; i--) {
     const d = new Date(selYear, selMon - 1 - i, 1);
     const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    trend.push({ month: m, count: myKunden.filter(k => phaseInMonth(k, 'production', m)).length });
+    trend.push({ month: m, count: myKunden.filter(k => countsForIntake(k, 'production', m)).length });
   }
   const maxTrend = Math.max(1, ...trend.map(t => t.count));
   const monthNames = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
