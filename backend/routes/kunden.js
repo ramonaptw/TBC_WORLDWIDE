@@ -91,8 +91,15 @@ router.patch('/:id/status', authenticate, (req, res) => {
 
   const updated = db.update('kunden', id, updates);
 
-  // On handover: notify the CS user + create a single Onboarding-Übergabe task (idempotent)
-  if (phaseEnteredDesign && updated.assigned_cs_user_id) {
+  // Trigger CS handover (push + task) when either:
+  //  (a) phase just entered 'design' (first hand-off), OR
+  //  (b) the assigned CS user just changed to a new value (e.g. reassigned via edit modal)
+  const csNewlyAssigned = updates.assigned_cs_user_id !== undefined
+    && !!updated.assigned_cs_user_id
+    && (before.assigned_cs_user_id || null) !== updated.assigned_cs_user_id;
+  const shouldHandover = updated.assigned_cs_user_id && (phaseEnteredDesign || csNewlyAssigned);
+
+  if (shouldHandover) {
     notifyUser(updated.assigned_cs_user_id, {
       title: 'Neuer Member zugewiesen',
       body: updated.firma,
@@ -112,8 +119,8 @@ router.patch('/:id/status', authenticate, (req, res) => {
       db.insert('tasks', {
         title: 'Onboarding-Übergabe: ' + updated.firma,
         description: nbDone
-          ? `${nbName} hat den Onboarding-Teil schon erledigt — bitte WhatsApp-Kontakt aufnehmen und übernehmen.`
-          : `${nbName} hat den Member "${updated.firma}" übergeben. Bitte komplettes Onboarding durchführen.`,
+          ? `Du hast den Kunden "${updated.firma}" von ${nbName} erhalten. Onboarding ist von ${nbName}s Seite aus erfolgt — bitte trotzdem den Kontakt aufnehmen und Details für die Übergabe ins Design klären.`
+          : `Du hast den Kunden "${updated.firma}" von ${nbName} erhalten. Bitte WhatsApp-Kontakt aufnehmen und das komplette Onboarding durchführen.`,
         status: 'open',
         priority: 'high',
         assigned_to: updated.assigned_cs_user_id,
@@ -123,10 +130,10 @@ router.patch('/:id/status', authenticate, (req, res) => {
         kunde_id: id,
         sourcing: null,
         checklist: [
-          { label: 'WhatsApp kontaktiert',  done: false },
-          { label: 'Erstgespräch geführt',  done: false },
-          { label: 'Design-Brief erstellt', done: false },
-          { label: 'Onboarding abgeschlossen', done: false },
+          { label: 'WhatsApp kontaktiert',                       done: false },
+          { label: 'Erstgespräch mit Kunde geführt',             done: false },
+          { label: 'Onboarding (Henrys Seite) abgeschlossen',    done: false },
+          { label: 'Alle Details geklärt → bereit für Production', done: false },
         ],
       });
     }
