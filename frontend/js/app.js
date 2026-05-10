@@ -1968,6 +1968,18 @@ async function markTaskDone(taskId) {
   loadTasks();
 }
 
+// Color coding by project (visible on the left edge of task cards + as chip tint)
+const PROJECT_THEMES = {
+  Sourcing:        { bar: '#0EA5E9', chipBg: '#E0F2FE', chipText: '#0369A1', icon: '📦' },
+  Onboarding:      { bar: '#8B5CF6', chipBg: '#F3E8FF', chipText: '#6D28D9', icon: '🚀' },
+  Sales:           { bar: '#22C55E', chipBg: '#DCFCE7', chipText: '#15803D', icon: '🎯' },
+  Support:         { bar: '#F59E0B', chipBg: '#FEF3C7', chipText: '#B45309', icon: '🛟' },
+  HR:              { bar: '#EC4899', chipBg: '#FCE7F3', chipText: '#BE185D', icon: '👥' },
+  Marketing:       { bar: '#F97316', chipBg: '#FFEDD5', chipText: '#C2410C', icon: '📣' },
+};
+const DEFAULT_THEME = { bar: '#94A3B8', chipBg: 'var(--bg)', chipText: 'var(--text-secondary)', icon: '📁' };
+function projectTheme(p) { return PROJECT_THEMES[p] || DEFAULT_THEME; }
+
 function dueBadge(due_date, status) {
   if (!due_date || status === 'done') return '';
   const now = new Date();
@@ -2005,30 +2017,30 @@ function renderTasks(tasks) {
     return (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1);
   });
 
-  const priorityBorder = { high: '#EF4444', medium: '#F59E0B', low: '#6B7280' };
-
   container.innerHTML = sorted.map(t => {
     const isOnboarding = t.project === 'Onboarding' && t.status !== 'done';
     const displayTitle = t.title.replace(/^Pre-Onboarding\s*\/\s*Onboarding starten:\s*/i, 'Onboarding starten: ');
-    const firma = isOnboarding ? t.title.replace(/^(?:Pre-Onboarding\s*\/\s*)?Onboarding starten:\s*/i, '').trim() : '';
     const isDone = t.status === 'done';
-    const borderColor = isDone ? '#E5E7EB' : (priorityBorder[t.priority] || '#E5E7EB');
+    const theme = projectTheme(t.project);
+    const barColor = isDone ? 'var(--border)' : theme.bar;
 
     return `
-    <div class="task-card-row" style="background:var(--surface);border-radius:12px;border-left:4px solid ${borderColor};padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);transition:box-shadow .15s,transform .1s;opacity:${isDone?'0.5':'1'};cursor:pointer"
+    <div class="task-card-row" style="background:var(--surface);border-radius:14px;border:1px solid var(--border);border-left:6px solid ${barColor};padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:box-shadow .15s,transform .1s;opacity:${isDone?'0.55':'1'};cursor:pointer"
       onclick="openTaskDetail(${t.id})"
-      onmouseenter="this.style.boxShadow='0 4px 14px rgba(0,0,0,0.1)';this.style.transform='translateY(-1px)'"
-      onmouseleave="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.06)';this.style.transform=''">
+      onmouseenter="this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)';this.style.transform='translateY(-1px)'"
+      onmouseleave="this.style.boxShadow='0 1px 2px rgba(0,0,0,0.04)';this.style.transform=''">
 
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:15px;margin-bottom:3px;${isDone?'text-decoration:line-through;color:var(--text-light)':''}">${displayTitle}</div>
-        ${t.description ? `<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:4px">${t.description.substring(0,90)}${t.description.length>90?'…':''}</div>` : ''}
-        ${t.project ? `<span style="font-size:11px;background:var(--bg);color:var(--text-secondary);padding:2px 8px;border-radius:20px">📁 ${t.project}</span>` : ''}
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
+          ${t.project ? `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:${theme.chipBg};color:${theme.chipText};padding:3px 9px;border-radius:6px">${theme.icon} ${t.project}</span>` : ''}
+          ${badge(t.status)}
+          ${badge(t.priority)}
+        </div>
+        <div style="font-weight:700;font-size:16px;line-height:1.3;margin-bottom:4px;letter-spacing:-.2px;${isDone?'text-decoration:line-through;color:var(--text-light)':'color:var(--text-primary)'}">${displayTitle}</div>
+        ${t.description ? `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55">${t.description.substring(0,110)}${t.description.length>110?'…':''}</div>` : ''}
       </div>
 
-      <div class="task-card-right" style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-        ${badge(t.status)}
-        ${badge(t.priority)}
+      <div class="task-card-right" style="display:flex;align-items:center;gap:8px;flex-shrink:0">
         ${dueBadge(t.due_date, t.status)}
         ${isOnboarding ? `<button class="btn btn-primary" style="font-size:12px;padding:7px 14px;white-space:nowrap" onclick="event.stopPropagation();startOnboardingFromTask(${t.id})">🚀 Onboarding starten</button>` : ''}
         <button class="btn-icon" onclick="event.stopPropagation();editTask(${t.id})" title="Bearbeiten">✏️</button>
@@ -2052,7 +2064,7 @@ async function openTaskDetail(id) {
   // Sourcing block — replace plaintext description with structured table when present
   const srcEl = document.getElementById('tdSourcing');
   if (t.sourcing) {
-    srcEl.innerHTML = renderSourcingDetail(t.sourcing);
+    srcEl.innerHTML = renderSourcingDetail(t.sourcing, t.id);
     srcEl.style.display = '';
     document.getElementById('tdDescription').textContent = '';
   } else {
@@ -2286,7 +2298,7 @@ async function saveSourcingTask() {
   loadTasks();
 }
 
-function renderSourcingDetail(s) {
+function renderSourcingDetail(s, taskId) {
   if (!s || typeof s !== 'object') return '';
   const rows = SOURCING_FIELDS
     .filter(([k]) => s[k])
@@ -2296,8 +2308,51 @@ function renderSourcingDetail(s) {
         <td style="padding:8px 12px;font-size:13px;border-bottom:1px solid var(--border-light)">${s[k]}</td>
       </tr>`).join('');
   return `
-    <div style="padding:10px 14px;background:var(--bg);font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary);border-bottom:1px solid var(--border)">📦 Sourcing-Anfrage</div>
+    <div style="padding:10px 14px;background:var(--bg);font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <span>📦 Sourcing-Anfrage</span>
+      <button class="btn btn-sm btn-secondary" style="font-size:11px;padding:4px 10px" onclick="copySourcingToClipboard(${taskId})">📋 Kopieren</button>
+    </div>
     <table style="width:100%;border-collapse:collapse">${rows}</table>`;
+}
+
+function _escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+async function copySourcingToClipboard(taskId) {
+  const t = allTasks.find(x => x.id === taskId);
+  const s = t?.sourcing;
+  if (!s) return showToast('Keine Sourcing-Daten gefunden', 'error');
+
+  const filled = SOURCING_FIELDS.filter(([k]) => s[k]);
+  // Plain-text — column-aligned for email clients without HTML
+  const labelWidth = Math.max(...filled.map(([, label]) => label.length));
+  const plain = filled.map(([k, label]) => `${label.padEnd(labelWidth, ' ')}  ${s[k]}`).join('\n');
+
+  // HTML — formatted table that looks good in Outlook/Gmail/Apple Mail
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#111">
+<p style="margin:0 0 8px 0;font-weight:700">📦 Sourcing-Anfrage</p>
+<table style="border-collapse:collapse;border:1px solid #ccc">
+${filled.map(([k, label]) => `<tr>
+  <td style="border:1px solid #ccc;padding:6px 10px;background:#f5f5f3;font-weight:600;width:200px">${_escapeHtml(label)}</td>
+  <td style="border:1px solid #ccc;padding:6px 10px">${_escapeHtml(s[k])}</td>
+</tr>`).join('')}
+</table></div>`;
+
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html':  new Blob([html],  { type: 'text/html'  }),
+        'text/plain': new Blob([plain], { type: 'text/plain' }),
+      })]);
+    } else {
+      await navigator.clipboard.writeText(plain);
+    }
+    showToast('In Zwischenablage kopiert!');
+  } catch (err) {
+    console.error('[copy] failed:', err);
+    showToast('Kopieren fehlgeschlagen', 'error');
+  }
 }
 
 async function deleteTask(id) {

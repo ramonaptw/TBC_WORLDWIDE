@@ -365,23 +365,27 @@ tbody tr:last-child td { border-bottom: none; }
 /* ─── Badges ─── */
 .badge {
   display: inline-flex; align-items: center;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 11px; font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 99px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .02em;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
-.badge-new { background: var(--sidebar-hover); color: var(--tbc-blue); }
-.badge-contacted { background: #FFF7ED; color: #EA580C; }
-.badge-qualified { background: #F0FDF4; color: #16A34A; }
-.badge-lost { background: #FEF2F2; color: var(--danger); }
-.badge-open { background: var(--sidebar-hover); color: var(--info); }
-.badge-in_progress { background: #FFFBEB; color: var(--warning); }
-.badge-done { background: #F0FDF4; color: var(--success); }
-.badge-high { background: #FEF2F2; color: var(--danger); }
-.badge-medium { background: #FFFBEB; color: var(--warning); }
-.badge-low { background: #F0FDF4; color: var(--success); }
-.badge-admin { background: #F5F3FF; color: #7C3AED; }
-.badge-manager { background: var(--sidebar-hover); color: var(--tbc-blue); }
-.badge-employee { background: var(--bg); color: var(--text-secondary); }
+.badge-new { background: var(--sidebar-hover); color: var(--tbc-blue); border-color: var(--border); }
+.badge-contacted { background: #FFF7ED; color: #C2410C; border-color: #FED7AA; }
+.badge-qualified { background: #F0FDF4; color: #15803D; border-color: #BBF7D0; }
+.badge-lost { background: #FEF2F2; color: #B91C1C; border-color: #FECACA; }
+.badge-open { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+.badge-in_progress { background: #FFFBEB; color: #B45309; border-color: #FDE68A; }
+.badge-done { background: #F0FDF4; color: #15803D; border-color: #BBF7D0; }
+.badge-high { background: #FEF2F2; color: #B91C1C; border-color: #FECACA; }
+.badge-medium { background: #FFFBEB; color: #B45309; border-color: #FDE68A; }
+.badge-low { background: #F0FDF4; color: #15803D; border-color: #BBF7D0; }
+.badge-admin { background: #F5F3FF; color: #6D28D9; border-color: #DDD6FE; }
+.badge-manager { background: var(--sidebar-hover); color: var(--tbc-blue); border-color: var(--border); }
+.badge-employee { background: var(--bg); color: var(--text-secondary); border-color: var(--border); }
+[data-theme="dark"] .badge { border-color: transparent; }
 
 /* ─── Progress Bar ─── */
 .progress-bar { background: var(--border); border-radius: 10px; height: 8px; overflow: hidden; }
