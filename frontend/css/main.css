@@ -975,6 +975,11 @@ tbody tr:last-child td { border-bottom: none; }
 .ob-log-row.pending .ob-log-icon::before { content:'◌'; color:var(--text-light); }
 @keyframes spin360 { to { transform:rotate(360deg); } }
 
+/* ─── Service-Typ Karten im Member-Modal ─── */
+.kstype-card { transition: background .12s, border-color .12s, box-shadow .12s; }
+.kstype-card:hover { background: var(--sidebar-hover); }
+.kstype-card.active { border-color: var(--tbc-blue); background: var(--sidebar-hover); box-shadow: inset 0 0 0 1px var(--tbc-blue); }
+
 /* ─── Admin Tabs ─── */
 .admin-tabs-row {
   display: flex;

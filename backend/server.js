@@ -43,6 +43,9 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
+// 24h SLA monitor for CS handovers
+require('./lib/sla-monitor').start();
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`TBC App läuft auf http://localhost:${PORT}`);
