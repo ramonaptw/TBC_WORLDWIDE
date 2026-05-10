@@ -1,0 +1,4 @@
+node_modules/
+backend/tbc.db
+backend/tbc-data.json
+.env

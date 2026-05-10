@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>B Mobile – Mitarbeiter-Portal</title>
+  <script>if(localStorage.getItem('tbc_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/api/brand/logo" type="image/png">
+
+  <!-- iOS Home Screen / PWA -->
+  <link rel="apple-touch-icon" href="/api/brand/logo">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="B Mobile">
+  <meta name="theme-color" content="#0F1E45">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<script>
+  if (!localStorage.getItem('tbc_token')) window.location.href = '/';
+</script>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="/api/brand/logo" alt="Logo" class="sidebar-logo-img" id="sidebarLogo">
+      <div class="logo-text">
+        <strong id="appName"></strong>
+        <span>Mitarbeiter-Portal</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <span class="icon">📊</span> Dashboard
+      </button>
+
+      <div class="nav-section-label">Tools</div>
+      <button class="nav-item" data-roles="admin,employee,newbusiness" onclick="showPage('leads')">
+        <span class="icon">➕</span> Insta Leads
+      </button>
+      <button class="nav-item" data-roles="admin,employee,newbusiness" onclick="openHsLeadModal()">
+        <span class="icon">➕</span> HubSpot Lead
+      </button>
+      <button class="nav-item" data-roles="admin,employee,newbusiness,customersuccess" onclick="showPage('deal')">
+        <span class="icon">🤝</span> Onboarding starten
+      </button>
+      <button class="nav-item" onclick="showPage('tools')">
+        <span class="icon">🔗</span> Tools & Links
+      </button>
+
+      <div class="nav-section-label" data-nav-section="sales">Sales</div>
+      <button class="nav-item" data-roles="admin,employee,newbusiness" onclick="showPage('statistik')">
+        <span class="icon">📈</span> Statistik
+      </button>
+
+      <div class="nav-section-label" data-nav-section="verwaltung">Verwaltung</div>
+      <button class="nav-item" data-roles="admin,manager,hr" onclick="showPage('employees')">
+        <span class="icon">👥</span> Mitarbeiter
+      </button>
+      <button class="nav-item" data-roles="admin,manager,employee,customersuccess,hr" onclick="showPage('onboarding')">
+        <span class="icon">🚀</span> Onboarding
+      </button>
+      <button class="nav-item" data-roles="admin,manager,employee,customersuccess,sellsupport,hr" onclick="showPage('tasks')">
+        <span class="icon">✅</span> Aufgaben
+      </button>
+      <button class="nav-item" onclick="showPage('feedback')">
+        <span class="icon">💬</span> Feedback
+      </button>
+
+    </nav>
+  </aside>
+
+  <!-- Sidebar overlay for mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Main -->
+  <div class="main-content">
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()" aria-label="Menü">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="topbar-title">
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageSubtitle">Willkommen im TBC Mitarbeiter-Portal</p>
+      </div>
+      <div class="topbar-actions" id="topbarActions"></div>
+
+      <!-- User menu -->
+      <div style="position:relative;margin-left:16px" id="userMenuWrap">
+        <div onclick="toggleUserMenu()" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:background .15s" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">
+          <div class="user-avatar" id="sidebarAvatar" style="width:34px;height:34px;font-size:13px">?</div>
+          <div style="line-height:1.3">
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary)" id="sidebarName">–</div>
+            <div style="font-size:11px;color:var(--text-secondary)" id="sidebarRole">–</div>
+          </div>
+          <span style="font-size:10px;color:var(--text-light);margin-left:2px">▼</span>
+        </div>
+
+        <!-- Dropdown -->
+        <div id="userMenuDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:180px;z-index:1000;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border-light)">
+            <div style="font-size:12px;font-weight:700" id="userMenuName">–</div>
+            <div style="font-size:11px;color:var(--text-secondary)" id="userMenuRole">–</div>
+          </div>
+          <button onclick="closeUserMenu();openProfileModal()" style="display:block;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">👤 Profil bearbeiten</button>
+          <button id="darkModeBtn" onclick="toggleDarkMode()" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''"><span id="darkModeIcon">🌙</span> <span id="darkModeLabel">Dark Mode</span></button>
+          <button id="userMenuAdmin" onclick="closeUserMenu();showPage('admin')" style="display:none;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--text-primary)" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">🛡️ Admin-Bereich</button>
+          <button onclick="closeUserMenu();logout()" style="display:block;width:100%;text-align:left;padding:10px 16px;font-size:13px;background:none;border:none;cursor:pointer;color:var(--danger)" onmouseenter="this.style.background='#FEF2F2'" onmouseleave="this.style.background=''">⏻ Abmelden</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <div class="page active" id="page-dashboard">
+
+        <!-- Greeting -->
+        <div class="dash-greeting">
+          <div id="welcomeMsg"></div>
+          <div id="dashDate" class="dash-date"></div>
+        </div>
+
+        <!-- Commitment Banner -->
+        <div id="commitBanner" style="display:none"></div>
+
+        <!-- KPI Row -->
+        <div class="dash-kpi-row" id="dashKpi"></div>
+
+        <!-- Recent + News -->
+        <div class="grid-2" id="dashGrid" style="margin-top:0">
+          <div class="card" id="dashRecentCard">
+            <div class="card-header"><h2>🕐 Zuletzt hinzugefügt</h2></div>
+            <div id="dashRecent" style="padding:0"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2>📢 Ankündigungen</h2>
+              <button class="btn btn-sm btn-secondary" id="btnAddNews" style="display:none" onclick="openModal('modalNews')">+ Neu</button>
+            </div>
+            <div id="dashNews" style="padding:0"></div>
+          </div>
+        </div>
+
+        <!-- Open Tasks -->
+        <div class="card" id="dashTasksCard" style="margin-top:16px">
+          <div class="card-header"><h2>✅ Meine offenen Aufgaben</h2></div>
+          <div id="dashTasks" style="padding:0"></div>
+        </div>
+
+      </div>
+
+      <!-- ═══ INSTA LEADS ═══ -->
+      <div class="page" id="page-leads">
+        <div style="max-width:520px;margin:0 auto">
+
+          <!-- Tabs -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-body" style="padding:16px">
+              <div class="lead-tab-row">
+                <button class="lead-tab active" id="ltab-scan" onclick="leadSwitchTab('scan')">📷 Screenshot</button>
+                <button class="lead-tab" id="ltab-insta" onclick="leadSwitchTab('insta')">🔍 Instagram suchen</button>
+              </div>
+
+              <!-- Screenshot Pane -->
+              <div id="lpane-scan">
+                <div class="lead-upload" id="leadUpload">
+                  <input type="file" id="leadFile" accept="image/*">
+                  <div class="lead-upload-icon">📷</div>
+                  <div style="font-weight:600;font-size:14px;margin-bottom:3px">Instagram-Screenshot hochladen</div>
+                  <div style="font-size:12px;color:var(--text-light)">Tippen zum Auswählen · PNG, JPG, HEIC</div>
+                </div>
+                <div id="leadConverting" style="display:none;text-align:center;font-size:13px;color:var(--text-secondary);padding:10px">⏳ Wird vorbereitet…</div>
+                <div id="leadPreview" style="display:none;position:relative;margin-top:10px">
+                  <img id="leadPreviewImg" src="" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
+                  <button onclick="leadClearImg()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">×</button>
+                </div>
+              </div>
+
+              <!-- Instagram Pane -->
+              <div id="lpane-insta" style="display:none">
+                <div style="position:relative">
+                  <div style="position:relative">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-light);font-size:14px;pointer-events:none">🔍</span>
+                    <input type="text" id="leadInstaInput" placeholder="Name oder @username suchen…" oninput="leadOnInstaInput()" onkeydown="leadInstaKeydown(event)" autocomplete="off" autocorrect="off" autocapitalize="off" class="form-control" style="padding-left:36px">
+                  </div>
+                  <div id="leadInstaSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);z-index:200;margin-top:4px;overflow:hidden"></div>
+                </div>
+                <div id="leadInstaPreview" style="display:none;margin-top:12px">
+                  <div class="lead-insta-card" id="leadInstaCard"></div>
+                </div>
+                <div id="leadInstaStatus" style="font-size:12px;color:var(--text-light);margin-top:6px;min-height:16px"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Salesperson -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-body" style="padding:16px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:12px">Salesperson</div>
+              <div class="lead-person-grid" id="leadPersonGrid"></div>
+            </div>
+          </div>
+
+          <!-- Go Button -->
+          <button class="btn btn-primary" id="leadGoBtn" onclick="leadRun()" disabled style="width:100%;padding:13px;font-size:15px;justify-content:center;margin-bottom:12px">Analysieren &amp; prüfen</button>
+
+          <!-- Status -->
+          <div id="leadStatus" style="display:none"></div>
+
+          <!-- Exists Card -->
+          <div class="card" id="leadExistsCard" style="display:none;margin-bottom:12px">
+            <div class="card-body" style="padding:16px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:12px">Ähnliche Einträge gefunden</div>
+              <div id="leadExistsContent"></div>
+              <div id="leadReassignStatus" style="margin-top:8px"></div>
+              <button class="btn btn-primary" id="leadReassignBtn" onclick="leadDoReassign()" style="display:none;width:100%;justify-content:center;margin-top:8px"></button>
+              <button class="btn btn-secondary" onclick="leadForceCreate()" style="width:100%;justify-content:center;margin-top:8px">Neu anlegen</button>
+            </div>
+          </div>
+
+          <!-- New Card -->
+          <div class="card" id="leadNewCard" style="display:none;margin-bottom:12px">
+            <div class="card-body" style="padding:16px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:12px">Erkannter Name <span class="badge badge-new" style="margin-left:6px">Neu</span></div>
+              <div class="form-group">
+                <label class="form-label">Unternehmensname</label>
+                <input type="text" id="leadNameInput" class="form-control" placeholder="Name prüfen...">
+              </div>
+              <div class="form-group" id="leadWebsiteRow" style="display:none">
+                <label class="form-label">Website</label>
+                <input type="text" id="leadWebsiteInput" class="form-control" placeholder="https://...">
+              </div>
+              <div style="background:var(--bg);border-radius:8px;padding:12px;font-size:13px;color:var(--text-secondary);margin-bottom:16px">
+                Typ: <strong>Instagram</strong> · Pipeline: <strong>[DE] Cold Sales · Qualification</strong><br>
+                Owner: <strong id="leadOwnerLabel">—</strong>
+              </div>
+              <button class="btn btn-success" id="leadCreateBtn" onclick="leadCreate()" style="width:100%;justify-content:center">In HubSpot anlegen</button>
+              <button class="btn btn-secondary" onclick="leadReset()" style="width:100%;justify-content:center;margin-top:8px">Abbrechen</button>
+            </div>
+          </div>
+
+          <!-- Done Card -->
+          <div class="card" id="leadDoneCard" style="display:none">
+            <div class="card-body" style="padding:16px">
+              <div id="leadDoneContent" class="alert alert-success" style="margin-bottom:12px"></div>
+              <button class="btn btn-secondary" onclick="leadReset()" style="width:100%;justify-content:center">Neuer Lead</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ═══ DEAL ÜBERGEBEN ═══ -->
+      <div class="page" id="page-deal">
+        <div style="max-width:520px;margin:0 auto">
+
+          <!-- Deal laden -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-body" style="padding:20px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:12px">Deal</div>
+
+              <div id="dealInputView">
+                <!-- Mode tabs -->
+                <div class="lead-tab-row" style="margin-bottom:14px">
+                  <button class="lead-tab active" id="obTab-kunde" onclick="obSwitchMode('kunde')">🏆 Aus Member-Liste</button>
+                  <button class="lead-tab" id="obTab-id" onclick="obSwitchMode('id')">🔗 Deal-ID eingeben</button>
+                </div>
+
+                <!-- Kunden mode -->
+                <div id="obPane-kunde">
+                  <select class="form-control" id="obKundeSelect" onchange="obOnKundeSelect()">
+                    <option value="">Member auswählen…</option>
+                  </select>
+                  <div id="obKundeDeals" style="margin-top:10px"></div>
+                </div>
+
+                <!-- Manual ID mode -->
+                <div id="obPane-id" style="display:none">
+                  <div style="display:flex;gap:8px">
+                    <div style="position:relative;flex:1">
+                      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-light);pointer-events:none">🔗</span>
+                      <input type="text" id="dealIdInput" class="form-control" placeholder="Deal-ID eingeben (z.B. 501853849788)…" style="padding-left:36px" autocomplete="off" onkeydown="if(event.key==='Enter')obLoadDeal()">
+                    </div>
+                    <button class="btn btn-primary" id="obLoadBtn" onclick="obLoadDeal()">Laden</button>
+                  </div>
+                </div>
+                <div id="obIdStatus" style="margin-top:8px;font-size:12px;color:var(--text-secondary)"></div>
+              </div>
+
+              <div id="dealSelectedView" style="display:none">
+                <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:2px solid var(--tbc-blue);border-radius:8px;padding:12px 14px">
+                  <div>
+                    <div style="font-weight:700;font-size:14px" id="obDealName">—</div>
+                    <div style="font-size:12px;color:var(--text-secondary);margin-top:2px" id="obDealSub">—</div>
+                  </div>
+                  <button class="btn btn-sm btn-secondary" onclick="obClearDeal()">ändern</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Übergeber -->
+          <div class="card" id="obSenderCard" style="display:none;margin-bottom:16px">
+            <div class="card-body" style="padding:20px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:12px">Wer übergibt? (NB Credits)</div>
+              <div class="ob-person-grid" id="obSenderGrid"></div>
+            </div>
+          </div>
+
+          <!-- Onboarding Person -->
+          <div class="card" id="obOwnerCard" style="display:none;margin-bottom:16px">
+            <div class="card-body" style="padding:20px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:12px">Onboarding-Verantwortliche/r</div>
+              <div style="display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+                <div class="avatar" style="background:#e0eef9;color:#0d3d6b;width:40px;height:40px;font-size:13px">HS</div>
+                <div>
+                  <div style="font-weight:600;font-size:14px">Henry Salazar</div>
+                  <div style="font-size:11px;color:var(--text-secondary)">Onboarding</div>
+                </div>
+                <span class="badge badge-employee" style="margin-left:auto">Onboarding</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Briefing -->
+          <div class="card" id="obBriefingCard" style="display:none;margin-bottom:16px">
+            <div class="card-body" style="padding:20px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:16px">Onboarding Briefing</div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div class="form-group" style="margin:0"><label class="form-label">Trigger / Dringlichkeit</label><textarea class="form-control" id="ob_trigger" placeholder="z.B. Neueröffnung, Rebrand, saisonaler Bedarf…"></textarea></div>
+                <div class="form-group" style="margin:0"><label class="form-label">Warum kaufen Sie jetzt?</label><textarea class="form-control" id="ob_why" placeholder="Konkreter Auslöser, Timing, externer Druck…"></textarea></div>
+                <div class="form-group" style="margin:0"><label class="form-label">Erwartungen & Risiken</label><textarea class="form-control" id="ob_expectations" placeholder="Was erwartet der Kunde, wo könnten Probleme entstehen?"></textarea></div>
+                <div class="form-group" style="margin:0"><label class="form-label">Besondere Wünsche</label><textarea class="form-control" id="ob_special" placeholder="Spezielle Anforderungen, Sonderwünsche…"></textarea></div>
+                <div class="form-group" style="margin:0"><label class="form-label">Wachstumspotenzial</label><textarea class="form-control" id="ob_growth" placeholder="Upsell-Potenzial, weitere Standorte, Erweiterungen…"></textarea></div>
+                <div class="form-group" style="margin:0"><label class="form-label">Kommunizierte Lieferzeit</label><input type="text" class="form-control" id="ob_delivery" placeholder="z.B. 3–4 Wochen ab Freigabe"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <button class="btn btn-primary" id="obSubmitBtn" onclick="obRun()" disabled style="width:100%;justify-content:center;padding:14px;font-size:15px;margin-bottom:16px">Onboarding starten</button>
+
+          <!-- Log -->
+          <div class="card" id="obLogCard" style="display:none;margin-bottom:16px">
+            <div class="card-body" style="padding:20px;display:flex;flex-direction:column;gap:10px" id="obLogInner"></div>
+          </div>
+
+          <!-- Success -->
+          <div class="card" id="obSuccessCard" style="display:none;border-color:#BBF7D0">
+            <div class="card-body" style="padding:24px;text-align:center">
+              <div style="font-size:32px;margin-bottom:10px">✅</div>
+              <h2 style="font-size:17px;font-weight:700;margin-bottom:6px">Onboarding gestartet</h2>
+              <p style="font-size:13px;color:var(--text-secondary)" id="obSuccessText"></p>
+              <button class="btn btn-secondary" onclick="obResetAll()" style="margin-top:16px">Weiteren Deal starten</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ═══ EMPLOYEES ═══ -->
+      <div class="page" id="page-employees">
+        <div class="filters-row">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="empSearch" placeholder="Suche..." oninput="filterEmployees()">
+          </div>
+          <select class="form-control" style="width:auto" id="empDeptFilter" onchange="filterEmployees()">
+            <option value="">Alle Abteilungen</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Mitarbeiter</th><th>Abteilung</th><th>Position</th><th>Rolle</th><th>Telefon</th><th></th></tr>
+              </thead>
+              <tbody id="empTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ONBOARDING ═══ -->
+      <div class="page" id="page-onboarding">
+        <div id="onboardingContent"></div>
+      </div>
+
+      <!-- ═══ STATISTIK ═══ -->
+      <div class="page" id="page-statistik">
+        <div class="filters-row" style="margin-bottom:20px">
+          <select class="form-control" style="width:auto" id="statMonth" onchange="loadStatistik()"></select>
+        </div>
+        <div id="statistikContent"></div>
+      </div>
+
+      <!-- ═══ DATENBANK ═══ -->
+      <div class="page" id="page-datenbank">
+        <div class="filters-row">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="dbSearch" placeholder="Firma suchen…" oninput="loadDatenbank()">
+          </div>
+          <select class="form-control" style="width:auto" id="dbKanal" onchange="loadDatenbank()">
+            <option value="">Alle Kanäle</option>
+            <option>Instagram</option>
+            <option>Kaltakquise</option>
+            <option>Messe</option>
+            <option>Empfehlung</option>
+            <option>LinkedIn</option>
+            <option>Website</option>
+            <option>Sonstiges</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Firma</th><th>Kanal</th><th>Abschluss</th><th>Umsatz</th><th>Marge</th><th>Mitarbeiter</th><th>Status</th><th></th></tr>
+              </thead>
+              <tbody id="datenbankTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ WIKI ═══ -->
+      <div class="page" id="page-wiki">
+        <div class="filters-row" style="gap:10px;align-items:center;margin-bottom:20px">
+          <div class="search-bar" style="flex:1;max-width:440px">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="wikiSearch" placeholder="Artikel suchen…" oninput="wikiOnSearch()" autocomplete="off">
+            <button id="wikiSearchClear" onclick="wikiClearSearch()" style="display:none;background:none;border:none;cursor:pointer;color:var(--text-light);padding:0 6px;font-size:16px;line-height:1">✕</button>
+          </div>
+          <span id="wikiSearchCount" style="font-size:12px;color:var(--text-light);display:none"></span>
+          <button class="btn btn-primary btn-sm" onclick="openNewWikiModal()" style="margin-left:auto;white-space:nowrap">+ Artikel anlegen</button>
+        </div>
+        <div id="wikiCatView"></div>
+        <div id="wikiSearchView" style="display:none"></div>
+      </div>
+
+      <!-- ═══ TASKS ═══ -->
+      <div class="page" id="page-tasks">
+        <div class="filters-row">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="taskSearch" placeholder="Aufgabe suchen..." oninput="filterTasks()">
+          </div>
+          <select class="form-control" style="width:auto" id="taskStatus" onchange="loadTasks()">
+            <option value="">Alle Status</option>
+            <option value="open">Offen</option>
+            <option value="in_progress">In Arbeit</option>
+            <option value="done">Erledigt</option>
+          </select>
+          <select class="form-control" style="width:auto" id="taskPriority" onchange="loadTasks()">
+            <option value="">Alle Prioritäten</option>
+            <option value="high">Hoch</option>
+            <option value="medium">Mittel</option>
+            <option value="low">Niedrig</option>
+          </select>
+        </div>
+        <div id="tasksContainer"></div>
+      </div>
+
+      <!-- ═══ TOOLS ═══ -->
+      <div class="page" id="page-tools">
+        <div id="toolsContent"></div>
+      </div>
+
+      <!-- ═══ CALLLISTE ═══ -->
+      <div class="page" id="page-calllist">
+        <div style="max-width:800px">
+
+          <!-- Wochenliste -->
+          <div class="card" id="calllistWeekCard" style="margin-bottom:20px">
+            <div class="card-header" style="padding:14px 18px 10px">
+              <h2 style="font-size:15px">⭐ Meine Wochenliste</h2>
+              <button class="btn btn-sm btn-secondary" onclick="clearCalllistWeek()" id="calllistWeekClearBtn" style="font-size:11px">Liste leeren</button>
+            </div>
+            <div id="calllistWeekBody" style="padding:0">
+              <div style="padding:16px;font-size:13px;color:var(--text-secondary)">Lädt…</div>
+            </div>
+          </div>
+
+          <!-- Neue Liste erstellen -->
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header" style="padding:14px 18px 10px">
+              <h2 style="font-size:15px">📞 Callliste erstellen</h2>
+            </div>
+            <div class="card-body" style="padding:16px">
+              <div style="margin-bottom:14px">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);margin-bottom:8px">Salesperson</div>
+                <div class="lead-person-grid" id="calllistPersonGrid"></div>
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+                <div>
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);margin-bottom:6px">Anzahl Unternehmen</div>
+                  <input type="number" id="calllistLimit" value="20" min="1" max="100" class="form-control" style="width:90px">
+                </div>
+                <button class="btn btn-primary" onclick="loadCalllist()" id="calllistBtn">Liste erstellen</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="calllistStatus"></div>
+          <div id="calllistResults"></div>
+        </div>
+      </div>
+
+      <!-- ═══ ADMIN ═══ -->
+      <!-- ═══ FEEDBACK ═══ -->
+      <div class="page" id="page-feedback">
+        <div class="page-header" style="margin-bottom:24px">
+          <h1 style="font-size:20px;font-weight:700">💬 Feedback</h1>
+          <p style="font-size:13px;color:var(--text-secondary);margin-top:4px">Gib Feedback zu verschiedenen Bereichen — anonym und offen.</p>
+        </div>
+
+        <!-- Topic selector -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-body" style="padding:20px">
+            <div class="form-group">
+              <label class="form-label">Thema</label>
+              <select class="form-control" id="fbTopic">
+                <option value="TBC Deutschland Tool">TBC Deutschland Tool</option>
+                <option value="Design">Design</option>
+                <option value="Produktion">Produktion</option>
+                <option value="Prozesse">Prozesse</option>
+                <option value="Onboarding">Onboarding</option>
+                <option value="Sonstiges">Sonstiges</option>
+              </select>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text-secondary)">Bewertung</div>
+              <div id="fbStars" style="display:flex;gap:4px;font-size:28px;cursor:pointer">
+                <span data-v="1">☆</span><span data-v="2">☆</span><span data-v="3">☆</span><span data-v="4">☆</span><span data-v="5">☆</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Was funktioniert nicht gut? ⚠️</label>
+              <textarea class="form-control" id="fbPros" style="min-height:70px" placeholder="z.B. Laden dauert zu lang, Funktion fehlt…"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Wie könnte man es verbessern? 💡</label>
+              <textarea class="form-control" id="fbCons" style="min-height:70px" placeholder="z.B. Schnellere Navigation, klarere Bezeichnungen…"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="submitFeedback()">Feedback abschicken</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-admin">
+        <!-- Tab nav -->
+        <div class="admin-tabs-row" style="display:flex;align-items:center;gap:2px;margin-bottom:24px;border-bottom:2px solid var(--border)">
+          <button class="admin-tab active" id="adminTab-overview" onclick="switchAdminTab('overview')">📊 Übersicht</button>
+          <button class="admin-tab" id="adminTab-users" onclick="switchAdminTab('users')">👥 Benutzer</button>
+          <button class="admin-tab" id="adminTab-tasks" onclick="switchAdminTab('tasks')">✅ Aufgaben</button>
+          <button class="admin-tab" id="adminTab-feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
+          <button class="admin-tab" id="adminTab-settings" onclick="switchAdminTab('settings')">⚙️ Einstellungen</button>
+        </div>
+
+        <!-- Übersicht -->
+        <div id="adminPanel-overview">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+            <button class="btn btn-secondary" style="font-size:12px;padding:5px 14px" onclick="exportUsersCSV()">⬇ Export Excel</button>
+          </div>
+          <div id="adminKpi" class="admin-kpi-row" style="margin-bottom:20px"></div>
+          <div class="admin-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="card">
+              <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">📈 Umsatz nach Monat</h2></div>
+              <div id="adminMonthly" style="padding:0"></div>
+            </div>
+            <div class="card">
+              <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🏆 Beste Vertriebskanäle</h2></div>
+              <div id="adminChannels" style="padding:0"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🥇 Top Performer</h2></div>
+            <div id="adminTopPerformers" style="padding:0"></div>
+          </div>
+        </div>
+
+        <!-- Benutzer -->
+        <div id="adminPanel-users" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <h2>👥 Benutzer</h2>
+              <button class="btn btn-primary btn-sm" onclick="openAdminNewUser()">+ Nutzer anlegen</button>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>Name</th><th>E-Mail</th><th>Rolle</th><th>Position</th><th>Abteilung</th><th></th></tr></thead>
+                <tbody id="adminUsersTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aufgaben -->
+        <div id="adminPanel-tasks" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <h2>✅ Alle Aufgaben</h2>
+              <select class="form-control" id="adminTaskStatus" style="width:auto;font-size:12px" onchange="loadAdminTasks()">
+                <option value="">Alle Status</option>
+                <option value="open">Offen</option>
+                <option value="in_progress">In Arbeit</option>
+                <option value="done">Erledigt</option>
+              </select>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>Aufgabe</th><th>Zuständig</th><th>Status</th><th>Fällig</th></tr></thead>
+                <tbody id="adminTasksTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback -->
+        <div id="adminPanel-feedback" style="display:none">
+          <div class="card">
+            <div class="card-header"><h2>💬 Feedback-Übersicht</h2></div>
+            <div id="adminFeedbackList"></div>
+          </div>
+        </div>
+
+        <!-- Einstellungen -->
+        <div id="adminPanel-settings" style="display:none">
+          <div class="card" style="max-width:480px;margin-bottom:20px">
+            <div class="card-header"><h2>✏️ App-Name</h2></div>
+            <div class="card-body" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+              <div style="font-size:13px;color:var(--text-secondary)">Wird überall in der App, im Browser-Tab und auf der Login-Seite angezeigt.</div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input class="form-control" id="appNameInput" placeholder="z.B. B Mobile" style="flex:1">
+                <button class="btn btn-primary btn-sm" onclick="saveAppName()">Speichern</button>
+              </div>
+              <div id="appNameStatus" style="font-size:13px;min-height:16px"></div>
+            </div>
+          </div>
+          <div class="card" style="max-width:480px">
+            <div class="card-header"><h2>🖼️ App-Logo</h2></div>
+            <div class="card-body" style="padding:20px;display:flex;flex-direction:column;gap:16px">
+              <div style="font-size:13px;color:var(--text-secondary)">
+                Logo hochladen – wird in der Sidebar, auf dem Login-Screen und als App-Icon verwendet.<br>
+                <span style="font-size:12px;color:var(--text-light)">PNG, JPG oder SVG · empfohlen: quadratisch, mind. 180×180px</span>
+              </div>
+
+              <!-- Current logo preview -->
+              <div style="display:flex;align-items:center;gap:16px">
+                <img id="logoPreviewCurrent" src="/api/brand/logo" alt="Aktuelles Logo"
+                     style="width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid var(--border)">
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px">Aktuelles Logo</div>
+                  <div style="font-size:11px;color:var(--text-light)" id="logoCurrentLabel">Wird geladen…</div>
+                </div>
+              </div>
+
+              <!-- Upload area -->
+              <div id="logoUploadArea" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s"
+                   onclick="document.getElementById('logoFileInput').click()"
+                   ondragover="event.preventDefault();this.style.borderColor='var(--tbc-blue)'"
+                   ondragleave="this.style.borderColor=''"
+                   ondrop="event.preventDefault();this.style.borderColor='';logoHandleDrop(event)">
+                <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="logoPreviewFile(this.files[0])">
+                <div id="logoUploadContent">
+                  <div style="font-size:28px;margin-bottom:8px">📁</div>
+                  <div style="font-size:13px;font-weight:600">Datei auswählen oder hierher ziehen</div>
+                  <div style="font-size:11px;color:var(--text-light);margin-top:4px">PNG, JPG, SVG</div>
+                </div>
+              </div>
+
+              <!-- New logo preview (after selection) -->
+              <div id="logoNewPreviewWrap" style="display:none;align-items:center;gap:16px">
+                <img id="logoNewPreview" src="" alt="Vorschau"
+                     style="width:80px;height:80px;border-radius:14px;object-fit:cover;border:2px solid var(--tbc-blue)">
+                <div style="flex:1">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:4px" id="logoNewName">–</div>
+                  <div style="font-size:11px;color:var(--text-light)" id="logoNewSize">–</div>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="logoResetPick()">✕</button>
+              </div>
+
+              <button class="btn btn-primary" id="logoUploadBtn" onclick="logoUpload()" disabled style="justify-content:center">
+                Logo hochladen &amp; aktivieren
+              </button>
+              <div id="logoUploadStatus" style="font-size:13px;min-height:18px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- New / Edit Employee -->
+<div class="modal-overlay" id="modalEmployee" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="empModalTitle">Nutzer anlegen</h3>
+      <button class="modal-close" onclick="closeModal('modalEmployee')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="empId">
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Name *</label><input class="form-control" id="empName" placeholder="Max Mustermann"></div>
+        <div class="form-group"><label class="form-label">E-Mail *</label><input class="form-control" id="empEmail" type="email"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" id="empPasswordLabel">Passwort *</label>
+          <input class="form-control" id="empPassword" type="password">
+        </div>
+        <div class="form-group"><label class="form-label">Rolle</label>
+          <select class="form-control" id="empRole">
+            <option value="employee">Mitarbeiter</option>
+            <option value="sellsupport">Sales Support</option>
+            <option value="newbusiness">New Business</option>
+            <option value="customersuccess">Customer Success</option>
+            <option value="hr">Human Resources</option>
+            <option value="manager">Human Resources</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Abteilung</label><input class="form-control" id="empDept"></div>
+        <div class="form-group"><label class="form-label">Position</label><input class="form-control" id="empPosition"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Telefon</label><input class="form-control" id="empPhone"></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:4px">
+        <input type="checkbox" id="empDoesOnboarding" style="width:16px;height:16px;cursor:pointer">
+        <label for="empDoesOnboarding" style="font-size:13px;cursor:pointer;margin:0">Macht Onboardings (versteckt "Onboarding starten" in der Navigation)</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalEmployee')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Prospect Modal -->
+<div class="modal-overlay" id="modalProspect" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="prospectModalTitle">Prospect hinzufügen</h3>
+      <button class="modal-close" onclick="closeModal('modalProspect')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prospectId">
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Name *</label><input class="form-control" id="pName" placeholder="Vorname Nachname"></div>
+        <div class="form-group"><label class="form-label">Unternehmen</label><input class="form-control" id="pCompany"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">E-Mail</label><input class="form-control" id="pEmail" type="email"></div>
+        <div class="form-group"><label class="form-label">Telefon</label><input class="form-control" id="pPhone"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-control" id="pStatus">
+            <option value="new">Neu</option>
+            <option value="contacted">Kontaktiert</option>
+            <option value="qualified">Qualifiziert</option>
+            <option value="lost">Verloren</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Quelle</label>
+          <select class="form-control" id="pSource">
+            <option value="">– wählen –</option>
+            <option value="Website">Website</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="Empfehlung">Empfehlung</option>
+            <option value="Kaltakquise">Kaltakquise</option>
+            <option value="Messe">Messe</option>
+            <option value="Sonstiges">Sonstiges</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Zugewiesen an</label>
+        <select class="form-control" id="pAssigned"><option value="">– niemanden –</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Notizen</label><textarea class="form-control" id="pNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalProspect')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveProspect()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="modalTask" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="taskModalTitle">Aufgabe erstellen</h3>
+      <button class="modal-close" onclick="closeModal('modalTask')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="taskId">
+      <div class="form-group"><label class="form-label">Titel *</label><input class="form-control" id="tTitle"></div>
+      <div class="form-group"><label class="form-label">Beschreibung</label><textarea class="form-control" id="tDesc"></textarea></div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-control" id="tStatus">
+            <option value="open">Offen</option>
+            <option value="in_progress">In Arbeit</option>
+            <option value="done">Erledigt</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Priorität</label>
+          <select class="form-control" id="tPriority">
+            <option value="medium">Mittel</option>
+            <option value="high">Hoch</option>
+            <option value="low">Niedrig</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Projekt</label><input class="form-control" id="tProject"></div>
+        <div class="form-group"><label class="form-label">Fälligkeitsdatum</label><input class="form-control" type="date" id="tDue"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Zugewiesen an</label>
+        <select class="form-control" id="tAssigned"><option value="">– niemanden –</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalTask')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveTask()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Announcement Modal -->
+<div class="modal-overlay" id="modalNews" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Ankündigung erstellen</h3>
+      <button class="modal-close" onclick="closeModal('modalNews')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Titel *</label><input class="form-control" id="newsTitle"></div>
+      <div class="form-group"><label class="form-label">Inhalt *</label><textarea class="form-control" id="newsContent" style="min-height:120px"></textarea></div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="newsPinned"> <span class="form-label" style="margin:0">📌 Anpinnen</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalNews')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveNews()">Veröffentlichen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Detail Modal -->
+<div class="modal-overlay" id="modalTaskDetail" style="display:none">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <div style="flex:1;min-width:0">
+        <div id="tdBadgeRow" style="display:flex;gap:6px;margin-bottom:8px"></div>
+        <h3 id="tdTitle" style="font-size:17px;line-height:1.3"></h3>
+        <div id="tdMeta" style="font-size:12px;color:var(--text-secondary);margin-top:5px;display:flex;gap:14px;flex-wrap:wrap"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modalTaskDetail')" style="align-self:flex-start;margin-left:12px">✕</button>
+    </div>
+    <div class="modal-body" style="padding-top:16px">
+      <div id="tdDescription" style="font-size:14px;line-height:1.7;color:var(--text-secondary);margin-bottom:16px;white-space:pre-wrap"></div>
+      <!-- Checklist (Onboarding tasks) -->
+      <div id="tdChecklist" style="display:none;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">✅ Checkliste</div>
+        <div id="tdChecklistItems"></div>
+        <!-- Phase selector for onboarding users -->
+        <div id="tdPhaseSection" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border-light)">
+          <label class="form-label">Phase aktualisieren</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px" id="tdPhaseButtons"></div>
+        </div>
+      </div>
+      <div id="tdOnboardingBtn" style="display:none;margin-bottom:16px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- HubSpot Lead Modal -->
+<div class="modal-overlay" id="modalHsLead" style="display:none">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h3 class="modal-title">Lead in HubSpot einpflegen</h3>
+      <button class="modal-close" onclick="closeModal('modalHsLead')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Firmenname *</label>
+          <input class="form-control" id="hlFirma" placeholder="z.B. Muster GmbH">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Website / URL</label>
+          <input class="form-control" id="hlUrl" placeholder="https://...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kontaktperson *</label>
+          <input class="form-control" id="hlName" placeholder="Vorname Nachname">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-Mail</label>
+          <input class="form-control" id="hlEmail" type="email" placeholder="kontakt@firma.de">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefon</label>
+          <input class="form-control" id="hlPhone" placeholder="+49 ...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pipeline</label>
+          <select class="form-control" id="hlPipeline">
+            <option value="1073833178">DE Cold Sales</option>
+            <option value="250370754">NL Pipeline</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:4px">
+        <label class="form-label">Notizen / Informationen</label>
+        <textarea class="form-control" id="hlNotes" style="min-height:80px" placeholder="Weitere Infos zum Lead…"></textarea>
+      </div>
+      <div id="hlStatus" style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;min-height:20px"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="submitHsLead()">Lead in HubSpot anlegen →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Announcement Read Modal -->
+<div class="modal-overlay" id="modalNewsRead" style="display:none">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div style="flex:1;min-width:0">
+        <div id="newsReadPinned" style="font-size:10px;font-weight:700;color:var(--tbc-blue);letter-spacing:0.5px;margin-bottom:4px;display:none">📌 ANGEPINNT</div>
+        <h3 id="newsReadTitle" style="font-size:18px;line-height:1.3"></h3>
+        <div id="newsReadMeta" style="font-size:12px;color:var(--text-secondary);margin-top:4px;font-weight:400"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modalNewsRead')" style="align-self:flex-start;margin-left:12px">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="newsReadContent" style="font-size:14px;line-height:1.75;color:var(--text-primary);white-space:pre-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Wiki Article Modal -->
+<style>
+/* ── Wiki Category View ── */
+.wiki-cat-section{border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;background:var(--bg-white)}
+.wiki-cat-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none;transition:background .12s}
+.wiki-cat-header:hover{background:var(--bg)}
+.wiki-cat-icon{font-size:18px;flex-shrink:0}
+.wiki-cat-name{font-size:14px;font-weight:700;flex:1}
+.wiki-cat-count{font-size:11px;color:var(--text-light);background:var(--bg);border:1px solid var(--border);border-radius:100px;padding:2px 9px;font-weight:600}
+.wiki-cat-chevron{font-size:18px;color:var(--text-light);transition:transform .2s;font-weight:300}
+.wiki-cat-body{border-top:1px solid var(--border);display:none}
+.wiki-row{display:flex;flex-direction:column;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background .12s;gap:2px}
+.wiki-row:last-child{border-bottom:none}
+.wiki-row:hover{background:var(--bg)}
+.wiki-row-title{font-size:13px;font-weight:700;color:var(--text-primary)}
+.wiki-row-preview{font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:600px}
+.wiki-row-meta{font-size:11px;color:var(--text-light);margin-top:2px}
+.wiki-search-card{background:var(--bg-white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;margin-bottom:8px;transition:box-shadow .15s}
+.wiki-search-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.07)}
+
+/* ── Wiki Editor ── */
+.wiki-toolbar{display:flex;flex-wrap:wrap;gap:2px;padding:8px 10px;background:var(--bg);border:1.5px solid var(--border);border-bottom:none;border-radius:10px 10px 0 0}
+.wiki-tb-btn{background:none;border:none;border-radius:6px;padding:5px 9px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--text-secondary);transition:background .12s,color .12s;line-height:1}
+.wiki-tb-btn:hover{background:var(--border-light);color:var(--text-primary)}
+.wiki-tb-btn.active{background:var(--tbc-blue);color:#fff}
+.wiki-tb-sep{width:1px;background:var(--border);margin:4px 4px;flex-shrink:0}
+.wiki-editor{min-height:300px;max-height:420px;overflow-y:auto;border:1.5px solid var(--border);border-radius:0 0 10px 10px;padding:14px 16px;outline:none;font-size:14px;line-height:1.75;color:var(--text-primary);background:#fff}
+.wiki-editor:focus{border-color:var(--tbc-blue)}
+.wiki-editor[data-empty=true]:before{content:attr(data-placeholder);color:var(--text-light);pointer-events:none;position:absolute}
+/* shared content styles */
+.wiki-body h2,.wiki-editor h2{font-size:18px;font-weight:800;margin:20px 0 6px;letter-spacing:-.3px;color:var(--text-primary)}
+.wiki-body h3,.wiki-editor h3{font-size:15px;font-weight:700;margin:16px 0 5px;color:var(--text-primary)}
+.wiki-body p,.wiki-editor p{margin-bottom:8px}
+.wiki-body ul,.wiki-editor ul,.wiki-body ol,.wiki-editor ol{margin:6px 0 10px 22px}
+.wiki-body li,.wiki-editor li{margin-bottom:3px}
+.wiki-body hr,.wiki-editor hr{border:none;border-top:1px solid var(--border);margin:20px 0}
+.wiki-body img,.wiki-editor img{max-width:100%;border-radius:10px;margin:10px 0;display:block;border:1px solid var(--border)}
+.wiki-body code,.wiki-editor code{background:var(--bg);padding:1px 6px;border-radius:5px;font-family:monospace;font-size:12px;color:#d63384}
+.wiki-body pre,.wiki-editor pre{background:#1e1e2e;color:#cdd6f4;padding:14px 16px;border-radius:10px;overflow-x:auto;font-family:monospace;font-size:12px;line-height:1.65;margin:12px 0}
+.wiki-body blockquote,.wiki-editor blockquote{border-left:3px solid var(--tbc-blue);padding:6px 14px;margin:10px 0;color:var(--text-secondary);background:var(--bg);border-radius:0 8px 8px 0}
+.wiki-body strong,.wiki-editor strong{font-weight:700}
+.wiki-body em,.wiki-editor em{font-style:italic}
+/* read modal wider */
+.wiki-read-modal{max-width:720px}
+</style>
+
+<div class="modal-overlay" id="modalWiki" style="display:none">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <h3 id="wikiModalTitle">Artikel anlegen</h3>
+      <button class="modal-close" onclick="closeModal('modalWiki')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="wikiId">
+      <div class="form-group">
+        <label class="form-label">Titel *</label>
+        <input class="form-control" id="wikiTitle" placeholder="z.B. Wie funktioniert der Onboarding-Prozess?">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kategorie</label>
+        <select class="form-control" id="wikiCategory">
+          <option value="Produktwissen">📦 Produktwissen</option>
+          <option value="Preise">💶 Preise</option>
+          <option value="Onboarding">🚀 Onboarding</option>
+          <option value="Brandhub">🎨 Brandhub</option>
+          <option value="Sales">🎯 Sales</option>
+          <option value="Prozesse">⚙️ Prozesse</option>
+          <option value="HR">👥 HR</option>
+          <option value="Allgemein">📄 Allgemein</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Inhalt *</label>
+        <div class="wiki-toolbar" id="wikiToolbar">
+          <button class="wiki-tb-btn" title="Fett" onclick="wikiCmd('bold')"><b>B</b></button>
+          <button class="wiki-tb-btn" title="Kursiv" onclick="wikiCmd('italic')"><i>I</i></button>
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Überschrift 2" onclick="wikiBlock('h2')">H2</button>
+          <button class="wiki-tb-btn" title="Überschrift 3" onclick="wikiBlock('h3')">H3</button>
+          <button class="wiki-tb-btn" title="Zitat" onclick="wikiBlock('blockquote')">"</button>
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Aufzählung" onclick="wikiCmd('insertUnorderedList')">• Liste</button>
+          <button class="wiki-tb-btn" title="Nummerierte Liste" onclick="wikiCmd('insertOrderedList')">1. Liste</button>
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Code" onclick="wikiInlineCode()">&#60;/&#62;</button>
+          <button class="wiki-tb-btn" title="Codeblock" onclick="wikiCodeBlock()">Block</button>
+          <button class="wiki-tb-btn" title="Trennlinie" onclick="wikiCmd('insertHorizontalRule')">—</button>
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Bild einfügen" onclick="document.getElementById('wikiImgInput').click()">🖼️ Bild</button>
+          <input type="file" id="wikiImgInput" accept="image/*" style="display:none" onchange="wikiInsertImageFile(this)">
+        </div>
+        <div class="wiki-editor wiki-body" id="wikiEditor" contenteditable="true"
+             data-placeholder="Wissen hier eintragen — Bilder einfach reinkopieren oder über den Button hochladen…"
+             onpaste="wikiHandlePaste(event)" oninput="wikiEditorInput()" onfocus="wikiEditorInput()"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalWiki')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveWikiArticle()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Wiki Read Modal -->
+<div class="modal-overlay" id="modalWikiRead" style="display:none">
+  <div class="modal wiki-read-modal">
+    <div class="modal-header">
+      <h3 id="wikiReadTitle">–</h3>
+      <button class="modal-close" onclick="closeModal('modalWikiRead')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="wikiReadMeta" style="font-size:12px;color:var(--text-light);margin-bottom:20px"></div>
+      <div id="wikiReadContent" class="wiki-body" style="font-size:14px;line-height:1.75;color:var(--text-primary)"></div>
+    </div>
+    <div class="modal-footer" id="wikiReadFooter"></div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="modalProfile" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Mein Profil</h3>
+      <button class="modal-close" onclick="closeModal('modalProfile')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px">
+        <div id="profileAvatarPreview" style="width:72px;height:72px;border-radius:50%;background:var(--tbc-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin-bottom:10px;overflow:hidden;cursor:pointer" onclick="document.getElementById('profilePicInput').click()">?</div>
+        <input type="file" id="profilePicInput" accept="image/*" style="display:none" onchange="previewProfilePic(event)">
+        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('profilePicInput').click()">📷 Bild ändern</button>
+      </div>
+      <div class="form-group"><label class="form-label">Name</label><input class="form-control" id="profName"></div>
+      <div class="form-group"><label class="form-label">E-Mail</label><input class="form-control" id="profEmail" type="email"></div>
+      <div class="form-group"><label class="form-label">Telefon</label><input class="form-control" id="profPhone"></div>
+      <div class="form-group">
+        <label class="form-label">Neues Passwort <span style="color:var(--text-light);font-weight:400">(optional)</span></label>
+        <input class="form-control" id="profPassword" type="password" placeholder="Leer lassen = unverändert">
+      </div>
+      <div style="border-top:1px solid var(--border);margin:16px 0 14px"></div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Instagram-Suche</div>
+      <div id="igConnectedBadge" style="display:none;align-items:center;gap:8px;margin-bottom:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:13px;color:#16a34a">
+        <span style="font-size:16px">✓</span> Instagram verbunden
+        <button onclick="disconnectInstagram()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:12px;color:#6b7280;text-decoration:underline">Trennen</button>
+      </div>
+      <div id="igConnectForm" style="display:none">
+        <p style="font-size:12px;color:var(--text-light);margin:0 0 8px">Füge deinen Instagram Session-Cookie ein, damit die Account-Suche funktioniert.</p>
+        <details style="font-size:12px;color:var(--text-light);margin-bottom:8px">
+          <summary style="cursor:pointer;font-weight:600">Wie finde ich den Cookie?</summary>
+          <ol style="margin:6px 0 0 16px;line-height:1.7">
+            <li>Öffne <strong>instagram.com</strong> im Browser und logge dich ein</li>
+            <li>Drücke <strong>F12</strong> → Tab <strong>Application</strong></li>
+            <li>Links: <strong>Cookies → https://www.instagram.com</strong></li>
+            <li>Kopiere den Wert von <strong>sessionid</strong></li>
+          </ol>
+        </details>
+        <div style="display:flex;gap:8px">
+          <input class="form-control" id="igSessionInput" type="password" placeholder="sessionid Cookie einfügen…" style="font-size:12px;flex:1">
+          <button class="btn btn-primary btn-sm" onclick="saveInstagramSession()" style="white-space:nowrap">Verbinden</button>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:16px 0 14px"></div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px">Commitment diesen Monat</div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Member-Ziel</label><input class="form-control" id="profCommitKunden" type="number" min="0" placeholder="z.B. 5"></div>
+        <div class="form-group"><label class="form-label">Umsatz-Ziel (€)</label><input class="form-control" id="profCommitUmsatz" type="number" min="0" placeholder="z.B. 10000"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalProfile')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveProfile()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Kunden Modal -->
+<div class="modal-overlay" id="modalKunde" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="kundeModalTitle">Member anlegen</h3>
+      <button class="modal-close" onclick="closeModal('modalKunde')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="kundeId">
+      <div class="form-group">
+        <label class="form-label">Firma *</label>
+        <input class="form-control" id="kFirma" placeholder="Firmenname">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telefon <span style="color:var(--text-light);font-weight:400">(optional)</span></label>
+        <input class="form-control" id="kTelefon" placeholder="+49 ...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kanal *</label>
+        <select class="form-control" id="kKanal">
+          <option value="">Bitte wählen…</option>
+          <option>Instagram</option>
+          <option>Kaltakquise</option>
+          <option>Messe</option>
+          <option>Empfehlung</option>
+          <option>LinkedIn</option>
+          <option>Website</option>
+          <option>Sonstiges</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Abschlussdatum *</label>
+        <input class="form-control" type="date" id="kAbschluss">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Umsatz (€) *</label>
+          <input class="form-control" type="number" id="kUmsatz" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Marge/Gewinn (€) *</label>
+          <input class="form-control" type="number" id="kMarge" min="0" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:4px">
+        <label class="form-label">HubSpot Company ID <span style="color:var(--text-light);font-weight:400">(optional)</span></label>
+        <input class="form-control" id="kHubspotId" placeholder="z.B. 12345678">
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px">Zu finden in HubSpot in der URL des Unternehmens: …/company/<strong>12345678</strong></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalKunde')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveKunde()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Commitment Modal -->
+<div class="modal-overlay" id="modalCommit" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Commitment eintragen</h3>
+      <button class="modal-close" onclick="closeModal('modalCommit')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Trage dein persönliches Ziel für diesen Monat ein. Deadline ist der 5. des Monats.</p>
+      <div class="form-group">
+        <label class="form-label">Member-Ziel (Anzahl) *</label>
+        <input class="form-control" type="number" id="commitKunden" min="0" placeholder="z.B. 10">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Umsatz-Ziel (€) *</label>
+        <input class="form-control" type="number" id="commitUmsatz" min="0" placeholder="z.B. 15000">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalCommit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveCommit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/app.js"></script>
+
+<div id="appLoader" style="position:fixed;inset:0;background:var(--surface,#fff);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .35s ease">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+    <div style="width:38px;height:38px;border:3px solid #e5e7eb;border-top-color:#1a3a8f;border-radius:50%;animation:appSpin .7s linear infinite"></div>
+  </div>
+</div>
+<style>@keyframes appSpin{to{transform:rotate(360deg)}}</style>
+</body>
+</html>

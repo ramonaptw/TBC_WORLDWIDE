@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#122246"/>
+
+  <!-- ── I-bar (left stroke) ── -->
+  <rect x="105" y="85" width="83" height="352" rx="10" fill="white"/>
+
+  <!-- ── Top D-bump of B ──
+       Rectangle (205,85)→(317,240) + right half-ellipse
+       Full ellipse bbox: (240,85)→(394,240)                     -->
+  <rect x="205" y="85" width="112" height="155" fill="white"/>
+  <ellipse cx="317" cy="162.5" rx="77" ry="77.5" fill="white"/>
+  <!-- Re-cut left corners of D to give slight rounding -->
+  <rect x="205" y="85"  width="10" height="10" fill="#122246"/>
+  <circle cx="215" cy="95"  r="10" fill="white"/>
+  <rect x="205" y="230" width="10" height="10" fill="#122246"/>
+  <circle cx="215" cy="230" r="10" fill="white"/>
+
+  <!-- ── Bottom D-bump of B (larger) ──
+       Rectangle (205,272)→(317,437) + right half-ellipse
+       Full ellipse bbox: (234,272)→(400,437)                    -->
+  <rect x="205" y="272" width="112" height="165" fill="white"/>
+  <ellipse cx="317" cy="354.5" rx="83" ry="82.5" fill="white"/>
+  <!-- Re-cut left corners -->
+  <rect x="205" y="272" width="10" height="10" fill="#122246"/>
+  <circle cx="215" cy="282" r="10" fill="white"/>
+  <rect x="205" y="427" width="10" height="10" fill="#122246"/>
+  <circle cx="215" cy="427" r="10" fill="white"/>
+
+  <!-- ── Mobile text ── -->
+  <text x="256" y="480" text-anchor="middle" fill="white"
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="66" font-weight="300" letter-spacing="5">Mobile</text>
+</svg>
