@@ -59,6 +59,14 @@
 [data-theme="dark"] .modal-overlay { background: rgba(0,0,0,0.7); }
 [data-theme="dark"] .badge { opacity: .85; }
 [data-theme="dark"] .stat-card { background: var(--surface); border-color: var(--border); }
+/* Dark-mode contrast fixes — prevent white-on-white where backgrounds were hardcoded for light theme */
+[data-theme="dark"] .search-bar input:focus { background: var(--bg-white); }
+[data-theme="dark"] .wiki-editor { background: var(--bg-white); }
+[data-theme="dark"] .lead-tab.active { background: var(--sidebar-active); border-color: var(--sidebar-active); color: var(--text-primary); }
+
+/* Text selection — readable in both themes */
+::selection { background: rgba(59,130,246,0.35); color: inherit; }
+::-moz-selection { background: rgba(59,130,246,0.35); color: inherit; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
