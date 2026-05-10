@@ -65,12 +65,6 @@
       </button>
 
       <div class="nav-section-label" data-nav-section="verwaltung">Verwaltung</div>
-      <button class="nav-item" data-roles="admin,management" onclick="showPage('employees')">
-        <span class="icon">👥</span> Mitarbeiter
-      </button>
-      <button class="nav-item" data-roles="admin,management,customersuccess" onclick="showPage('onboarding')">
-        <span class="icon">🚀</span> Onboarding
-      </button>
       <button class="nav-item" data-roles="admin,management,sellsupport,customersuccess,newbusiness" onclick="showPage('tasks')">
         <span class="icon">✅</span> Aufgaben
       </button>
@@ -135,11 +129,11 @@
         <!-- KPI Row -->
         <div class="dash-kpi-row" id="dashKpi"></div>
 
-        <!-- Recent + News -->
+        <!-- Tasks + News -->
         <div class="grid-2" id="dashGrid" style="margin-top:0">
-          <div class="card" id="dashRecentCard">
-            <div class="card-header"><h2>🕐 Zuletzt hinzugefügt</h2></div>
-            <div id="dashRecent" style="padding:0"></div>
+          <div class="card" id="dashTasksCard">
+            <div class="card-header"><h2>✅ Meine offenen Aufgaben</h2></div>
+            <div id="dashTasks" style="padding:0"></div>
           </div>
           <div class="card">
             <div class="card-header">
@@ -150,10 +144,10 @@
           </div>
         </div>
 
-        <!-- Open Tasks -->
-        <div class="card" id="dashTasksCard" style="margin-top:16px">
-          <div class="card-header"><h2>✅ Meine offenen Aufgaben</h2></div>
-          <div id="dashTasks" style="padding:0"></div>
+        <!-- Recent -->
+        <div class="card" id="dashRecentCard" style="margin-top:16px">
+          <div class="card-header"><h2>🕐 Zuletzt hinzugefügt</h2></div>
+          <div id="dashRecent" style="padding:0"></div>
         </div>
 
       </div>
@@ -367,34 +361,6 @@
         </div>
       </div>
 
-      <!-- ═══ EMPLOYEES ═══ -->
-      <div class="page" id="page-employees">
-        <div class="filters-row">
-          <div class="search-bar">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="empSearch" placeholder="Suche..." oninput="filterEmployees()">
-          </div>
-          <select class="form-control" style="width:auto" id="empDeptFilter" onchange="filterEmployees()">
-            <option value="">Alle Abteilungen</option>
-          </select>
-        </div>
-        <div class="card">
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr><th>Mitarbeiter</th><th>Abteilung</th><th>Position</th><th>Rolle</th><th>Telefon</th><th></th></tr>
-              </thead>
-              <tbody id="empTable"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ═══ ONBOARDING ═══ -->
-      <div class="page" id="page-onboarding">
-        <div id="onboardingContent"></div>
-      </div>
-
       <!-- ═══ STATISTIK ═══ -->
       <div class="page" id="page-statistik">
         <div class="filters-row" style="margin-bottom:20px">
@@ -563,6 +529,7 @@
           <button class="admin-tab active" id="adminTab-overview" onclick="switchAdminTab('overview')">📊 Übersicht</button>
           <button class="admin-tab" id="adminTab-users" onclick="switchAdminTab('users')">👥 Benutzer</button>
           <button class="admin-tab" id="adminTab-tasks" onclick="switchAdminTab('tasks')">✅ Aufgaben</button>
+          <button class="admin-tab" id="adminTab-onboarding" onclick="switchAdminTab('onboarding')">🚀 Onboarding</button>
           <button class="admin-tab" id="adminTab-feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
           <button class="admin-tab" id="adminTab-settings" onclick="switchAdminTab('settings')">⚙️ Einstellungen</button>
         </div>
@@ -624,6 +591,11 @@
               </table>
             </div>
           </div>
+        </div>
+
+        <!-- Onboarding -->
+        <div id="adminPanel-onboarding" style="display:none">
+          <div id="onboardingContent"></div>
         </div>
 
         <!-- Feedback -->

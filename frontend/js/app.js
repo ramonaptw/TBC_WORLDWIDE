@@ -320,7 +320,8 @@ async function loadDashboard() {
 
   // ── Recently won customers ──
   document.getElementById('dashRecentCard').style.display = hasRecent ? '' : 'none';
-  document.getElementById('dashGrid').style.gridTemplateColumns = hasRecent ? '' : '1fr';
+  // Tasks is now the left column of the grid; collapse to 1fr when tasks hidden so News fills the row
+  document.getElementById('dashGrid').style.gridTemplateColumns = hasTasks ? '' : '1fr';
   if (hasRecent) {
     const recentEl = document.getElementById('dashRecent');
     const recent = [...kunden].sort((a, b) => new Date(b.abschlussdatum) - new Date(a.abschlussdatum)).slice(0, 6);
@@ -1410,15 +1411,16 @@ async function loadAdmin() {
 }
 
 function switchAdminTab(tab) {
-  ['overview','users','tasks','feedback','settings'].forEach(t => {
+  ['overview','users','tasks','onboarding','feedback','settings'].forEach(t => {
     document.getElementById('adminTab-' + t).classList.toggle('active', t === tab);
     document.getElementById('adminPanel-' + t).style.display = t === tab ? '' : 'none';
   });
-  if (tab === 'overview')  loadAdminOverview();
-  if (tab === 'users')     loadAdminUsers();
-  if (tab === 'tasks')     loadAdminTasks();
-  if (tab === 'feedback')  loadAdminFeedback();
-  if (tab === 'settings')  loadAdminSettings();
+  if (tab === 'overview')   loadAdminOverview();
+  if (tab === 'users')      loadAdminUsers();
+  if (tab === 'tasks')      loadAdminTasks();
+  if (tab === 'onboarding') loadOnboarding();
+  if (tab === 'feedback')   loadAdminFeedback();
+  if (tab === 'settings')   loadAdminSettings();
 }
 
 /* ─── Logo Upload (Admin Settings) ─── */
