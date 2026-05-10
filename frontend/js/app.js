@@ -283,8 +283,9 @@ async function loadDashboard() {
   // ── KPI Cards ──
   const kpiEl = document.getElementById('dashKpi');
   const today = now.toISOString().slice(0, 10);
-  const overdueTasks = tasks.filter(t => t.assigned_to === currentUser.id && t.status !== 'done' && t.due_date && t.due_date < today).length;
-  const myOpenTasks  = tasks.filter(t => t.assigned_to === currentUser.id && t.status !== 'done').length;
+  const isMine = t => t.assigned_to === currentUser.id || (t.created_by === currentUser.id && !t.assigned_to);
+  const overdueTasks = tasks.filter(t => isMine(t) && t.status !== 'done' && t.due_date && t.due_date < today).length;
+  const myOpenTasks  = tasks.filter(t => isMine(t) && t.status !== 'done').length;
 
   if (hasSales) {
     const kundenThisMonth = kunden.filter(k => k.abschlussdatum && k.abschlussdatum.startsWith(currentMonth));
@@ -345,24 +346,28 @@ async function loadDashboard() {
   // ── News (always visible) ──
   const dashNews = document.getElementById('dashNews');
   dashNews.innerHTML = news.length
-    ? news.slice(0, 4).map(n => `
+    ? news.slice(0, 4).map(n => {
+        const preview = htmlToPreviewText(n.content);
+        return `
       <div onclick="openNewsRead(${n.id})" style="padding:12px 18px;border-bottom:1px solid var(--border-light);cursor:pointer;transition:background .12s" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">
         ${n.pinned ? '<div style="font-size:10px;font-weight:700;color:var(--tbc-blue);letter-spacing:0.5px;margin-bottom:2px">📌 ANGEPINNT</div>' : ''}
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
           <div style="font-weight:600;font-size:13px;margin-bottom:2px">${n.title}</div>
-          ${n.content.length > 90 ? '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;margin-top:1px">Lesen →</div>' : ''}
+          ${preview.length > 90 ? '<div style="font-size:11px;color:var(--text-light);white-space:nowrap;margin-top:1px">Lesen →</div>' : ''}
         </div>
-        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">${n.content.substring(0, 90)}${n.content.length > 90 ? '…' : ''}</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">${preview.substring(0, 90)}${preview.length > 90 ? '…' : ''}</div>
         <div style="font-size:11px;color:var(--text-light);margin-top:4px">${n.author_name || ''} · ${formatRelative(n.created_at)}</div>
-      </div>`).join('')
+      </div>`;
+      }).join('')
     : '<div class="empty-state" style="padding:24px"><div class="empty-icon">📭</div><p>Noch keine Ankündigungen</p></div>';
 
   // ── My open tasks ──
   document.getElementById('dashTasksCard').style.display = hasTasks ? '' : 'none';
   if (hasTasks) {
     const dashTasks = document.getElementById('dashTasks');
+    // Mine = explicitly assigned to me OR created by me without an assignee
     const myTasks = tasks
-      .filter(t => t.assigned_to === currentUser.id && t.status !== 'done')
+      .filter(t => t.status !== 'done' && (t.assigned_to === currentUser.id || (t.created_by === currentUser.id && !t.assigned_to)))
       .sort((a, b) => {
         const aOver = a.due_date && a.due_date < today;
         const bOver = b.due_date && b.due_date < today;
@@ -426,27 +431,109 @@ function formatRelative(iso) {
 }
 
 /* ─── News (Dashboard only) ─── */
+const NEWS_ALLOWED_TAGS = new Set(['B','STRONG','I','EM','U','H2','H3','P','BR','UL','OL','LI','SPAN','HR','BLOCKQUOTE','FONT','DIV']);
+function sanitizeNewsHtml(html) {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const walk = (node) => {
+    [...node.children].forEach(child => {
+      if (!NEWS_ALLOWED_TAGS.has(child.tagName)) {
+        const text = document.createTextNode(child.textContent);
+        child.replaceWith(text);
+        return;
+      }
+      // Strip event-handler attrs and javascript: URLs
+      [...child.attributes].forEach(attr => {
+        const an = attr.name.toLowerCase();
+        const av = String(attr.value).toLowerCase();
+        if (an.startsWith('on') || av.includes('javascript:')) child.removeAttribute(attr.name);
+      });
+      walk(child);
+    });
+  };
+  walk(tpl.content);
+  return tpl.innerHTML;
+}
+
+function htmlToPreviewText(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html || '';
+  return (tmp.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function newsCmd(cmd) {
+  document.getElementById('newsEditor').focus();
+  document.execCommand(cmd, false, null);
+  newsEditorInput();
+}
+function newsBlock(tag) {
+  document.getElementById('newsEditor').focus();
+  document.execCommand('formatBlock', false, tag);
+  newsEditorInput();
+}
+function newsFontSize(size) {
+  document.getElementById('newsEditor').focus();
+  document.execCommand('fontSize', false, String(size));
+  newsEditorInput();
+}
+function newsInsert(text) {
+  document.getElementById('newsEditor').focus();
+  document.execCommand('insertText', false, text);
+  newsEditorInput();
+}
+function newsEditorInput() {
+  const ed = document.getElementById('newsEditor');
+  if (!ed) return;
+  ed.dataset.empty = ed.innerText.trim() === '';
+}
+
 async function openNewsRead(id) {
   const news = await api.get('/news');
   const n = news.find(x => x.id === id);
   if (!n) return;
   document.getElementById('newsReadTitle').textContent = n.title;
   document.getElementById('newsReadMeta').textContent = (n.author_name || '') + (n.author_name && n.created_at ? ' · ' : '') + formatRelative(n.created_at);
-  document.getElementById('newsReadContent').textContent = n.content;
-  const pinnedEl = document.getElementById('newsReadPinned');
-  pinnedEl.style.display = n.pinned ? '' : 'none';
+  // Render with sanitization. Backwards-compat: treat plain-text legacy entries as such.
+  const isHtml = /<[a-z][\s\S]*>/i.test(n.content);
+  document.getElementById('newsReadContent').innerHTML = isHtml ? sanitizeNewsHtml(n.content) : `<p style="white-space:pre-wrap">${n.content.replace(/[<>&]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;' }[c]))}</p>`;
+
+  document.getElementById('newsReadPinned').style.display = n.pinned ? '' : 'none';
+
+  // Delete button — visible to author + admin/management/sellsupport
+  const canDelete = n.author_id === currentUser.id || ['admin','management','sellsupport'].includes(currentUser.role);
+  const footer = document.getElementById('newsReadFooter');
+  const delBtn = document.getElementById('newsReadDeleteBtn');
+  footer.style.display = canDelete ? '' : 'none';
+  if (canDelete) delBtn.onclick = () => deleteNews(n.id);
+
   openModal('modalNewsRead');
+}
+
+async function deleteNews(id) {
+  if (!confirm('Ankündigung wirklich löschen?')) return;
+  try {
+    await api.delete('/news/' + id);
+    closeModal('modalNewsRead');
+    showToast('Ankündigung gelöscht');
+    // Refresh dashboard if it's the active page
+    if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
+  } catch (err) {
+    showToast(err.message || 'Löschen fehlgeschlagen', 'error');
+  }
 }
 
 async function saveNews() {
   const title = document.getElementById('newsTitle').value.trim();
-  const content = document.getElementById('newsContent').value.trim();
-  if (!title || !content) return showToast('Titel und Inhalt erforderlich', 'error');
+  const editor = document.getElementById('newsEditor');
+  const content = sanitizeNewsHtml(editor.innerHTML.trim());
+  if (!title || !editor.innerText.trim()) return showToast('Titel und Inhalt erforderlich', 'error');
   await api.post('/news', { title, content, pinned: document.getElementById('newsPinned').checked });
   closeModal('modalNews');
+  // Reset editor for next use
   document.getElementById('newsTitle').value = '';
-  document.getElementById('newsContent').value = '';
+  editor.innerHTML = '';
   document.getElementById('newsPinned').checked = false;
+  newsEditorInput();
   showToast('Ankündigung veröffentlicht!');
   loadDashboard();
 }
