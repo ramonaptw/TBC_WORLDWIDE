@@ -1554,13 +1554,12 @@ async function loadAdmin() {
 }
 
 function switchAdminTab(tab) {
-  ['overview','users','tasks','onboarding','feedback','settings'].forEach(t => {
+  ['overview','users','onboarding','feedback','settings'].forEach(t => {
     document.getElementById('adminTab-' + t).classList.toggle('active', t === tab);
     document.getElementById('adminPanel-' + t).style.display = t === tab ? '' : 'none';
   });
   if (tab === 'overview')   loadAdminOverview();
   if (tab === 'users')      loadAdminUsers();
-  if (tab === 'tasks')      loadAdminTasks();
   if (tab === 'onboarding') loadOnboarding();
   if (tab === 'feedback')   loadAdminFeedback();
   if (tab === 'settings')   loadAdminSettings();
@@ -1735,11 +1734,6 @@ async function loadAdminOverview() {
   // KPI row — with month-over-month deltas
   document.getElementById('adminKpi').innerHTML = `
     <div class="dash-kpi">
-      <div class="dash-kpi-label">Nutzer</div>
-      <div class="dash-kpi-value">${stats.totalUsers}</div>
-      <div class="dash-kpi-sub">${stats.newUsersThisMonth ? `+${stats.newUsersThisMonth} ds. Monat` : 'unverändert'}</div>
-    </div>
-    <div class="dash-kpi">
       <div class="dash-kpi-label">Umsatz Monat</div>
       <div class="dash-kpi-value admin-kpi-euro">${fmt(stats.thisMonth.umsatz)}</div>
       <div class="dash-kpi-sub">${delta(stats.thisMonth.umsatz, stats.prevMonth.umsatz)} vs Vormonat</div>
@@ -1758,16 +1752,6 @@ async function loadAdminOverview() {
       <div class="dash-kpi-label">Sourcing</div>
       <div class="dash-kpi-value">${stats.sourcingThisMonth}</div>
       <div class="dash-kpi-sub">Anfragen ds. Monat</div>
-    </div>
-    <div class="dash-kpi${stats.overdueTasks > 0 ? ' dash-kpi--warn' : ''}">
-      <div class="dash-kpi-label">Aufgaben</div>
-      <div class="dash-kpi-value">${stats.openTasks}</div>
-      <div class="dash-kpi-sub">${stats.overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${stats.overdueTasks} überfällig</span>` : 'keine überfällig'}</div>
-    </div>
-    <div class="dash-kpi">
-      <div class="dash-kpi-label">Feedback Ø</div>
-      <div class="dash-kpi-value">${stats.avgRating ? stats.avgRating + ' ★' : '–'}</div>
-      <div class="dash-kpi-sub">${stats.totalFeedback} Einträge</div>
     </div>
     <div class="dash-kpi">
       <div class="dash-kpi-label">Umsatz gesamt</div>
@@ -1808,26 +1792,6 @@ async function loadAdminOverview() {
         <div style="height:100%;background:#8B5CF6;border-radius:4px;width:${Math.round(p.count/maxPipe*100)}%;transition:width .4s"></div>
       </div>
     </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px">Keine Daten</div>';
-
-  // Task stats
-  const ts = stats.taskStats;
-  const taskTotal = ts.open + ts.in_progress + ts.done;
-  const seg = (n, color) => taskTotal ? `<div style="height:100%;background:${color};width:${(n/taskTotal*100).toFixed(1)}%"></div>` : '';
-  document.getElementById('adminTaskStats').innerHTML = `
-    <div style="padding:14px 18px">
-      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--border);margin-bottom:14px">
-        ${seg(ts.open, '#3B82F6')}${seg(ts.in_progress, '#F59E0B')}${seg(ts.done, '#22C55E')}
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
-        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3B82F6;margin-right:6px"></span>Offen <strong>${fmtN(ts.open)}</strong></div>
-        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B;margin-right:6px"></span>In Arbeit <strong>${fmtN(ts.in_progress)}</strong></div>
-        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22C55E;margin-right:6px"></span>Erledigt <strong>${fmtN(ts.done)}</strong></div>
-        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#EF4444;margin-right:6px"></span>Überfällig <strong>${fmtN(ts.overdue)}</strong></div>
-      </div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);font-size:12px;color:var(--text-secondary)">
-        Diesen Monat erledigt: <strong style="color:var(--text-primary)">${fmtN(ts.doneThisMonth)}</strong>
-      </div>
-    </div>`;
 
   // Channels
   const maxCh = Math.max(1, ...stats.channels.map(c => c.count));
