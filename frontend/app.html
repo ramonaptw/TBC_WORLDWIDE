@@ -877,14 +877,40 @@
 
 <!-- Announcement Modal -->
 <div class="modal-overlay" id="modalNews" style="display:none">
-  <div class="modal">
+  <div class="modal" style="max-width:600px">
     <div class="modal-header">
       <h3>Ankündigung erstellen</h3>
       <button class="modal-close" onclick="closeModal('modalNews')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Titel *</label><input class="form-control" id="newsTitle"></div>
-      <div class="form-group"><label class="form-label">Inhalt *</label><textarea class="form-control" id="newsContent" style="min-height:120px"></textarea></div>
+      <div class="form-group">
+        <label class="form-label">Inhalt *</label>
+        <div class="wiki-toolbar">
+          <button class="wiki-tb-btn" title="Fett" onclick="newsCmd('bold')"><b>B</b></button>
+          <button class="wiki-tb-btn" title="Kursiv" onclick="newsCmd('italic')"><i>I</i></button>
+          <button class="wiki-tb-btn" title="Unterstrichen" onclick="newsCmd('underline')"><u>U</u></button>
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Klein" onclick="newsFontSize(2)" style="font-size:11px">A</button>
+          <button class="wiki-tb-btn" title="Normal" onclick="newsFontSize(3)" style="font-size:13px">A</button>
+          <button class="wiki-tb-btn" title="Groß" onclick="newsFontSize(5)" style="font-size:16px">A</button>
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Überschrift" onclick="newsBlock('h2')">H2</button>
+          <button class="wiki-tb-btn" title="Zwischenüberschrift" onclick="newsBlock('h3')">H3</button>
+          <button class="wiki-tb-btn" title="Absatz" onclick="newsBlock('p')">¶</button>
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Aufzählung" onclick="newsCmd('insertUnorderedList')">• Liste</button>
+          <button class="wiki-tb-btn" title="Nummerierte Liste" onclick="newsCmd('insertOrderedList')">1. Liste</button>
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Pfeil rechts" onclick="newsInsert('→ ')">→</button>
+          <button class="wiki-tb-btn" title="Pfeil links" onclick="newsInsert('← ')">←</button>
+          <button class="wiki-tb-btn" title="Häkchen" onclick="newsInsert('✓ ')">✓</button>
+          <button class="wiki-tb-btn" title="Trennlinie" onclick="newsCmd('insertHorizontalRule')">—</button>
+        </div>
+        <div class="wiki-editor wiki-body" id="newsEditor" contenteditable="true"
+             data-placeholder="Inhalt eingeben — Texte können fett, kursiv, in Listen oder Überschriften formatiert werden…"
+             oninput="newsEditorInput()" onfocus="newsEditorInput()" style="min-height:180px"></div>
+      </div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
           <input type="checkbox" id="newsPinned"> <span class="form-label" style="margin:0">📌 Anpinnen</span>
@@ -989,7 +1015,10 @@
       <button class="modal-close" onclick="closeModal('modalNewsRead')" style="align-self:flex-start;margin-left:12px">✕</button>
     </div>
     <div class="modal-body">
-      <div id="newsReadContent" style="font-size:14px;line-height:1.75;color:var(--text-primary);white-space:pre-wrap"></div>
+      <div id="newsReadContent" class="wiki-body" style="font-size:14px;line-height:1.75;color:var(--text-primary)"></div>
+    </div>
+    <div class="modal-footer" id="newsReadFooter" style="display:none">
+      <button class="btn btn-secondary" id="newsReadDeleteBtn" style="color:var(--danger)">🗑️ Löschen</button>
     </div>
   </div>
 </div>
