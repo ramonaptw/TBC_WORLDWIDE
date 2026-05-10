@@ -527,10 +527,9 @@
 
       <div class="page" id="page-admin">
         <!-- Tab nav -->
-        <div class="admin-tabs-row" style="display:flex;align-items:center;gap:2px;margin-bottom:24px;border-bottom:2px solid var(--border)">
+        <div class="admin-tabs-row">
           <button class="admin-tab active" id="adminTab-overview" onclick="switchAdminTab('overview')">📊 Übersicht</button>
           <button class="admin-tab" id="adminTab-users" onclick="switchAdminTab('users')">👥 Benutzer</button>
-          <button class="admin-tab" id="adminTab-tasks" onclick="switchAdminTab('tasks')">✅ Aufgaben</button>
           <button class="admin-tab" id="adminTab-onboarding" onclick="switchAdminTab('onboarding')">🚀 Onboarding</button>
           <button class="admin-tab" id="adminTab-feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
           <button class="admin-tab" id="adminTab-settings" onclick="switchAdminTab('settings')">⚙️ Einstellungen</button>
@@ -552,28 +551,22 @@
             <div id="adminMonthly" style="padding:14px 18px 18px"></div>
           </div>
 
-          <!-- Pipeline + Tasks -->
+          <!-- Pipeline + Channels -->
           <div class="admin-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
             <div class="card">
               <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🔄 Member-Pipeline</h2></div>
               <div id="adminPipeline" style="padding:0"></div>
             </div>
             <div class="card">
-              <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">✅ Aufgaben-Status</h2></div>
-              <div id="adminTaskStats" style="padding:0"></div>
-            </div>
-          </div>
-
-          <!-- Channels + Top -->
-          <div class="admin-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-            <div class="card">
               <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🏆 Beste Vertriebskanäle</h2></div>
               <div id="adminChannels" style="padding:0"></div>
             </div>
-            <div class="card">
-              <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🥇 Top Performer</h2></div>
-              <div id="adminTopPerformers" style="padding:0"></div>
-            </div>
+          </div>
+
+          <!-- Top performers -->
+          <div class="card">
+            <div class="card-header" style="padding:14px 18px 10px"><h2 style="font-size:14px">🥇 Top Performer</h2></div>
+            <div id="adminTopPerformers" style="padding:0"></div>
           </div>
         </div>
 
