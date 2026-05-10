@@ -64,6 +64,18 @@
 [data-theme="dark"] .wiki-editor { background: var(--bg-white); }
 [data-theme="dark"] .lead-tab.active { background: var(--sidebar-active); border-color: var(--sidebar-active); color: var(--text-primary); }
 
+/* User menu dropdown — force dark theme, override any leaked inline/light styles */
+[data-theme="dark"] #userMenuDropdown,
+[data-theme="dark"] #userMenuDropdown > div { background: var(--surface) !important; color: var(--text-primary); }
+[data-theme="dark"] #userMenuDropdown #userMenuName { color: var(--text-primary); }
+[data-theme="dark"] #userMenuDropdown #userMenuRole { color: var(--text-secondary); }
+[data-theme="dark"] #userMenuDropdown button { color: var(--text-primary); background: transparent !important; }
+[data-theme="dark"] #userMenuDropdown button:hover,
+[data-theme="dark"] #userMenuDropdown button:focus { background: var(--sidebar-hover) !important; }
+[data-theme="dark"] #userMenuDropdown button[onclick*="logout"] { color: var(--danger); }
+[data-theme="dark"] #userMenuDropdown button[onclick*="logout"]:hover,
+[data-theme="dark"] #userMenuDropdown button[onclick*="logout"]:focus { background: rgba(239,68,68,0.15) !important; }
+
 /* Text selection — readable in both themes */
 ::selection { background: rgba(59,130,246,0.35); color: inherit; }
 ::-moz-selection { background: rgba(59,130,246,0.35); color: inherit; }
