@@ -24,6 +24,7 @@ app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/brand', require('./routes/brand'));
 app.use('/api/push', require('./routes/push'));
+app.use('/api/repeat-orders', require('./routes/repeat-orders'));
 
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {

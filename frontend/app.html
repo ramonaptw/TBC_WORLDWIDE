@@ -57,7 +57,7 @@
       </button>
 
       <div class="nav-section-label" data-nav-section="sales">Sales</div>
-      <button class="nav-item" data-roles="admin,newbusiness,management" onclick="showPage('statistik')">
+      <button class="nav-item" data-roles="admin,newbusiness,management,customersuccess" onclick="showPage('statistik')">
         <span class="icon">📈</span> Statistik
       </button>
 
@@ -339,6 +339,13 @@
                 <div class="form-group" style="margin:0"><label class="form-label">Kommunizierte Lieferzeit</label><input type="text" class="form-control" id="ob_delivery" placeholder="z.B. 3–4 Wochen ab Freigabe"></div>
               </div>
             </div>
+          </div>
+
+          <!-- CS-Empfänger -->
+          <div class="card" style="margin-bottom:16px;padding:16px 18px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);margin-bottom:6px">Customer Success Empfänger</div>
+            <select class="form-control" id="obAssignCS"><option value="">– wählen –</option></select>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">Dieser User bekommt den Member im Tool zugewiesen und eine Push-Benachrichtigung.</div>
           </div>
 
           <!-- Submit -->
@@ -1289,6 +1296,29 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modalCommit')">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveCommit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Repeat Order Modal (Customer Success) -->
+<div class="modal-overlay" id="modalRepeatOrder" style="display:none">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3>↻ Repeat Order eintragen</h3>
+      <button class="modal-close" onclick="closeModal('modalRepeatOrder')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px"><span id="roKundeFirma">–</span></p>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Datum *</label><input class="form-control" type="date" id="roDate"></div>
+        <div class="form-group"><label class="form-label">Umsatz (€) *</label><input class="form-control" type="number" min="0" id="roUmsatz" placeholder="z.B. 5000"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Marge (€)</label><input class="form-control" type="number" min="0" id="roMarge" placeholder="optional"></div>
+      <div class="form-group"><label class="form-label">Notiz</label><textarea class="form-control" id="roNotes" placeholder="optional" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalRepeatOrder')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveRepeatOrder()">Speichern</button>
     </div>
   </div>
 </div>

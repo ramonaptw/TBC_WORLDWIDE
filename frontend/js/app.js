@@ -758,6 +758,8 @@ async function loadStatistik() {
   statMonthInit();
   const isAdmin = ['admin', 'management'].includes(currentUser.role);
   const allKunden = await api.get('/kunden');
+  // Customer Success has its own statistik view (Design/Production Intake + Repeat Orders)
+  if (currentUser.role === 'customersuccess') return loadStatistikCS(allKunden);
   // Non-admins see only their own customers
   const kunden = isAdmin ? allKunden : allKunden.filter(k => k.created_by === currentUser.id);
   const container = document.getElementById('statistikContent');
@@ -957,6 +959,96 @@ async function loadStatistik() {
   `;
 }
 
+/* ─── CS Statistik (Design / Production / Repeat Orders) ─── */
+async function loadStatistikCS(allKunden) {
+  const container = document.getElementById('statistikContent');
+  const myKunden = allKunden.filter(k => k.assigned_cs_user_id === currentUser.id);
+
+  const now2 = new Date();
+  const selMonth = document.getElementById('statMonth')?.value || `${now2.getFullYear()}-${String(now2.getMonth() + 1).padStart(2, '0')}`;
+  const [selYear, selMon] = selMonth.split('-').map(Number);
+
+  const phaseInMonth = (k, phase, m) =>
+    Array.isArray(k.phase_history) && k.phase_history.some(h => h.phase === phase && (h.at || '').startsWith(m));
+
+  const designCount = myKunden.filter(k => phaseInMonth(k, 'design', selMonth)).length;
+  const productionCount = myKunden.filter(k => phaseInMonth(k, 'production', selMonth)).length;
+
+  let repeats = [];
+  try { repeats = await api.get('/repeat-orders?month=' + selMonth); } catch {}
+  const repeatCount = repeats.length;
+  const repeatRevenue = repeats.reduce((s, r) => s + (Number(r.umsatz) || 0), 0);
+
+  // 6-month trend of Production Intake
+  const trend = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(selYear, selMon - 1 - i, 1);
+    const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    trend.push({ month: m, count: myKunden.filter(k => phaseInMonth(k, 'production', m)).length });
+  }
+  const maxTrend = Math.max(1, ...trend.map(t => t.count));
+  const monthNames = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+  // Recent phase changes across my kunden (last 10)
+  const recent = [];
+  myKunden.forEach(k => {
+    (k.phase_history || []).forEach(h => recent.push({ ...h, firma: k.firma }));
+  });
+  recent.sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+  const recentSlice = recent.slice(0, 10);
+
+  const fmt = n => '€' + Number(n).toLocaleString('de-DE');
+  const PHASE_LABEL = { design: 'Design', production: 'Production', fertig: 'Fertig', pre_onboarding: 'Pre-Onb.', onboarding: 'Onb.', 'übergeben': 'Übergeben' };
+
+  const miniKpi = (label, val, sub) => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;flex:1">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);margin-bottom:3px">${label}</div>
+      <div style="font-size:20px;font-weight:800;color:var(--text-primary);line-height:1.1">${val}</div>
+      ${sub ? `<div style="font-size:11px;margin-top:2px;color:var(--text-secondary)">${sub}</div>` : ''}
+    </div>`;
+
+  container.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      ${miniKpi('Design Intake', designCount, 'eingegangen ' + selMonth)}
+      ${miniKpi('Production Intake', productionCount, 'eingegangen ' + selMonth)}
+      ${miniKpi('Repeat Orders', repeatCount, fmt(repeatRevenue))}
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--border-light);font-size:12px;font-weight:700">📈 Production Intake – 6 Monate</div>
+      <div style="padding:14px 18px">
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end;height:120px;margin-bottom:6px">
+          ${trend.map(t => {
+            const pct = Math.round((t.count / maxTrend) * 100);
+            const isThis = t.month === selMonth;
+            return `<div style="display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%" title="${t.month}: ${t.count}">
+              <div style="font-size:11px;color:var(--text-light);font-weight:600;${pct < 30 ? 'opacity:0' : ''}">${t.count || ''}</div>
+              <div style="width:100%;height:${Math.max(2, pct)}%;background:${isThis ? '#0EA5E9' : 'var(--text-light)'};border-radius:4px 4px 0 0;transition:height .4s"></div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;font-size:10px;color:var(--text-secondary);text-align:center">
+          ${trend.map(t => `<span>${monthNames[parseInt(t.month.split('-')[1]) - 1]}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--border-light);font-size:12px;font-weight:700">🕐 Letzte Phasenwechsel</div>
+      <div style="padding:0">
+        ${recentSlice.length === 0
+          ? '<div style="padding:18px;color:var(--text-secondary);font-size:13px">Noch keine Phasenwechsel.</div>'
+          : recentSlice.map(r => `
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border-light);font-size:13px">
+              <span style="font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.firma}</span>
+              <span style="font-size:11px;font-weight:700;background:var(--bg);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:2px 8px">${PHASE_LABEL[r.phase] || r.phase}</span>
+              <span style="font-size:11px;color:var(--text-light);min-width:90px;text-align:right">${formatDate(r.at)}</span>
+            </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
 /* ─── Datenbank (gewonnene Kunden) ─── */
 function uebergabeDeadlineBadge(createdAt) {
   const hoursElapsed = (Date.now() - new Date(createdAt)) / 3600000;
@@ -989,11 +1081,36 @@ async function loadDatenbank() {
 
   const fmt = n => n ? '€' + Number(n).toLocaleString('de-DE') : '–';
 
+  const isCS = currentUser.role === 'customersuccess';
+  const PHASE_LABEL = { design: 'Design', production: 'Production', fertig: 'Fertig', pre_onboarding: 'Pre-Onb.', onboarding: 'Onb.', 'übergeben': 'Übergeben' };
+
   tbody.innerHTML = filtered.map(k => {
     const isUebergeben = k.status === 'übergeben';
-    const statusBadge = isUebergeben
-      ? '<span style="font-size:11px;font-weight:700;color:var(--success);background:#F0FDF4;border:1px solid #22C55E;border-radius:99px;padding:2px 8px">✓ Übergeben</span>'
-      : `<div><span style="font-size:11px;font-weight:700;color:#92400E;background:#FFF8E1;border:1px solid #F59E0B;border-radius:99px;padding:2px 8px">🏆 Gewonnen</span>${uebergabeDeadlineBadge(k.created_at)}</div>`;
+    const mineAsCS = isCS && k.assigned_cs_user_id === currentUser.id;
+    const csLabel = k.assigned_cs_name ? k.assigned_cs_name : '–';
+    const phaseLabel = k.onboarding_phase ? (PHASE_LABEL[k.onboarding_phase] || k.onboarding_phase) : null;
+
+    let statusBadge;
+    if (isUebergeben) {
+      statusBadge = `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+        <span style="font-size:11px;font-weight:700;color:var(--success);background:#F0FDF4;border:1px solid #22C55E;border-radius:99px;padding:2px 8px">📤 Übergeben an ${csLabel}</span>
+        ${phaseLabel ? `<span style="font-size:10px;font-weight:700;color:#6D28D9;background:#F3E8FF;border:1px solid #DDD6FE;border-radius:6px;padding:2px 7px">Phase: ${phaseLabel}</span>` : ''}
+      </div>`;
+    } else {
+      statusBadge = `<div><span style="font-size:11px;font-weight:700;color:#92400E;background:#FFF8E1;border:1px solid #F59E0B;border-radius:99px;padding:2px 8px">🏆 Gewonnen</span>${uebergabeDeadlineBadge(k.created_at)}</div>`;
+    }
+    if (isCS && k.created_by !== currentUser.id) {
+      statusBadge = `<span style="font-size:10px;font-weight:700;color:var(--text-secondary);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px 7px;display:inline-block;margin-bottom:4px">von ${k.mitarbeiter_name} gewonnen</span><br>${statusBadge}`;
+    }
+
+    const csActions = mineAsCS ? `
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">
+        <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:#F3E8FF;color:#6D28D9;border-radius:6px" onclick="setKundePhase(${k.id},'design',this)" title="In Design verschieben">Design</button>
+        <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:#E0F2FE;color:#0369A1;border-radius:6px" onclick="setKundePhase(${k.id},'production',this)" title="In Production verschieben">Production</button>
+        <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:#DCFCE7;color:#15803D;border-radius:6px" onclick="setKundePhase(${k.id},'fertig',this)" title="Fertig">Fertig</button>
+        <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:var(--bg);color:var(--text-primary);border-radius:6px" onclick="openRepeatOrderModal(${k.id},'${k.firma.replace(/'/g,"\\'")}')" title="Repeat Order eintragen">↻ Repeat</button>
+      </div>` : '';
+
     return `<tr>
       <td data-label="Firma"><div style="font-weight:600">${k.firma}</div>${k.telefon ? `<div style="font-size:12px;color:var(--text-secondary)">${k.telefon}</div>` : ''}</td>
       <td data-label="Kanal"><span class="db-kanal-badge">${k.kanal}</span></td>
@@ -1003,7 +1120,8 @@ async function loadDatenbank() {
       <td data-label="Mitarbeiter">${k.mitarbeiter_name}</td>
       <td data-label="Status">${statusBadge}</td>
       <td class="db-actions">
-        ${!isUebergeben ? `<button class="btn btn-sm btn-primary" onclick="startUebergabe(${k.id},'${k.firma.replace(/'/g,"\\'")}')">Übergeben →</button>` : ''}
+        ${csActions}
+        ${!isUebergeben && !isCS ? `<button class="btn btn-sm btn-primary" onclick="startUebergabe(${k.id},'${k.firma.replace(/'/g,"\\'")}')">Übergeben →</button>` : ''}
         <button class="btn-icon" onclick="editKunde(${k.id})" title="Bearbeiten">✏️</button>
         <button class="btn-icon" onclick="deleteKunde(${k.id})" title="Löschen">🗑️</button>
       </td>
@@ -1081,6 +1199,32 @@ async function deleteKunde(id) {
 
 let obPendingKundeId = null;
 let obPendingKundeFirma = null;
+
+/* ─── Repeat Orders (Customer Success) ─── */
+let _roCurrentKundeId = null;
+function openRepeatOrderModal(kundeId, firma) {
+  _roCurrentKundeId = kundeId;
+  document.getElementById('roKundeFirma').textContent = firma || '';
+  document.getElementById('roDate').value = new Date().toISOString().slice(0, 10);
+  ['roUmsatz', 'roMarge', 'roNotes'].forEach(id => document.getElementById(id).value = '');
+  openModal('modalRepeatOrder');
+}
+
+async function saveRepeatOrder() {
+  if (!_roCurrentKundeId) return;
+  const date = document.getElementById('roDate').value;
+  const umsatz = parseInt(document.getElementById('roUmsatz').value) || 0;
+  const marge = parseInt(document.getElementById('roMarge').value) || 0;
+  const notes = document.getElementById('roNotes').value.trim();
+  if (!date || !umsatz) return showToast('Datum und Umsatz erforderlich', 'error');
+  try {
+    await api.post('/repeat-orders', { kunde_id: _roCurrentKundeId, date, umsatz, marge, notes });
+    closeModal('modalRepeatOrder');
+    showToast('Repeat Order gespeichert!');
+  } catch (err) {
+    showToast(err.message || 'Speichern fehlgeschlagen', 'error');
+  }
+}
 
 function startUebergabe(kundeId, firma) {
   obPendingKundeId = kundeId;
@@ -2309,16 +2453,21 @@ async function toggleChecklistItem(taskId, index, done) {
 
 async function setKundePhase(kundeId, phase, btn) {
   await api.patch('/kunden/' + kundeId + '/status', { onboarding_phase: phase });
-  // Highlight active button
-  btn.closest('#tdPhaseButtons').querySelectorAll('button').forEach(b => {
-    b.style.background = 'var(--bg)';
-    b.style.borderColor = 'var(--border)';
-    b.style.color = 'var(--text-primary)';
-  });
-  btn.style.background = 'var(--tbc-blue)';
-  btn.style.borderColor = 'var(--tbc-blue)';
-  btn.style.color = '#fff';
-  showToast('Phase aktualisiert: ' + btn.textContent);
+  // Highlight active button if used inside the task-detail phase row
+  const phaseRow = btn?.closest('#tdPhaseButtons');
+  if (phaseRow) {
+    phaseRow.querySelectorAll('button').forEach(b => {
+      b.style.background = 'var(--bg)';
+      b.style.borderColor = 'var(--border)';
+      b.style.color = 'var(--text-primary)';
+    });
+    btn.style.background = 'var(--tbc-blue)';
+    btn.style.borderColor = 'var(--tbc-blue)';
+    btn.style.color = '#fff';
+  }
+  showToast('Phase aktualisiert: ' + (btn?.textContent || phase));
+  // If on Datenbank page, refresh list so status badge updates
+  if (document.getElementById('page-datenbank')?.classList.contains('active')) loadDatenbank();
 }
 
 async function startOnboardingFromTask(taskId) {
@@ -2843,6 +2992,24 @@ let obSender = null;
 
 function initObDeal() {
   initObSenderGrid();
+  initObAssignCS();
+}
+
+async function initObAssignCS() {
+  const sel = document.getElementById('obAssignCS');
+  if (!sel) return;
+  if (sel.dataset.loaded === '1') return;
+  try {
+    const users = await api.get('/employees');
+    const csUsers = users.filter(u => u.role === 'customersuccess');
+    sel.innerHTML = '<option value="">– wählen –</option>' + csUsers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+    if (csUsers.length === 1) sel.value = String(csUsers[0].id);
+    sel.dataset.loaded = '1';
+    sel.onchange = () => {
+      const btn = document.getElementById('obSubmitBtn');
+      if (btn) btn.disabled = !(obDeal && obSender && sel.value);
+    };
+  } catch {}
 }
 
 function initObSenderGrid() {
@@ -2908,7 +3075,9 @@ function obSelectSender(el) {
 }
 
 function obCheckSubmit() {
-  document.getElementById('obSubmitBtn').disabled = !(obDeal && obSender);
+  const csSel = document.getElementById('obAssignCS');
+  const csOk = csSel ? !!csSel.value : true;
+  document.getElementById('obSubmitBtn').disabled = !(obDeal && obSender && csOk);
 }
 
 function obBuildNote() {
@@ -2979,13 +3148,16 @@ async function obRun() {
     obPendingKundeId = null;
     obPendingKundeFirma = null;
 
-    api.patch('/kunden/' + pendingId + '/status', { status: 'übergeben', onboarding_phase: 'übergeben' }).catch(() => {});
+    const assignedCsId = parseInt(document.getElementById('obAssignCS')?.value) || null;
+    // Phase 'design' triggers auto status='übergeben' + push-notify of the CS user on the backend
+    api.patch('/kunden/' + pendingId + '/status', { onboarding_phase: 'design', assigned_cs_user_id: assignedCsId }).catch(() => {});
 
     const currentUser = JSON.parse(localStorage.getItem('tbc_user') || '{}');
     try {
       const users = await api.get('/employees');
-      const firstName = OB_ONBOARDING_PERSON.name.split(' ')[0].toLowerCase();
-      const receiver = users.find(u => u.name.toLowerCase().includes(firstName));
+      const receiver = assignedCsId
+        ? users.find(u => u.id === assignedCsId)
+        : users.find(u => u.name.toLowerCase().includes(OB_ONBOARDING_PERSON.name.split(' ')[0].toLowerCase()));
       const due = new Date(); due.setDate(due.getDate() + 3);
       await api.post('/tasks', {
         title: `Onboarding starten: ${firma}`,

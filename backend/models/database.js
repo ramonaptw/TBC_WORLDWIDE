@@ -15,6 +15,7 @@ const EMPTY = {
   password_reset_tokens: [],
   push_subscriptions: [],
   calllist_week: [],
+  repeat_orders: [],
   _counters: {}
 };
 
