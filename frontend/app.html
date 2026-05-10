@@ -468,6 +468,10 @@
                 <div class="lead-person-grid" id="calllistPersonGrid"></div>
               </div>
               <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+                <div style="flex:1;min-width:180px">
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);margin-bottom:6px">Filter (optional)</div>
+                  <input type="text" id="calllistNameFilter" placeholder="z.B. Burger, Café, Restaurant" class="form-control" onkeydown="if(event.key==='Enter')loadCalllist()">
+                </div>
                 <div>
                   <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);margin-bottom:6px">Anzahl Unternehmen</div>
                   <input type="number" id="calllistLimit" value="20" min="1" max="100" class="form-control" style="width:90px">
@@ -966,6 +970,8 @@
 .wiki-body li,.wiki-editor li{margin-bottom:3px}
 .wiki-body hr,.wiki-editor hr{border:none;border-top:1px solid var(--border);margin:20px 0}
 .wiki-body img,.wiki-editor img{max-width:100%;border-radius:10px;margin:10px 0;display:block;border:1px solid var(--border)}
+.wiki-editor img{cursor:pointer;transition:outline .12s}
+.wiki-editor img.selected{outline:2px solid var(--tbc-blue);outline-offset:2px}
 .wiki-body code,.wiki-editor code{background:var(--bg);padding:1px 6px;border-radius:5px;font-family:monospace;font-size:12px;color:#d63384}
 .wiki-body pre,.wiki-editor pre{background:#1e1e2e;color:#cdd6f4;padding:14px 16px;border-radius:10px;overflow-x:auto;font-family:monospace;font-size:12px;line-height:1.65;margin:12px 0}
 .wiki-body blockquote,.wiki-editor blockquote{border-left:3px solid var(--tbc-blue);padding:6px 14px;margin:10px 0;color:var(--text-secondary);background:var(--bg);border-radius:0 8px 8px 0}
@@ -1017,8 +1023,18 @@
           <button class="wiki-tb-btn" title="Codeblock" onclick="wikiCodeBlock()">Block</button>
           <button class="wiki-tb-btn" title="Trennlinie" onclick="wikiCmd('insertHorizontalRule')">—</button>
           <div class="wiki-tb-sep"></div>
-          <button class="wiki-tb-btn" title="Bild einfügen" onclick="document.getElementById('wikiImgInput').click()">🖼️ Bild</button>
+          <button class="wiki-tb-btn" title="Bild einfügen (wird automatisch verkleinert)" onclick="document.getElementById('wikiImgInput').click()">🖼️ Bild</button>
           <input type="file" id="wikiImgInput" accept="image/*" style="display:none" onchange="wikiInsertImageFile(this)">
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Bild S (33%) — vorher Bild im Artikel anklicken" onclick="wikiResizeImg(33)">Bild S</button>
+          <button class="wiki-tb-btn" title="Bild M (66%)" onclick="wikiResizeImg(66)">Bild M</button>
+          <button class="wiki-tb-btn" title="Bild L (100%)" onclick="wikiResizeImg(100)">Bild L</button>
+          <div class="wiki-tb-sep"></div>
+          <button class="wiki-tb-btn" title="Pfeil rechts" onclick="wikiInsert('→ ')">→</button>
+          <button class="wiki-tb-btn" title="Pfeil links" onclick="wikiInsert('← ')">←</button>
+          <button class="wiki-tb-btn" title="Pfeil hoch" onclick="wikiInsert('↑ ')">↑</button>
+          <button class="wiki-tb-btn" title="Pfeil runter" onclick="wikiInsert('↓ ')">↓</button>
+          <button class="wiki-tb-btn" title="Doppelpfeil" onclick="wikiInsert('⇒ ')">⇒</button>
         </div>
         <div class="wiki-editor wiki-body" id="wikiEditor" contenteditable="true"
              data-placeholder="Wissen hier eintragen — Bilder einfach reinkopieren oder über den Button hochladen…"

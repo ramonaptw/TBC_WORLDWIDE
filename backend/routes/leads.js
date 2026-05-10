@@ -307,12 +307,13 @@ router.post('/', authenticate, async (req, res) => {
   // ── CALLLIST ──
   if (action === 'calllist') {
     if (!HS_KEY) return res.status(500).json({ error: 'HUBSPOT_TOKEN nicht konfiguriert' });
-    const { ownerId, limit = 20 } = payload;
+    const { ownerId, limit = 20, nameFilter } = payload;
     if (!ownerId) return res.status(400).json({ error: 'Salesperson auswählen' });
     const want = Math.min(parseInt(limit) || 20, 100);
+    const nameQ = (nameFilter || '').trim();
 
-    // Return cached result if fresh (15 min per owner+limit)
-    const cacheKey = `calllist_${ownerId}_${want}`;
+    // Cache 15 min per owner+limit+filter
+    const cacheKey = `calllist_${ownerId}_${want}_${nameQ.toLowerCase()}`;
     const cached = cacheGet(cacheKey);
     if (cached) return res.json({ ...cached, fromCache: true });
 
@@ -394,8 +395,10 @@ router.post('/', authenticate, async (req, res) => {
 
       outer: while (entries.length < want && pages < 10) {
         pages++;
+        const filters = [{ propertyName: 'hubspot_owner_id', operator: 'EQ', value: String(ownerId) }];
+        if (nameQ) filters.push({ propertyName: 'name', operator: 'CONTAINS_TOKEN', value: nameQ });
         const body = {
-          filterGroups: [{ filters: [{ propertyName: 'hubspot_owner_id', operator: 'EQ', value: String(ownerId) }] }],
+          filterGroups: [{ filters }],
           properties: ['name', 'website', 'notes_last_contacted'],
           sorts: [{ propertyName: 'notes_last_contacted', direction: 'ASCENDING' }],
           limit: 100
