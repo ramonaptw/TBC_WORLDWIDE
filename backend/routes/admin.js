@@ -59,14 +59,56 @@ router.get('/stats', (req, res) => {
   const totalUmsatz = kunden.reduce((s, k) => s + (Number(k.umsatz) || 0), 0);
   const totalMarge  = kunden.reduce((s, k) => s + (Number(k.marge)  || 0), 0);
 
-  // Monthly revenue — last 6 months
+  // Monthly revenue — last 12 months (rolling)
   const monthlyRevenue = [];
-  for (let i = 5; i >= 0; i--) {
+  for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const mk = kunden.filter(k => (k.abschlussdatum || '').startsWith(m));
-    monthlyRevenue.push({ month: m, count: mk.length, umsatz: mk.reduce((s, k) => s + (Number(k.umsatz) || 0), 0), marge: mk.reduce((s, k) => s + (Number(k.marge) || 0), 0) });
+    monthlyRevenue.push({
+      month: m,
+      count: mk.length,
+      umsatz: mk.reduce((s, k) => s + (Number(k.umsatz) || 0), 0),
+      marge:  mk.reduce((s, k) => s + (Number(k.marge)  || 0), 0),
+    });
   }
+  const prevMonthKey = (() => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  })();
+  const prevMonth = monthlyRevenue.find(m => m.month === prevMonthKey) || { count: 0, umsatz: 0, marge: 0 };
+  const thisMonthEntry = monthlyRevenue.find(m => m.month === thisMonth) || { count: 0, umsatz: 0, marge: 0 };
+
+  // Member-Pipeline: count by onboarding phase (sales hand-off → won)
+  const PIPELINE_PHASES = [
+    { key: 'übergeben',      label: 'Übergeben' },
+    { key: 'pre_onboarding', label: 'Pre-Onboarding' },
+    { key: 'onboarding',     label: 'Onboarding' },
+    { key: 'design',         label: 'Design' },
+    { key: 'fertig',         label: 'Fertig' },
+  ];
+  const pipeline = PIPELINE_PHASES.map(p => ({
+    ...p,
+    count: kunden.filter(k => (k.onboarding_phase || '') === p.key).length,
+  }));
+
+  // Sourcing requests this month (Sourcing-Anfrage = task with project='Sourcing' or sourcing payload)
+  const sourcingThisMonth = tasks.filter(t => {
+    const created = (t.created_at || '').slice(0, 7);
+    return created === thisMonth && (t.project === 'Sourcing' || t.sourcing);
+  }).length;
+
+  // Task status breakdown
+  const taskStats = {
+    open:        tasks.filter(t => t.status === 'open').length,
+    in_progress: tasks.filter(t => t.status === 'in_progress').length,
+    done:        tasks.filter(t => t.status === 'done').length,
+    overdue:     tasks.filter(t => t.status !== 'done' && t.due_date && t.due_date < today).length,
+    doneThisMonth: tasks.filter(t => t.status === 'done' && (t.updated_at || t.created_at || '').slice(0, 7) === thisMonth).length,
+  };
+
+  const newUsersThisMonth = users.filter(u => (u.created_at || '').slice(0, 7) === thisMonth).length;
+  const avgDealValue = kunden.length ? Math.round(totalUmsatz / kunden.length) : 0;
 
   // Channel breakdown
   const channelMap = {};
@@ -91,13 +133,18 @@ router.get('/stats', (req, res) => {
 
   res.json({
     totalUsers: users.length,
+    newUsersThisMonth,
     totalKunden: kunden.length,
-    kundenThisMonth: kunden.filter(k => (k.abschlussdatum || '').startsWith(thisMonth)).length,
-    openTasks: tasks.filter(t => t.status !== 'done').length,
-    overdueTasks: tasks.filter(t => t.status !== 'done' && t.due_date && t.due_date < today).length,
+    kundenThisMonth: thisMonthEntry.count,
+    avgDealValue,
+    openTasks: taskStats.open + taskStats.in_progress,
+    overdueTasks: taskStats.overdue,
     totalFeedback, avgRating,
     totalUmsatz, totalMarge,
+    thisMonth: { umsatz: thisMonthEntry.umsatz, marge: thisMonthEntry.marge, count: thisMonthEntry.count },
+    prevMonth: { umsatz: prevMonth.umsatz, marge: prevMonth.marge, count: prevMonth.count },
     monthlyRevenue, channels, topPerformers,
+    pipeline, sourcingThisMonth, taskStats,
   });
 });
 
