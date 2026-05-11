@@ -1008,7 +1008,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="form-group">
             <label class="form-label">Kontaktperson *</label>
-            <input class="form-control" id="hlName" placeholder="Vorname Nachname">
+            <input class="form-control" id="hlName" placeholder="Vorname Nachname" oninput="_rerenderHsLeadMatchCardFromCache()">
           </div>
           <div class="form-group">
             <label class="form-label">E-Mail</label>
@@ -1020,7 +1020,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Salesperson *</label>
-            <select class="form-control" id="hlOwner">
+            <select class="form-control" id="hlOwner" onchange="_rerenderHsLeadMatchCardFromCache()">
               <option value="">– bitte wählen –</option>
             </select>
           </div>

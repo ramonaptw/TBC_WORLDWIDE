@@ -2421,12 +2421,14 @@ const HS_LEAD_PERSONS = [
   { id: '34040625', name: 'Marko Zecevic' },
   { id: '34040626', name: 'Justus Kemper' },
 ];
+let _hsLeadLastDetail = null;
 
 function openHsLeadModal() {
   ['hlFirma','hlUrl','hlName','hlEmail','hlPhone','hlNotes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hlStatus').innerHTML = '';
   document.getElementById('hsLeadSharedFields').style.display = 'none';
   document.getElementById('hsLeadNewOnlyFields').style.display = 'none';
+  _hsLeadLastDetail = null;
   const submitBtn = document.getElementById('hlSubmitBtn');
   if (submitBtn) { submitBtn.disabled = false; submitBtn.style.display = ''; }
   const checkBtn = document.getElementById('hlCheckBtn');
@@ -2496,10 +2498,18 @@ async function _refreshHsLeadMatchCard(companyId) {
   cardEl.innerHTML = '<div style="color:var(--text-secondary);font-size:13px">⏳ Lade Details…</div>';
   try {
     const detail = await api.post('/onboarding-hs', { action: 'getCompanyDetail', companyId });
+    _hsLeadLastDetail = detail;
     cardEl.innerHTML = _renderHsLeadMatchCard(detail);
   } catch (e) {
     cardEl.innerHTML = `<div style="color:var(--danger);font-size:13px">❌ Detail konnte nicht geladen werden: ${e.message || 'Fehler'}</div>`;
   }
+}
+
+function _rerenderHsLeadMatchCardFromCache() {
+  if (!_hsLeadLastDetail) return;
+  const cardEl = document.getElementById('hsLeadMatchCard');
+  if (!cardEl) return;
+  cardEl.innerHTML = _renderHsLeadMatchCard(_hsLeadLastDetail);
 }
 
 function _renderHsLeadMatchCard(detail) {
@@ -2657,6 +2667,7 @@ function resetHsLeadForm() {
   document.getElementById('hlStatus').innerHTML = '';
   document.getElementById('hsLeadSharedFields').style.display = 'none';
   document.getElementById('hsLeadNewOnlyFields').style.display = 'none';
+  _hsLeadLastDetail = null;
   const submitBtn = document.getElementById('hlSubmitBtn');
   if (submitBtn) { submitBtn.disabled = false; submitBtn.style.display = ''; }
   const checkBtn = document.getElementById('hlCheckBtn');
