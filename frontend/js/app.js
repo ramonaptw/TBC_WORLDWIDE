@@ -394,7 +394,45 @@ async function loadDashboard() {
       }).join('')
     : '<div class="empty-state" style="padding:24px"><div class="empty-icon">📭</div><p>Noch keine Ankündigungen</p></div>';
 
-  // (Aufgaben-Karte wurde entfernt — neue Aufgaben erscheinen im Notification-Popup.)
+  // ── My open tasks ──
+  document.getElementById('dashTasksCard').style.display = hasTasks ? '' : 'none';
+  if (hasTasks) {
+    const dashTasks = document.getElementById('dashTasks');
+    const myTasks = tasks
+      .filter(t => t.status !== 'done' && (t.assigned_to === currentUser.id || (t.created_by === currentUser.id && !t.assigned_to)))
+      .sort((a, b) => {
+        const aOver = a.due_date && a.due_date < today;
+        const bOver = b.due_date && b.due_date < today;
+        if (aOver && !bOver) return -1;
+        if (!aOver && bOver) return 1;
+        return (a.due_date || '9999') < (b.due_date || '9999') ? -1 : 1;
+      })
+      .slice(0, 6);
+    dashTasks.innerHTML = myTasks.length
+      ? myTasks.map(t => {
+          const isOverdue = t.due_date && t.due_date < today;
+          const isDueToday = t.due_date === today;
+          const dueLine = isOverdue
+            ? `<span style="color:var(--danger);font-weight:700">⚠ Überfällig seit ${formatDate(t.due_date)}</span>`
+            : isDueToday
+              ? `<span style="color:#D97706;font-weight:700">⏰ Heute fällig</span>`
+              : `Fällig: ${formatDate(t.due_date)}`;
+          const isCsHandover = currentUser.role === 'customersuccess' && t.project === 'Onboarding' && t.kunde_id;
+          const clickAction = isCsHandover
+            ? `openCsMemberOverview(${t.kunde_id})`
+            : `openTaskDetail(${t.id})`;
+          return `
+          <div onclick="${clickAction}" style="padding:11px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .12s${isOverdue ? ';background:#FEF9F9' : ''}" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background='${isOverdue ? '#FEF9F9' : ''}'">
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:13px">${t.title}</div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:1px">${t.project || '–'} · ${dueLine}</div>
+            </div>
+            ${badge(t.priority)}
+            <span style="font-size:12px;color:var(--text-light);flex-shrink:0">→</span>
+          </div>`;
+        }).join('')
+      : '<div class="empty-state" style="padding:24px"><div class="empty-icon">🎉</div><p>Alle Aufgaben erledigt!</p></div>';
+  }
 }
 
 // Phase ordering helpers — used to decide whether a kunde currently counts as
