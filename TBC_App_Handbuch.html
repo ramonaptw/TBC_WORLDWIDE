@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TBC WORLDWIDE — Deine Mitarbeiter-App</title>
+<script>document.documentElement.classList.add('js');</script>
 <style>
   :root {
     --primary: #0d5c38;
@@ -581,9 +582,10 @@
     text-align: center;
   }
 
-  /* Reveal-on-scroll (CSS-only) */
-  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
-  .reveal.in { opacity: 1; transform: translateY(0); }
+  /* Reveal-on-scroll — Default sichtbar, nur mit JS unsichtbar starten */
+  .reveal { opacity: 1; transform: none; transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+  .js .reveal { opacity: 0; transform: translateY(20px); }
+  .js .reveal.in { opacity: 1; transform: translateY(0); }
 </style>
 </head>
 <body>
