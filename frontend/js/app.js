@@ -2425,8 +2425,12 @@ const HS_LEAD_PERSONS = [
 function openHsLeadModal() {
   ['hlFirma','hlUrl','hlName','hlEmail','hlPhone','hlNotes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hlStatus').innerHTML = '';
+  document.getElementById('hsLeadSharedFields').style.display = 'none';
+  document.getElementById('hsLeadNewOnlyFields').style.display = 'none';
   const submitBtn = document.getElementById('hlSubmitBtn');
   if (submitBtn) { submitBtn.disabled = false; submitBtn.style.display = ''; }
+  const checkBtn = document.getElementById('hlCheckBtn');
+  if (checkBtn) { checkBtn.disabled = false; checkBtn.textContent = 'Prüfen →'; }
   const ownerSel = document.getElementById('hlOwner');
   if (ownerSel) {
     ownerSel.innerHTML = '<option value="">– bitte wählen –</option>' +
@@ -2434,32 +2438,34 @@ function openHsLeadModal() {
     ownerSel.value = '';
   }
   openModal('modalHsLead');
+  setTimeout(() => document.getElementById('hlUrl').focus(), 50);
 }
 
-async function submitHsLead() {
-  const firma = document.getElementById('hlFirma').value.trim();
+async function hsLeadCheckUrl() {
   const url = document.getElementById('hlUrl').value.trim();
-  const contactName = document.getElementById('hlName').value.trim();
-  const ownerId = document.getElementById('hlOwner').value;
-  if (!firma || !contactName) return alert('Firmenname und Kontaktperson sind Pflichtfelder.');
-  if (!url) return alert('Website / URL ist Pflichtfeld.');
-  if (!ownerId) return alert('Bitte Salesperson auswählen.');
-
+  if (!url) return alert('Bitte URL eingeben.');
   const statusEl = document.getElementById('hlStatus');
-  const submitBtn = document.getElementById('hlSubmitBtn');
+  const checkBtn = document.getElementById('hlCheckBtn');
+  checkBtn.disabled = true;
   statusEl.innerHTML = '<span style="color:var(--text-secondary)">⏳ Prüfe URL in HubSpot…</span>';
-  if (submitBtn) submitBtn.disabled = true;
-
+  document.getElementById('hsLeadSharedFields').style.display = 'none';
+  document.getElementById('hsLeadNewOnlyFields').style.display = 'none';
   try {
     const check = await api.post('/onboarding-hs', { action: 'checkLeadUrl', url });
     if (check?.matches?.length) {
+      document.getElementById('hsLeadSharedFields').style.display = '';
       await _showHsLeadDuplicateUI(check.matches);
-      return;
+    } else {
+      statusEl.innerHTML = '<span style="color:#15803D;font-weight:600">✅ URL ist noch nicht in HubSpot — bitte unten alle Felder ausfüllen</span>';
+      document.getElementById('hsLeadSharedFields').style.display = '';
+      document.getElementById('hsLeadNewOnlyFields').style.display = '';
+      document.getElementById('hlFirma').focus();
     }
-    await _createHsLeadConfirmed();
   } catch (e) {
     statusEl.innerHTML = `<span style="color:var(--danger)">❌ Fehler: ${e.message || 'Unbekannter Fehler'}</span>`;
-    if (submitBtn) submitBtn.disabled = false;
+  } finally {
+    checkBtn.disabled = false;
+    checkBtn.textContent = 'Erneut prüfen';
   }
 }
 
@@ -2559,7 +2565,7 @@ function _renderHsLeadMatchCard(detail) {
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${showReassign ? `<button class="btn btn-sm btn-primary" style="font-size:12px;padding:7px 14px" onclick="_hsLeadReassignOwner('${company.id}')">Owner auf ${selectedName} umschreiben</button>` : ''}
         <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="_hsLeadAddContact('${company.id}')" ${canAddContact ? '' : 'disabled title="Bitte Kontaktperson im Formular eintragen"'}>${canAddContact ? `Kontakt „${contactNameInput}" hinzufügen` : 'Kontakt hinzufügen (Name fehlt)'}</button>
-        <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="_createHsLeadConfirmed()">Trotzdem neu anlegen</button>
+        <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="document.getElementById('hsLeadNewOnlyFields').style.display='';document.getElementById('hlFirma').focus()">Trotzdem komplett neu anlegen</button>
         <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="document.getElementById('hlStatus').innerHTML='';document.getElementById('hlSubmitBtn').disabled=false">Abbrechen</button>
       </div>
     </div>`;
@@ -2604,6 +2610,13 @@ async function _hsLeadAddContact(companyId) {
 
 async function _createHsLeadConfirmed() {
   const firma = document.getElementById('hlFirma').value.trim();
+  const url = document.getElementById('hlUrl').value.trim();
+  const contactName = document.getElementById('hlName').value.trim();
+  const ownerId = document.getElementById('hlOwner').value;
+  if (!url) return alert('Website / URL ist Pflichtfeld.');
+  if (!firma) return alert('Firmenname ist Pflichtfeld.');
+  if (!contactName) return alert('Kontaktperson ist Pflichtfeld.');
+  if (!ownerId) return alert('Bitte Salesperson auswählen.');
   const statusEl = document.getElementById('hlStatus');
   const submitBtn = document.getElementById('hlSubmitBtn');
   statusEl.innerHTML = '<span style="color:var(--text-secondary)">⏳ Wird in HubSpot angelegt…</span>';
@@ -2631,6 +2644,8 @@ async function _createHsLeadConfirmed() {
         </div>
       </div>`;
     if (submitBtn) submitBtn.style.display = 'none';
+    document.getElementById('hsLeadSharedFields').style.display = 'none';
+    document.getElementById('hsLeadNewOnlyFields').style.display = 'none';
   } catch (e) {
     statusEl.innerHTML = `<span style="color:var(--danger)">❌ Fehler: ${e.message || 'Unbekannter Fehler'}</span>`;
     if (submitBtn) submitBtn.disabled = false;
@@ -2640,9 +2655,13 @@ async function _createHsLeadConfirmed() {
 function resetHsLeadForm() {
   ['hlFirma','hlUrl','hlName','hlEmail','hlPhone','hlNotes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hlStatus').innerHTML = '';
+  document.getElementById('hsLeadSharedFields').style.display = 'none';
+  document.getElementById('hsLeadNewOnlyFields').style.display = 'none';
   const submitBtn = document.getElementById('hlSubmitBtn');
   if (submitBtn) { submitBtn.disabled = false; submitBtn.style.display = ''; }
-  document.getElementById('hlFirma').focus();
+  const checkBtn = document.getElementById('hlCheckBtn');
+  if (checkBtn) { checkBtn.disabled = false; checkBtn.textContent = 'Prüfen →'; }
+  document.getElementById('hlUrl').focus();
 }
 
 // ── FEEDBACK PAGE ──
