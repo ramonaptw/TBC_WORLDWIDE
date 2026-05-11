@@ -261,7 +261,6 @@ async function loadDashboard() {
     hasCommit ? api.get('/commitments?month=' + currentMonth).catch(() => null) : Promise.resolve(null),
   ]);
   allTasks = tasks;
-  refreshTaskNotifyBadge();
 
   // ── Commitment Banner ──
   const bannerEl = document.getElementById('commitBanner');
@@ -285,11 +284,18 @@ async function loadDashboard() {
   const isMine = t => t.assigned_to === currentUser.id || (t.created_by === currentUser.id && !t.assigned_to);
   const overdueTasks = tasks.filter(t => isMine(t) && t.status !== 'done' && t.due_date && t.due_date < today).length;
   const myOpenTasks  = tasks.filter(t => isMine(t) && t.status !== 'done').length;
-  const tasksTile = `
-      <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
-        <div class="dash-kpi-label">Aufgaben</div>
-        <div class="dash-kpi-value">${myOpenTasks}</div>
-        <div class="dash-kpi-sub">${overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${overdueTasks} überfällig</span>` : myOpenTasks === 0 ? '✓ alle erledigt' : 'offen'}</div>
+  // Notification tile: combined unread tasks + unread announcements ('!' + badge)
+  const unreadTaskCount = unreadTasksForCurrentUser().length;
+  const unreadNewsCount = unreadNewsList(news).length;
+  const totalUnread = unreadTaskCount + unreadNewsCount;
+  const notifyTile = `
+      <div class="dash-kpi${totalUnread > 0 ? ' dash-kpi--warn' : ' dash-kpi--ok'}" onclick="openDashNotifyPopup()" style="cursor:pointer;position:relative">
+        <div class="dash-kpi-label">Neue Nachrichten</div>
+        <div class="dash-kpi-value" style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:28px;line-height:1">${totalUnread > 0 ? '❗' : '✓'}</span>
+          ${totalUnread > 0 ? `<span style="background:var(--danger);color:#fff;padding:2px 9px;border-radius:99px;font-size:13px;font-weight:800">+${totalUnread}</span>` : ''}
+        </div>
+        <div class="dash-kpi-sub">${totalUnread === 0 ? 'Alles gelesen' : `${unreadTaskCount} Aufgabe${unreadTaskCount === 1 ? '' : 'n'} · ${unreadNewsCount} Ankündigung${unreadNewsCount === 1 ? '' : 'en'}`}</div>
       </div>`;
 
   if (hasSales) {
@@ -312,7 +318,7 @@ async function loadDashboard() {
         <div class="dash-kpi-value dash-kpi-value--euro">€${actualUmsatz.toLocaleString('de-DE')}</div>
         ${targetUmsatz ? `<div class="dash-kpi-bar"><div class="dash-kpi-bar-fill ${barClass(umsatzPct)}" style="width:${umsatzPct}%"></div></div><div class="dash-kpi-sub">${umsatzPct}% von €${targetUmsatz.toLocaleString('de-DE')}</div>` : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>
-      ${tasksTile}`;
+      ${notifyTile}`;
   } else if (hasIntakeCommit) {
     // Customer Success KPIs: € sum of revenue of kunden that entered design/production this month
     const fmtEur = n => '€' + Number(n).toLocaleString('de-DE');
@@ -335,7 +341,7 @@ async function loadDashboard() {
           : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>`;
     };
-    kpiEl.innerHTML = moneyTile('Design Intake', designEur, targetDI) + moneyTile('Production Intake', productionEur, targetPI) + tasksTile;
+    kpiEl.innerHTML = moneyTile('Design Intake', designEur, targetDI) + moneyTile('Production Intake', productionEur, targetPI) + notifyTile;
   } else if (hasTasks) {
     kpiEl.innerHTML = `
       <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
@@ -354,8 +360,6 @@ async function loadDashboard() {
 
   // ── Recently won customers ──
   document.getElementById('dashRecentCard').style.display = hasRecent ? '' : 'none';
-  // Tasks is now the left column of the grid; collapse to 1fr when tasks hidden so News fills the row
-  document.getElementById('dashGrid').style.gridTemplateColumns = hasTasks ? '' : '1fr';
   if (hasRecent) {
     const recentEl = document.getElementById('dashRecent');
     const recent = [...kunden].sort((a, b) => new Date(b.abschlussdatum) - new Date(a.abschlussdatum)).slice(0, 6);
@@ -390,47 +394,7 @@ async function loadDashboard() {
       }).join('')
     : '<div class="empty-state" style="padding:24px"><div class="empty-icon">📭</div><p>Noch keine Ankündigungen</p></div>';
 
-  // ── My open tasks ──
-  document.getElementById('dashTasksCard').style.display = hasTasks ? '' : 'none';
-  if (hasTasks) {
-    const dashTasks = document.getElementById('dashTasks');
-    // Mine = explicitly assigned to me OR created by me without an assignee
-    const myTasks = tasks
-      .filter(t => t.status !== 'done' && (t.assigned_to === currentUser.id || (t.created_by === currentUser.id && !t.assigned_to)))
-      .sort((a, b) => {
-        const aOver = a.due_date && a.due_date < today;
-        const bOver = b.due_date && b.due_date < today;
-        if (aOver && !bOver) return -1;
-        if (!aOver && bOver) return 1;
-        return (a.due_date || '9999') < (b.due_date || '9999') ? -1 : 1;
-      })
-      .slice(0, 6);
-    dashTasks.innerHTML = myTasks.length
-      ? myTasks.map(t => {
-          const isOverdue = t.due_date && t.due_date < today;
-          const isDueToday = t.due_date === today;
-          const dueLine = isOverdue
-            ? `<span style="color:var(--danger);font-weight:700">⚠ Überfällig seit ${formatDate(t.due_date)}</span>`
-            : isDueToday
-              ? `<span style="color:#D97706;font-weight:700">⏰ Heute fällig</span>`
-              : `Fällig: ${formatDate(t.due_date)}`;
-          // For CS users, Onboarding tasks open the dedicated member overview
-          const isCsHandover = currentUser.role === 'customersuccess' && t.project === 'Onboarding' && t.kunde_id;
-          const clickAction = isCsHandover
-            ? `openCsMemberOverview(${t.kunde_id})`
-            : `openTaskDetail(${t.id})`;
-          return `
-          <div onclick="${clickAction}" style="padding:11px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .12s${isOverdue ? ';background:#FEF9F9' : ''}" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background='${isOverdue ? '#FEF9F9' : ''}'">
-            <div style="flex:1">
-              <div style="font-weight:600;font-size:13px">${t.title}</div>
-              <div style="font-size:12px;color:var(--text-secondary);margin-top:1px">${t.project || '–'} · ${dueLine}</div>
-            </div>
-            ${badge(t.priority)}
-            <span style="font-size:12px;color:var(--text-light);flex-shrink:0">→</span>
-          </div>`;
-        }).join('')
-      : '<div class="empty-state" style="padding:24px"><div class="empty-icon">🎉</div><p>Alle Aufgaben erledigt!</p></div>';
-  }
+  // (Aufgaben-Karte wurde entfernt — neue Aufgaben erscheinen im Notification-Popup.)
 }
 
 // Phase ordering helpers — used to decide whether a kunde currently counts as
@@ -573,7 +537,7 @@ function newsEditorInput() {
   ed.dataset.empty = ed.innerText.trim() === '';
 }
 
-/* ─── Task Notification Inbox (Topbar Bell) ─── */
+/* ─── Dashboard Notification (Aufgaben + Ankündigungen, ungelesen) ─── */
 function getReadTaskIds() {
   try { return JSON.parse(localStorage.getItem('tbc_read_tasks') || '[]'); }
   catch { return []; }
@@ -584,7 +548,6 @@ function markTaskRead(id) {
   const set = new Set(getReadTaskIds());
   set.add(n);
   localStorage.setItem('tbc_read_tasks', JSON.stringify([...set]));
-  refreshTaskNotifyBadge();
 }
 function unreadTasksForCurrentUser() {
   if (!currentUser) return [];
@@ -594,75 +557,98 @@ function unreadTasksForCurrentUser() {
     .filter(t => t.assigned_to === currentUser.id || (t.created_by === currentUser.id && !t.assigned_to))
     .filter(t => !read.has(t.id));
 }
-function refreshTaskNotifyBadge() {
-  const badge = document.getElementById('taskNotifyBadge');
-  if (!badge) return;
-  const n = unreadTasksForCurrentUser().length;
-  badge.textContent = n > 99 ? '99+' : n;
-  badge.style.display = n > 0 ? 'block' : 'none';
+function getReadNewsIds() {
+  try { return JSON.parse(localStorage.getItem('tbc_read_news') || '[]'); }
+  catch { return []; }
 }
-function markAllTasksRead() {
-  const unread = unreadTasksForCurrentUser();
-  if (unread.length === 0) { closeTaskInbox(); return; }
-  const set = new Set(getReadTaskIds());
-  unread.forEach(t => set.add(t.id));
-  localStorage.setItem('tbc_read_tasks', JSON.stringify([...set]));
-  refreshTaskNotifyBadge();
-  closeTaskInbox();
+function markNewsRead(id) {
+  const n = Number(id);
+  if (!Number.isFinite(n)) return;
+  const set = new Set(getReadNewsIds());
+  set.add(n);
+  localStorage.setItem('tbc_read_news', JSON.stringify([...set]));
 }
-function toggleTaskInbox() {
-  const popup = document.getElementById('taskInboxPopup');
-  if (!popup) return;
-  if (popup.style.display === 'block') { closeTaskInbox(); return; }
-  renderTaskInbox();
-  popup.style.display = 'block';
-  setTimeout(() => document.addEventListener('click', _taskInboxOutsideClick), 0);
+function unreadNewsList(news) {
+  const read = new Set(getReadNewsIds());
+  return (news || []).filter(n => !read.has(n.id));
 }
-function closeTaskInbox() {
-  const popup = document.getElementById('taskInboxPopup');
-  if (popup) popup.style.display = 'none';
-  document.removeEventListener('click', _taskInboxOutsideClick);
-}
-function _taskInboxOutsideClick(e) {
-  if (!document.getElementById('taskNotifyWrap')?.contains(e.target)) closeTaskInbox();
-}
-function renderTaskInbox() {
-  const list = document.getElementById('taskInboxList');
-  if (!list) return;
-  const tasks = unreadTasksForCurrentUser()
+
+async function openDashNotifyPopup() {
+  let news = [];
+  try { news = await api.get('/news'); } catch {}
+  const unreadTasks = unreadTasksForCurrentUser()
     .sort((a, b) => (a.due_date || '9999').localeCompare(b.due_date || '9999'))
     .slice(0, 20);
-  if (!tasks.length) {
-    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px">✓ Alle Aufgaben gelesen</div>';
-    return;
+  const unreadNews = unreadNewsList(news).slice(0, 20);
+  document.getElementById('dashNotifyTasksSection').innerHTML = _renderDashNotifyTasks(unreadTasks);
+  document.getElementById('dashNotifyNewsSection').innerHTML  = _renderDashNotifyNews(unreadNews);
+  if (!unreadTasks.length && !unreadNews.length) {
+    document.getElementById('dashNotifyTasksSection').innerHTML =
+      '<div style="padding:28px;text-align:center;color:var(--text-secondary);font-size:13px">✓ Alles gelesen</div>';
   }
-  list.innerHTML = tasks.map(t => {
-    const due = t.due_date ? ' · ' + formatDate(t.due_date) : '';
-    return `<div onclick="openTaskFromInbox(${t.id})" style="padding:11px 14px;border-bottom:1px solid var(--border-light);cursor:pointer;transition:background .12s"
-       onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+  window._dashNotifyNewsCache = unreadNews;
+  openModal('modalDashNotify');
+}
+
+function _renderDashNotifyTasks(tasks) {
+  if (!tasks.length) return '';
+  return `<div style="padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-light);border-bottom:1px solid var(--border-light)">✅ Aufgaben (${tasks.length})</div>` +
+    tasks.map(t => `<div onclick="openDashNotifyTask(${t.id})" style="padding:11px 16px;border-bottom:1px solid var(--border-light);cursor:pointer" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--tbc-blue);flex-shrink:0"></span>
         <div style="font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</div>
       </div>
-      <div style="font-size:11px;color:var(--text-secondary);padding-left:14px">${t.project || '–'}${due}</div>
-    </div>`;
-  }).join('');
+      <div style="font-size:11px;color:var(--text-secondary);padding-left:14px">${t.project || '–'}${t.due_date ? ' · ' + formatDate(t.due_date) : ''}</div>
+    </div>`).join('');
 }
-function openTaskFromInbox(taskId) {
-  closeTaskInbox();
+function _renderDashNotifyNews(items) {
+  if (!items.length) return '';
+  return `<div style="padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-light);border-top:1px solid var(--border);border-bottom:1px solid var(--border-light)">📢 Ankündigungen (${items.length})</div>` +
+    items.map(n => `<div onclick="openDashNotifyNews(${n.id})" style="padding:11px 16px;border-bottom:1px solid var(--border-light);cursor:pointer" onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#F0A500;flex-shrink:0"></span>
+        <div style="font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.pinned ? '📌 ' : ''}${n.title}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-secondary);padding-left:14px">${n.author_name || ''}${n.created_at ? ' · ' + formatRelative(n.created_at) : ''}</div>
+    </div>`).join('');
+}
+
+function openDashNotifyTask(taskId) {
+  closeModal('modalDashNotify');
   markTaskRead(taskId);
   const t = (allTasks || []).find(x => x.id === taskId);
-  if (currentUser?.role === 'customersuccess' && t && t.project === 'Onboarding' && t.kunde_id) {
+  if (currentUser?.role === 'customersuccess' && t?.project === 'Onboarding' && t.kunde_id) {
     openCsMemberOverview(t.kunde_id);
   } else {
     openTaskDetail(taskId);
   }
+  if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
+}
+
+function openDashNotifyNews(newsId) {
+  closeModal('modalDashNotify');
+  markNewsRead(newsId);
+  openNewsRead(newsId);
+  if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
+}
+
+function markAllDashNotifyRead() {
+  const setT = new Set(getReadTaskIds());
+  unreadTasksForCurrentUser().forEach(t => setT.add(t.id));
+  localStorage.setItem('tbc_read_tasks', JSON.stringify([...setT]));
+  const newsCached = window._dashNotifyNewsCache || [];
+  const setN = new Set(getReadNewsIds());
+  newsCached.forEach(n => setN.add(n.id));
+  localStorage.setItem('tbc_read_news', JSON.stringify([...setN]));
+  closeModal('modalDashNotify');
+  if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
 }
 
 async function openNewsRead(id) {
   const news = await api.get('/news');
   const n = news.find(x => x.id === id);
   if (!n) return;
+  markNewsRead(id);
   document.getElementById('newsReadTitle').textContent = n.title;
   document.getElementById('newsReadMeta').textContent = (n.author_name || '') + (n.author_name && n.created_at ? ' · ' : '') + formatRelative(n.created_at);
   // Render with sanitization. Backwards-compat: treat plain-text legacy entries as such.
@@ -2496,7 +2482,6 @@ async function loadTasks() {
   if (priority) path += `priority=${priority}&`;
   allTasks = await api.get(path);
   renderTasks(allTasks);
-  refreshTaskNotifyBadge();
 }
 
 // Live countdown for the task detail view — adapts units (D/h/m/s)
