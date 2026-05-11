@@ -602,8 +602,9 @@
       <a href="#dashboard">Dashboard</a>
       <a href="#hubspot">HubSpot-Lead</a>
       <a href="#cs">Customer Success</a>
+      <a href="#callliste">Callliste</a>
+      <a href="#wissen-tools">Wissen</a>
       <a href="#rollen">Rollen</a>
-      <a href="#tipps">Tipps</a>
     </div>
     <button class="nav-cta" onclick="window.print()">📄 Als PDF</button>
   </div>
@@ -1176,6 +1177,243 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Callliste ─── -->
+<section class="scope reveal" id="callliste">
+  <div class="section-eyebrow">CALLLISTE — DER TIME-SAVER</div>
+  <h2 class="section-title">Eine Stunde Excel-Sortieren? <span>20 Sekunden.</span></h2>
+  <p class="section-sub">
+    Früher: HubSpot-Export, Excel-Filter, manuell die Cafés rausziehen, Telefonnummern zusammensuchen.
+    Jetzt: Salesperson klicken, „Kaffee" eintippen, fertig.
+  </p>
+
+  <!-- Vorher / Nachher Comparison -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:40px">
+    <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:14px;padding:24px 22px;text-align:center">
+      <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">VORHER</div>
+      <div style="font-size:42px;font-weight:800;color:var(--red);letter-spacing:-0.02em;line-height:1">1<span style="font-size:24px"> Std.</span></div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:10px">HubSpot exportieren · Excel öffnen · Filter setzen · Nummern raussuchen · neue Datei speichern · nervig</div>
+    </div>
+    <div style="background:var(--primary-bg);border:1px solid var(--primary-light);border-radius:14px;padding:24px 22px;text-align:center">
+      <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">NACHHER</div>
+      <div style="font-size:42px;font-weight:800;color:var(--primary);letter-spacing:-0.02em;line-height:1">20<span style="font-size:24px"> Sek.</span></div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:10px">Owner klicken · Filter „Kaffee" eintippen · Liste steht · direkt loslegen</div>
+    </div>
+  </div>
+
+  <div class="duo">
+    <div class="duo-text">
+      <div class="badge">3 KLICKS · FERTIG</div>
+      <h2>So machst du <span>deine Wochenliste</span>:</h2>
+      <ol style="padding-left:0;list-style:none;counter-reset:cstep">
+        <li style="counter-increment:cstep;position:relative;padding-left:38px;margin-bottom:14px">
+          <span style="position:absolute;left:0;top:0;width:26px;height:26px;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">1</span>
+          <strong>Salesperson wählen</strong> — Avatar anklicken (Ramon, Tim, Leon, Justus, Henry, Marko).
+        </li>
+        <li style="counter-increment:cstep;position:relative;padding-left:38px;margin-bottom:14px">
+          <span style="position:absolute;left:0;top:0;width:26px;height:26px;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">2</span>
+          <strong>Liste erstellen</strong> — alle Kontaktnummern dieses Owners aus HubSpot, live abgerufen.
+        </li>
+        <li style="counter-increment:cstep;position:relative;padding-left:38px;margin-bottom:14px">
+          <span style="position:absolute;left:0;top:0;width:26px;height:26px;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">3</span>
+          <strong>Filtern &amp; sammeln</strong> — „Kaffee" oder „Smash" eintippen → nur passende Unternehmen, direkt zur Wochenliste hinzufügen.
+        </li>
+      </ol>
+      <div style="background:var(--primary-bg);border-left:4px solid var(--primary);padding:14px 16px;border-radius:0 8px 8px 0;margin-top:18px;font-size:13px">
+        <strong style="color:var(--primary)">💡 Pro-Tipp:</strong> Mit „Meine Wochenliste" sammelst du deine Anruf-Kandidaten über die Woche und arbeitest die Liste fokussiert ab — ohne jedes Mal neu zu filtern.
+      </div>
+    </div>
+
+    <div class="duo-mock">
+      <div class="mock-window">
+        <div class="mock-window-header">📞 Callliste · Cafés filtern</div>
+        <div class="mock-window-body">
+
+          <!-- Step 1: Owner picker -->
+          <div style="margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.04em">Owner wählen</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <div style="background:#fff;border:1.5px solid var(--accent);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700">
+                <span class="mock-avatar" style="background:#d8f0e8;color:#0d5c38">RH</span> Ramon ✓
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)">
+                <span class="mock-avatar" style="background:#dde8f5;color:#4a7ab5">TZ</span> Tim
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)">
+                <span class="mock-avatar" style="background:#ede8fd;color:#5a3ab5">JK</span> Justus
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)">
+                <span class="mock-avatar" style="background:#fdf5d7;color:#8a6a13">HS</span> Henry
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Filter input -->
+          <div style="margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.04em">Filter</div>
+            <div style="position:relative">
+              <div class="mock-input" style="padding-left:32px;font-weight:600;color:var(--primary)">Kaffee</div>
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px">🔍</span>
+            </div>
+          </div>
+
+          <!-- Step 3: Results -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.04em;display:flex;justify-content:space-between">
+              <span>Ergebnis (8 Treffer)</span>
+              <span style="color:var(--accent)">⚡ in 0.4s</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="background:var(--primary-bg);border:1px solid var(--primary-light);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:12px">
+                <span style="font-weight:700;flex:1">☕ Kaffeerösterei Mahlwerk</span>
+                <span style="color:var(--text-secondary);font-size:11px">+49 221 123456</span>
+                <span style="color:var(--accent);font-weight:800">+</span>
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:12px">
+                <span style="font-weight:700;flex:1">☕ Café Frühling</span>
+                <span style="color:var(--text-secondary);font-size:11px">+49 30 987654</span>
+                <span style="color:var(--text-light)">+</span>
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:12px">
+                <span style="font-weight:700;flex:1">☕ Kaffee &amp; Komplizen</span>
+                <span style="color:var(--text-secondary);font-size:11px">+49 89 555111</span>
+                <span style="color:var(--text-light)">+</span>
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:12px">
+                <span style="font-weight:700;flex:1">☕ Espresso Bar Bohne</span>
+                <span style="color:var(--text-secondary);font-size:11px">+49 211 222333</span>
+                <span style="color:var(--text-light)">+</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-light);text-align:center;padding:6px">… +4 weitere</div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="mock-btn" style="flex:1">📋 Alle zur Wochenliste</button>
+              <button class="mock-btn mock-btn-sec" style="flex:1">Export CSV</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Wissen &amp; Tools ─── -->
+<section class="scope reveal" id="wissen-tools" style="background:linear-gradient(180deg, var(--bg-soft) 0%, #fff 100%); max-width:none; padding-left:0; padding-right:0">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px">
+    <div class="section-eyebrow">WISSEN &amp; TOOLS</div>
+    <h2 class="section-title">Alles, was du brauchst, <span>einen Klick entfernt</span>.</h2>
+    <p class="section-sub">Wiki für Team-Wissen, Quick-Access für externe Tools — kein langes Suchen mehr.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+
+      <!-- Wiki Card -->
+      <div class="duo-mock">
+        <div class="mock-window" style="height:100%">
+          <div class="mock-window-header">📚 Wiki · Wissensdatenbank</div>
+          <div class="mock-window-body" style="padding:18px">
+            <div style="position:relative;margin-bottom:14px">
+              <div class="mock-input" style="padding-left:32px;color:var(--text-light)">Wiki durchsuchen…</div>
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px">🔍</span>
+            </div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.04em">Beliebte Artikel</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="padding:9px 12px;background:#fff;border:1px solid var(--border);border-radius:8px;font-size:13px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">📘</span>
+                <div style="flex:1">
+                  <div style="font-weight:600">Instagram-Session-ID einrichten</div>
+                  <div style="font-size:11px;color:var(--text-light)">Schritt-für-Schritt für das Insta-Tool</div>
+                </div>
+              </div>
+              <div style="padding:9px 12px;background:#fff;border:1px solid var(--border);border-radius:8px;font-size:13px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">📘</span>
+                <div style="flex:1">
+                  <div style="font-weight:600">Übergabe NB → CS</div>
+                  <div style="font-size:11px;color:var(--text-light)">Checkliste &amp; Best Practices</div>
+                </div>
+              </div>
+              <div style="padding:9px 12px;background:#fff;border:1px solid var(--border);border-radius:8px;font-size:13px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">📘</span>
+                <div style="flex:1">
+                  <div style="font-weight:600">HubSpot-Pipelines erklärt</div>
+                  <div style="font-size:11px;color:var(--text-light)">DE Cold Sales vs. NL Pipeline</div>
+                </div>
+              </div>
+              <div style="padding:9px 12px;background:#fff;border:1px solid var(--border);border-radius:8px;font-size:13px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">📘</span>
+                <div style="flex:1">
+                  <div style="font-weight:600">Sourcing-Anfrage richtig stellen</div>
+                  <div style="font-size:11px;color:var(--text-light)">Vorlage &amp; Beispiele</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wiki Description -->
+      <div class="duo-text">
+        <div class="badge">WISSENSDATENBANK</div>
+        <h2 style="font-size:28px">Team-Wissen, <span>nicht im Slack-Chaos</span>.</h2>
+        <p>Alle Anleitungen, Prozesse und Best Practices an einem Ort. Statt jeden Monat dieselbe Frage im Chat zu beantworten, schreibst du's einmal ins Wiki.</p>
+        <ul>
+          <li>Durchsuchbar — Stichwort eingeben, Antwort finden</li>
+          <li>Rich-Text-Editor mit Listen, Links, Formatierung</li>
+          <li>Für alle Rollen sichtbar, Admin/Management pflegt</li>
+          <li>Neuer Mitarbeiter? Verweise aufs Wiki statt Onboarding-Call</li>
+        </ul>
+      </div>
+
+      <!-- Tools Description -->
+      <div class="duo-text" style="margin-top:20px">
+        <div class="badge">TOOLS &amp; LINKS</div>
+        <h2 style="font-size:28px">Drei Klicks zu <span>jedem Tool</span>.</h2>
+        <p>Google Drive für Dateien, HubSpot fürs CRM, Personio für HR — direkt aus der Sidebar, kein Tab-Wirrwarr.</p>
+        <ul>
+          <li>Ein-Klick-Zugang zu allen externen Tools</li>
+          <li>„Onboarding starten" → führt neue Mitarbeiter durch die Schritte</li>
+          <li>Admin kann weitere Tools hinzufügen</li>
+        </ul>
+      </div>
+
+      <!-- Tools Card -->
+      <div class="duo-mock" style="margin-top:20px">
+        <div class="mock-window" style="height:100%">
+          <div class="mock-window-header">🛠️ Tools &amp; Links</div>
+          <div class="mock-window-body" style="padding:18px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              <div style="padding:14px 12px;background:#fff;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer">
+                <div style="font-size:28px;margin-bottom:4px">📁</div>
+                <div style="font-weight:700;font-size:13px">Google Drive</div>
+                <div style="font-size:10px;color:var(--text-light);margin-top:2px">Dateien &amp; Mockups</div>
+              </div>
+              <div style="padding:14px 12px;background:#fff;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer">
+                <div style="font-size:28px;margin-bottom:4px">🎯</div>
+                <div style="font-weight:700;font-size:13px">HubSpot</div>
+                <div style="font-size:10px;color:var(--text-light);margin-top:2px">CRM</div>
+              </div>
+              <div style="padding:14px 12px;background:#fff;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer">
+                <div style="font-size:28px;margin-bottom:4px">👤</div>
+                <div style="font-weight:700;font-size:13px">Personio</div>
+                <div style="font-size:10px;color:var(--text-light);margin-top:2px">HR-Portal</div>
+              </div>
+              <div style="padding:14px 12px;background:var(--primary-bg);border:1.5px solid var(--primary);border-radius:10px;text-align:center;cursor:pointer">
+                <div style="font-size:28px;margin-bottom:4px">🚀</div>
+                <div style="font-weight:700;font-size:13px;color:var(--primary)">Onboarding</div>
+                <div style="font-size:10px;color:var(--primary);margin-top:2px;opacity:0.8">starten</div>
+              </div>
+            </div>
+            <div style="background:var(--bg-soft);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text-secondary);text-align:center">
+              Admin/Management kann weitere Tool-Links hinzufügen
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
