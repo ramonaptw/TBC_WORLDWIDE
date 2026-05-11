@@ -2417,6 +2417,11 @@ function exportUsersCSV() {
 }
 
 // ── HUBSPOT LEAD MODAL ──
+const HS_LEAD_PERSONS = [
+  { id: '34040625', name: 'Marko Zecevic' },
+  { id: '34040626', name: 'Justus Kemper' },
+];
+
 function openHsLeadModal() {
   ['hlFirma','hlUrl','hlName','hlEmail','hlPhone','hlNotes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hlStatus').innerHTML = '';
@@ -2425,7 +2430,7 @@ function openHsLeadModal() {
   const ownerSel = document.getElementById('hlOwner');
   if (ownerSel) {
     ownerSel.innerHTML = '<option value="">– bitte wählen –</option>' +
-      CL_PERSONS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+      HS_LEAD_PERSONS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     ownerSel.value = '';
   }
   openModal('modalHsLead');
