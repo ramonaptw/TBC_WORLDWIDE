@@ -2419,7 +2419,9 @@ function exportUsersCSV() {
 // ── HUBSPOT LEAD MODAL ──
 function openHsLeadModal() {
   ['hlFirma','hlUrl','hlName','hlEmail','hlPhone','hlNotes'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('hlStatus').textContent = '';
+  document.getElementById('hlStatus').innerHTML = '';
+  const submitBtn = document.getElementById('hlSubmitBtn');
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.style.display = ''; }
   openModal('modalHsLead');
 }
 
@@ -2429,10 +2431,12 @@ async function submitHsLead() {
   if (!firma || !contactName) return alert('Firmenname und Kontaktperson sind Pflichtfelder.');
 
   const statusEl = document.getElementById('hlStatus');
-  statusEl.textContent = '⏳ Wird in HubSpot angelegt…';
+  const submitBtn = document.getElementById('hlSubmitBtn');
+  statusEl.innerHTML = '<span style="color:var(--text-secondary)">⏳ Wird in HubSpot angelegt…</span>';
+  if (submitBtn) submitBtn.disabled = true;
 
   try {
-    await api.post('/onboarding-hs', {
+    const r = await api.post('/onboarding-hs', {
       action: 'createLead',
       firma,
       url: document.getElementById('hlUrl').value.trim(),
@@ -2442,12 +2446,29 @@ async function submitHsLead() {
       pipeline: document.getElementById('hlPipeline').value,
       notes: document.getElementById('hlNotes').value.trim(),
     });
-    statusEl.textContent = '';
-    closeModal('modalHsLead');
-    alert(`✅ Lead "${firma}" wurde in HubSpot angelegt (Firma, Kontakt & Deal erstellt).`);
+    const dealUrl = r?.dealId ? `https://app.hubspot.com/contacts/143445032/record/0-3/${r.dealId}` : null;
+    statusEl.innerHTML = `
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+        <div style="color:#15803D;font-weight:700;font-size:14px">✅ Deal „${firma}" in HubSpot angelegt</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${dealUrl ? `<a href="${dealUrl}" target="_blank" rel="noopener" class="btn btn-sm btn-primary" style="font-size:12px;padding:7px 14px">In HubSpot öffnen ↗</a>` : ''}
+          <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="resetHsLeadForm()">Weiteren Lead anlegen</button>
+          <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="closeModal('modalHsLead')">Schließen</button>
+        </div>
+      </div>`;
+    if (submitBtn) submitBtn.style.display = 'none';
   } catch (e) {
-    statusEl.textContent = '❌ Fehler: ' + (e.message || 'Unbekannter Fehler');
+    statusEl.innerHTML = `<span style="color:var(--danger)">❌ Fehler: ${e.message || 'Unbekannter Fehler'}</span>`;
+    if (submitBtn) submitBtn.disabled = false;
   }
+}
+
+function resetHsLeadForm() {
+  ['hlFirma','hlUrl','hlName','hlEmail','hlPhone','hlNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('hlStatus').innerHTML = '';
+  const submitBtn = document.getElementById('hlSubmitBtn');
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.style.display = ''; }
+  document.getElementById('hlFirma').focus();
 }
 
 // ── FEEDBACK PAGE ──
