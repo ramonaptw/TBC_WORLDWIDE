@@ -261,6 +261,7 @@ async function loadDashboard() {
     hasCommit ? api.get('/commitments?month=' + currentMonth).catch(() => null) : Promise.resolve(null),
   ]);
   allTasks = tasks;
+  refreshTaskNotifyBadge();
 
   // ── Commitment Banner ──
   const bannerEl = document.getElementById('commitBanner');
@@ -284,14 +285,11 @@ async function loadDashboard() {
   const isMine = t => t.assigned_to === currentUser.id || (t.created_by === currentUser.id && !t.assigned_to);
   const overdueTasks = tasks.filter(t => isMine(t) && t.status !== 'done' && t.due_date && t.due_date < today).length;
   const myOpenTasks  = tasks.filter(t => isMine(t) && t.status !== 'done').length;
-  // Unread announcements (tracked client-side via localStorage)
-  const readNewsIds = getReadNewsIds();
-  const unreadNews  = news.filter(n => !readNewsIds.includes(n.id)).length;
-  const newsTile = `
-      <div class="dash-kpi${unreadNews > 0 ? ' dash-kpi--warn' : ' dash-kpi--ok'}" onclick="scrollToNews()" style="cursor:pointer">
-        <div class="dash-kpi-label">Ankündigungen</div>
-        <div class="dash-kpi-value">${unreadNews}</div>
-        <div class="dash-kpi-sub">${unreadNews === 0 ? '✓ alle gelesen' : unreadNews === 1 ? '1 ungelesen' : `${unreadNews} ungelesen`}</div>
+  const tasksTile = `
+      <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
+        <div class="dash-kpi-label">Aufgaben</div>
+        <div class="dash-kpi-value">${myOpenTasks}</div>
+        <div class="dash-kpi-sub">${overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${overdueTasks} überfällig</span>` : myOpenTasks === 0 ? '✓ alle erledigt' : 'offen'}</div>
       </div>`;
 
   if (hasSales) {
@@ -314,7 +312,7 @@ async function loadDashboard() {
         <div class="dash-kpi-value dash-kpi-value--euro">€${actualUmsatz.toLocaleString('de-DE')}</div>
         ${targetUmsatz ? `<div class="dash-kpi-bar"><div class="dash-kpi-bar-fill ${barClass(umsatzPct)}" style="width:${umsatzPct}%"></div></div><div class="dash-kpi-sub">${umsatzPct}% von €${targetUmsatz.toLocaleString('de-DE')}</div>` : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>
-      ${newsTile}`;
+      ${tasksTile}`;
   } else if (hasIntakeCommit) {
     // Customer Success KPIs: € sum of revenue of kunden that entered design/production this month
     const fmtEur = n => '€' + Number(n).toLocaleString('de-DE');
@@ -337,7 +335,7 @@ async function loadDashboard() {
           : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>`;
     };
-    kpiEl.innerHTML = moneyTile('Design Intake', designEur, targetDI) + moneyTile('Production Intake', productionEur, targetPI) + newsTile;
+    kpiEl.innerHTML = moneyTile('Design Intake', designEur, targetDI) + moneyTile('Production Intake', productionEur, targetPI) + tasksTile;
   } else if (hasTasks) {
     kpiEl.innerHTML = `
       <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
@@ -575,25 +573,96 @@ function newsEditorInput() {
   ed.dataset.empty = ed.innerText.trim() === '';
 }
 
-function getReadNewsIds() {
-  try { return JSON.parse(localStorage.getItem('tbc_read_news') || '[]'); }
+/* ─── Task Notification Inbox (Topbar Bell) ─── */
+function getReadTaskIds() {
+  try { return JSON.parse(localStorage.getItem('tbc_read_tasks') || '[]'); }
   catch { return []; }
 }
-function markNewsRead(id) {
-  const set = new Set(getReadNewsIds());
-  set.add(id);
-  localStorage.setItem('tbc_read_news', JSON.stringify([...set]));
+function markTaskRead(id) {
+  const n = Number(id);
+  if (!Number.isFinite(n)) return;
+  const set = new Set(getReadTaskIds());
+  set.add(n);
+  localStorage.setItem('tbc_read_tasks', JSON.stringify([...set]));
+  refreshTaskNotifyBadge();
 }
-function scrollToNews() {
-  const card = document.querySelector('#dashNews')?.closest('.card');
-  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+function unreadTasksForCurrentUser() {
+  if (!currentUser) return [];
+  const read = new Set(getReadTaskIds());
+  return (allTasks || [])
+    .filter(t => t.status !== 'done')
+    .filter(t => t.assigned_to === currentUser.id || (t.created_by === currentUser.id && !t.assigned_to))
+    .filter(t => !read.has(t.id));
+}
+function refreshTaskNotifyBadge() {
+  const badge = document.getElementById('taskNotifyBadge');
+  if (!badge) return;
+  const n = unreadTasksForCurrentUser().length;
+  badge.textContent = n > 99 ? '99+' : n;
+  badge.style.display = n > 0 ? 'block' : 'none';
+}
+function markAllTasksRead() {
+  const unread = unreadTasksForCurrentUser();
+  if (unread.length === 0) { closeTaskInbox(); return; }
+  const set = new Set(getReadTaskIds());
+  unread.forEach(t => set.add(t.id));
+  localStorage.setItem('tbc_read_tasks', JSON.stringify([...set]));
+  refreshTaskNotifyBadge();
+  closeTaskInbox();
+}
+function toggleTaskInbox() {
+  const popup = document.getElementById('taskInboxPopup');
+  if (!popup) return;
+  if (popup.style.display === 'block') { closeTaskInbox(); return; }
+  renderTaskInbox();
+  popup.style.display = 'block';
+  setTimeout(() => document.addEventListener('click', _taskInboxOutsideClick), 0);
+}
+function closeTaskInbox() {
+  const popup = document.getElementById('taskInboxPopup');
+  if (popup) popup.style.display = 'none';
+  document.removeEventListener('click', _taskInboxOutsideClick);
+}
+function _taskInboxOutsideClick(e) {
+  if (!document.getElementById('taskNotifyWrap')?.contains(e.target)) closeTaskInbox();
+}
+function renderTaskInbox() {
+  const list = document.getElementById('taskInboxList');
+  if (!list) return;
+  const tasks = unreadTasksForCurrentUser()
+    .sort((a, b) => (a.due_date || '9999').localeCompare(b.due_date || '9999'))
+    .slice(0, 20);
+  if (!tasks.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px">✓ Alle Aufgaben gelesen</div>';
+    return;
+  }
+  list.innerHTML = tasks.map(t => {
+    const due = t.due_date ? ' · ' + formatDate(t.due_date) : '';
+    return `<div onclick="openTaskFromInbox(${t.id})" style="padding:11px 14px;border-bottom:1px solid var(--border-light);cursor:pointer;transition:background .12s"
+       onmouseenter="this.style.background='var(--sidebar-hover)'" onmouseleave="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--tbc-blue);flex-shrink:0"></span>
+        <div style="font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-secondary);padding-left:14px">${t.project || '–'}${due}</div>
+    </div>`;
+  }).join('');
+}
+function openTaskFromInbox(taskId) {
+  closeTaskInbox();
+  markTaskRead(taskId);
+  const t = (allTasks || []).find(x => x.id === taskId);
+  if (currentUser?.role === 'customersuccess' && t && t.project === 'Onboarding' && t.kunde_id) {
+    openCsMemberOverview(t.kunde_id);
+  } else {
+    openTaskDetail(taskId);
+  }
 }
 
 async function openNewsRead(id) {
   const news = await api.get('/news');
   const n = news.find(x => x.id === id);
   if (!n) return;
-  markNewsRead(id);
   document.getElementById('newsReadTitle').textContent = n.title;
   document.getElementById('newsReadMeta').textContent = (n.author_name || '') + (n.author_name && n.created_at ? ' · ' : '') + formatRelative(n.created_at);
   // Render with sanitization. Backwards-compat: treat plain-text legacy entries as such.
@@ -610,8 +679,6 @@ async function openNewsRead(id) {
   if (canDelete) delBtn.onclick = () => deleteNews(n.id);
 
   openModal('modalNewsRead');
-  // Refresh dashboard KPI behind the modal so the unread-count updates immediately
-  if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
 }
 
 async function deleteNews(id) {
@@ -1392,6 +1459,7 @@ async function openCsMemberOverview(kundeId) {
     t.status !== 'done'
   );
   _csmTaskId = task?.id || null;
+  if (_csmTaskId) markTaskRead(_csmTaskId);
 
   // Header
   document.getElementById('csmTitle').textContent = k.firma;
@@ -2428,6 +2496,7 @@ async function loadTasks() {
   if (priority) path += `priority=${priority}&`;
   allTasks = await api.get(path);
   renderTasks(allTasks);
+  refreshTaskNotifyBadge();
 }
 
 // Live countdown for the task detail view — adapts units (D/h/m/s)
@@ -2570,6 +2639,7 @@ let tdRating = 0;
 
 async function openTaskDetail(id) {
   tdCurrentTaskId = id;
+  markTaskRead(id);
 
   const t = await api.get('/tasks/' + id);
 

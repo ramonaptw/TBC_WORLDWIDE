@@ -90,6 +90,24 @@
       </div>
       <div class="topbar-actions" id="topbarActions"></div>
 
+      <!-- Task notification bell -->
+      <div id="taskNotifyWrap" style="position:relative;flex-shrink:0">
+        <button id="taskNotifyBtn" type="button" onclick="toggleTaskInbox()" aria-label="Aufgaben-Inbox"
+                style="position:relative;background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;transition:background .15s"
+                onmouseenter="this.style.background='var(--sidebar-hover)'"
+                onmouseleave="this.style.background=''">
+          <span style="font-size:20px;line-height:1">🔔</span>
+          <span id="taskNotifyBadge" style="display:none;position:absolute;top:2px;right:2px;min-width:18px;height:18px;padding:0 5px;background:var(--danger);color:#fff;border-radius:99px;font-size:11px;font-weight:800;line-height:18px;text-align:center;box-shadow:0 0 0 2px var(--bg-white)"></span>
+        </button>
+        <div id="taskInboxPopup" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:320px;max-width:380px;max-height:440px;overflow:hidden;z-index:1000">
+          <div style="padding:12px 14px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between">
+            <strong style="font-size:13px">Neue Aufgaben</strong>
+            <button onclick="markAllTasksRead()" type="button" style="font-size:11px;background:none;border:none;color:var(--text-secondary);cursor:pointer;text-decoration:underline">alle als gelesen</button>
+          </div>
+          <div id="taskInboxList" style="max-height:380px;overflow-y:auto"></div>
+        </div>
+      </div>
+
       <!-- User menu -->
       <div style="position:relative;margin-left:16px" id="userMenuWrap">
         <div onclick="toggleUserMenu()" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:background .15s" onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">
