@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TBC WORLDWIDE — Benutzerhandbuch</title>
+<style>
+  :root {
+    --green-dark: #0d5c38;
+    --green-mid: #16a34a;
+    --green-light: #d8f0e8;
+    --green-bg: #f0fdf4;
+    --orange: #D97706;
+    --orange-light: #fef3c7;
+    --red: #B91C1C;
+    --red-light: #fef2f2;
+    --gray-900: #111827;
+    --gray-700: #374151;
+    --gray-500: #6b7280;
+    --gray-300: #d1d5db;
+    --gray-100: #f3f4f6;
+    --border: #e5e7eb;
+  }
+
+  @page { size: A4; margin: 18mm 16mm; }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--gray-900);
+    line-height: 1.55;
+    background: #fafafa;
+  }
+
+  body {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 24px 24px 80px;
+    background: #fff;
+    box-shadow: 0 0 60px rgba(0,0,0,0.06);
+  }
+
+  h1, h2, h3 { color: var(--green-dark); font-weight: 700; line-height: 1.25; }
+  h1 { font-size: 32px; margin: 0 0 8px; }
+  h2 { font-size: 22px; margin: 32px 0 14px; padding-left: 14px; border-left: 5px solid var(--green-dark); }
+  h3 { font-size: 16px; margin: 22px 0 8px; color: var(--gray-900); }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--gray-900); font-weight: 700; }
+  code, .kbd {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    background: var(--gray-100);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  a { color: var(--green-dark); }
+
+  .print-bar {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    padding: 8px 0 14px;
+    border-bottom: 1px solid var(--border);
+    margin: -24px -24px 24px;
+    padding-left: 24px;
+    padding-right: 24px;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+  .print-bar button {
+    background: var(--green-dark);
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .print-bar button:hover { background: var(--green-mid); }
+
+  .cover {
+    page-break-after: always;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px 0;
+    background: linear-gradient(135deg, var(--green-light) 0%, #fff 100%);
+    margin: -24px -24px 0;
+    padding-left: 60px;
+    padding-right: 60px;
+    border-radius: 8px;
+  }
+  .cover .badge {
+    background: var(--green-dark);
+    color: #fff;
+    padding: 5px 14px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin-bottom: 28px;
+  }
+  .cover h1 {
+    font-size: 44px;
+    line-height: 1.15;
+    margin: 0 0 12px;
+    color: var(--green-dark);
+  }
+  .cover .subtitle {
+    font-size: 18px;
+    color: var(--gray-700);
+    margin-bottom: 32px;
+  }
+  .cover .meta {
+    color: var(--gray-500);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .cover .meta strong { color: var(--gray-900); }
+
+  .toc {
+    page-break-after: always;
+    margin: 32px 0;
+  }
+  .toc h2 { margin-top: 0; }
+  .toc ol { padding-left: 0; counter-reset: tocitem; }
+  .toc ol li {
+    list-style: none;
+    counter-increment: tocitem;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .toc ol li::before {
+    content: counter(tocitem, decimal-leading-zero);
+    color: var(--green-dark);
+    font-weight: 700;
+    font-family: "SF Mono", monospace;
+    font-size: 12px;
+    flex-shrink: 0;
+    width: 28px;
+  }
+  .toc a {
+    text-decoration: none;
+    color: var(--gray-900);
+    font-size: 14px;
+    flex: 1;
+  }
+  .toc a:hover { color: var(--green-dark); }
+
+  .chapter {
+    page-break-before: always;
+    margin-top: 28px;
+  }
+  .chapter:first-of-type { page-break-before: auto; }
+  .chapter > h2 .num {
+    display: inline-block;
+    background: var(--green-dark);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 4px;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+
+  .callout {
+    border-left: 4px solid var(--green-dark);
+    background: var(--green-bg);
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+  }
+  .callout strong { color: var(--green-dark); }
+  .callout--tip { border-color: var(--orange); background: var(--orange-light); }
+  .callout--tip strong { color: var(--orange); }
+  .callout--warn { border-color: var(--red); background: var(--red-light); }
+  .callout--warn strong { color: var(--red); }
+
+  .role-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .role-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #fafafa;
+  }
+  .role-card .name {
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .role-card .desc { font-size: 12.5px; color: var(--gray-700); }
+
+  .step-list { padding-left: 0; counter-reset: step; }
+  .step-list > li {
+    list-style: none;
+    counter-increment: step;
+    position: relative;
+    padding-left: 38px;
+    margin-bottom: 12px;
+    min-height: 26px;
+  }
+  .step-list > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    background: var(--green-dark);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .feat-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 13px;
+  }
+  .feat-table th, .feat-table td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .feat-table th {
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .feat-table tr:nth-child(even) td { background: #fafafa; }
+
+  .pill {
+    display: inline-block;
+    background: var(--green-light);
+    color: var(--green-dark);
+    padding: 2px 9px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 4px;
+  }
+  .pill--gray { background: var(--gray-100); color: var(--gray-700); }
+  .pill--orange { background: var(--orange-light); color: var(--orange); }
+  .pill--red { background: var(--red-light); color: var(--red); }
+
+  .ui-box {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 14px 0;
+    background: #fff;
+    font-size: 13px;
+  }
+  .ui-box .ui-title {
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ui-box .ui-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .ui-box .ui-row:last-child { border-bottom: 0; }
+
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--gray-500);
+    text-align: center;
+  }
+
+  @media print {
+    body {
+      max-width: none;
+      margin: 0;
+      box-shadow: none;
+      padding: 0;
+      background: #fff;
+    }
+    .print-bar { display: none; }
+    .cover { background: var(--green-light); }
+    a { color: var(--green-dark); text-decoration: none; }
+    h2 { break-inside: avoid; }
+    .role-card, .ui-box, .callout { break-inside: avoid; }
+    .chapter { page-break-before: always; }
+    .toc { page-break-after: always; }
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 16px; }
+    .role-grid { grid-template-columns: 1fr; }
+    .cover { padding-left: 30px; padding-right: 30px; }
+    .cover h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="print-bar">
+  <span>TBC WORLDWIDE — Benutzerhandbuch</span>
+  <button onclick="window.print()">📄 Als PDF speichern</button>
+</div>
+
+<!-- ── COVER ───────────────────────────────────────────── -->
+<section class="cover">
+  <span class="badge">MITARBEITER-BRIEFING</span>
+  <h1>TBC WORLDWIDE</h1>
+  <h1 style="font-size:28px;font-weight:500;color:var(--gray-700);margin-top:-4px">Benutzerhandbuch</h1>
+  <div class="subtitle">So nutzt du die Mitarbeiter-App im Alltag</div>
+  <div class="meta">
+    <strong>Version:</strong> Stand Mai 2026<br>
+    <strong>Zielgruppe:</strong> Alle TBC-Mitarbeiter (NB, CS, SellSupport, Management, Admin)<br>
+    <strong>Hinweis:</strong> Beste Druck-Ergebnisse mit Chrome oder Edge<br>
+    <strong>So speicherst du das PDF:</strong> oben rechts auf „Als PDF speichern" klicken, im Browser-Dialog Ziel „Als PDF speichern" wählen
+  </div>
+</section>
+
+<!-- ── INHALTSVERZEICHNIS ─────────────────────────────── -->
+<section class="toc">
+  <h2>Inhalt</h2>
+  <ol>
+    <li><a href="#k1">Was ist TBC WORLDWIDE?</a></li>
+    <li><a href="#k2">Anmeldung &amp; Konto</a></li>
+    <li><a href="#k3">Rollen &amp; Berechtigungen</a></li>
+    <li><a href="#k4">Dashboard</a></li>
+    <li><a href="#k5">Navigation (Sidebar)</a></li>
+    <li><a href="#k6">Insta-Leads</a></li>
+    <li><a href="#k7">HubSpot-Lead anlegen</a></li>
+    <li><a href="#k8">Aufgaben</a></li>
+    <li><a href="#k9">Sourcing-Anfrage</a></li>
+    <li><a href="#k10">Customer-Success-Workflow</a></li>
+    <li><a href="#k11">Member (Kunden)</a></li>
+    <li><a href="#k12">Ankündigungen</a></li>
+    <li><a href="#k13">Callliste</a></li>
+    <li><a href="#k14">Statistik</a></li>
+    <li><a href="#k15">Wiki</a></li>
+    <li><a href="#k16">Feedback</a></li>
+    <li><a href="#k17">Tools &amp; Links</a></li>
+    <li><a href="#k18">Admin-Panel</a></li>
+    <li><a href="#k19">Profil</a></li>
+    <li><a href="#k20">Tipps für die tägliche Nutzung</a></li>
+  </ol>
+</section>
+
+<!-- ── 1 ──────────────────────────────────────────────── -->
+<section class="chapter" id="k1">
+  <h2><span class="num">01</span>Was ist TBC WORLDWIDE?</h2>
+  <p>TBC WORLDWIDE ist die interne <strong>Mitarbeiter-App von The Branding Club</strong>. Sie bündelt alles, was du im Tagesgeschäft brauchst: Lead-Erfassung in HubSpot, Customer-Success-Workflow, Aufgaben, Sourcing-Anfragen, Ankündigungen und ein internes Wiki.</p>
+  <p>Die App läuft im Browser — egal ob Desktop oder Smartphone. Du brauchst keine Installation, nur deinen Login.</p>
+  <div class="callout">
+    <strong>Auf einen Blick:</strong> Web-App, Login per <code>@thebrandingclub.com</code>-Adresse. Die App ersetzt mehrere Tools (Excel-Listen für Sourcing, manuelle Lead-Erfassung in HubSpot, separate Aufgaben-Listen) und macht alles an einem Ort verfügbar.
+  </div>
+  <h3>Was kannst du damit konkret machen?</h3>
+  <ul>
+    <li>Neue Leads in HubSpot anlegen — mit automatischer Duplikat-Prüfung</li>
+    <li>Instagram-Profile screenshotten und per AI direkt als HubSpot-Lead erfassen</li>
+    <li>Member (Kunden) anlegen, durch alle Phasen führen (Design → Production → fertig)</li>
+    <li>Aufgaben erstellen, zuweisen, abhaken</li>
+    <li>Sourcing-Anfragen strukturiert erfassen und kopieren</li>
+    <li>Calllisten aus HubSpot generieren (pro Salesperson)</li>
+    <li>Ankündigungen für das Team posten</li>
+  </ul>
+</section>
+
+<!-- ── 2 ──────────────────────────────────────────────── -->
+<section class="chapter" id="k2">
+  <h2><span class="num">02</span>Anmeldung &amp; Konto</h2>
+
+  <h3>Einloggen</h3>
+  <ol class="step-list">
+    <li>App-URL im Browser öffnen (z. B. <code>tbc.up.railway.app</code>).</li>
+    <li>E-Mail und Passwort eingeben.</li>
+    <li>Auf <strong>Anmelden</strong> klicken.</li>
+  </ol>
+  <p>Es können sich nur Mitarbeiter mit einer <code>@thebrandingclub.com</code>-Adresse anmelden. Externe Admins können einen Bypass haben.</p>
+
+  <h3>Erstanmeldung (Account aktivieren)</h3>
+  <ol class="step-list">
+    <li>Auf der Login-Seite auf <strong>Registrieren</strong> klicken.</li>
+    <li>Deine Firmen-Mail eingeben.</li>
+    <li>Du bekommst per Mail (von Resend) einen Link zum Passwort-Setzen.</li>
+    <li>Auf den Link klicken (gültig 30 Minuten), neues Passwort vergeben — fertig.</li>
+  </ol>
+
+  <h3>Passwort vergessen</h3>
+  <p>Gleicher Flow wie Erstanmeldung — „Registrieren" funktioniert auch als Passwort-Reset.</p>
+  <div class="callout callout--warn">
+    <strong>Wichtig:</strong> Ein Login-Token ist <strong>8 Stunden</strong> gültig. Danach musst du dich neu anmelden. Logout am Schichtende ist gute Praxis.
+  </div>
+</section>
+
+<!-- ── 3 ──────────────────────────────────────────────── -->
+<section class="chapter" id="k3">
+  <h2><span class="num">03</span>Rollen &amp; Berechtigungen</h2>
+  <p>Die App kennt fünf Rollen. Welche Funktionen du siehst, hängt von deiner Rolle ab.</p>
+  <div class="role-grid">
+    <div class="role-card">
+      <div class="name">Admin</div>
+      <div class="desc">Vollzugriff — Admin-Panel, Mitarbeiter, Logo, Brand-Name, Commitments, alle Daten.</div>
+    </div>
+    <div class="role-card">
+      <div class="name">Management</div>
+      <div class="desc">Wie Admin, mit Zugriff auf Statistik, Commitments, Ankündigungen verwalten.</div>
+    </div>
+    <div class="role-card">
+      <div class="name">New Business (NB)</div>
+      <div class="desc">Leads anlegen (Insta + HubSpot), Member anlegen, Sourcing, eigene Aufgaben.</div>
+    </div>
+    <div class="role-card">
+      <div class="name">Customer Success (CS)</div>
+      <div class="desc">Übernahme von Membern, Phasen-Steuerung, SLA, CS-Member-Overview, Sourcing.</div>
+    </div>
+    <div class="role-card">
+      <div class="name">SellSupport</div>
+      <div class="desc">Unterstützungsrolle für NB/CS, eingeschränkter Lese-/Edit-Zugriff.</div>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Wie wird Rolle vergeben?</strong> Beim Anlegen oder im Admin-Panel. Bestimmte E-Mail-Adressen (z. B. <code>ramon@thebrandingclub.com</code>) werden automatisch zu Admin promoted.
+  </div>
+</section>
+
+<!-- ── 4 ──────────────────────────────────────────────── -->
+<section class="chapter" id="k4">
+  <h2><span class="num">04</span>Dashboard</h2>
+  <p>Das Dashboard ist deine Startseite nach dem Login. Hier siehst du auf einen Blick:</p>
+
+  <h3>KPI-Reihe (oben, 3 Kacheln)</h3>
+  <ul>
+    <li><strong>Member</strong> (NB) oder <strong>Design Intake</strong> (CS) — wie viele Member abgeschlossen / wie viel Umsatz schon in Design-Phase, mit Ziel-Fortschrittsbalken.</li>
+    <li><strong>Umsatz</strong> (NB) oder <strong>Production Intake</strong> (CS) — der zweite Hauptindikator, ebenfalls mit Ziel-Anzeige.</li>
+    <li><strong>Notification-Kachel</strong> — die 3. Kachel ist schmal und zeigt nur ein Symbol:
+      <ul>
+        <li>✓ wenn alle Aufgaben &amp; Ankündigungen gelesen sind</li>
+        <li>❗ mit <span class="pill pill--red">+N</span>-Badge bei ungelesenen Einträgen</li>
+      </ul>
+      Klick öffnet ein Popup mit den ungelesenen Items.
+    </li>
+  </ul>
+
+  <h3>📢 Ankündigungen</h3>
+  <p>Feed mit Posts aus dem Management. Neueste oben. Klick markiert als gelesen.</p>
+
+  <h3>✅ Meine offenen Aufgaben</h3>
+  <p>Bis zu 6 deiner offenen Tasks. Überfällige Aufgaben werden mit ⚠ rot markiert und nach oben sortiert. Klick öffnet Task-Detail.</p>
+
+  <h3>🕐 Zuletzt hinzugefügt</h3>
+  <p>Erscheint nur für bestimmte Rollen — zeigt aktuell neu angelegte Member oder Leads.</p>
+
+  <div class="callout callout--tip">
+    <strong>Tipp:</strong> Die Notification-Kachel ist deine „Posteingang"-Anzeige. Wenn sie ❗ zeigt, ist etwas neu für dich. Daily-Driver-Liste bleibt die „Meine offenen Aufgaben"-Karte darunter.
+  </div>
+</section>
+
+<!-- ── 5 ──────────────────────────────────────────────── -->
+<section class="chapter" id="k5">
+  <h2><span class="num">05</span>Navigation (Sidebar)</h2>
+  <p>Links siehst du die Hauptnavigation. Welche Einträge sichtbar sind, hängt von deiner Rolle ab.</p>
+  <table class="feat-table">
+    <thead>
+      <tr><th>Eintrag</th><th>Sichtbar für</th><th>Was es macht</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Dashboard</strong></td><td>Alle</td><td>Startseite mit KPIs, Ankündigungen, Aufgaben</td></tr>
+      <tr><td><strong>Insta Leads</strong></td><td>NB, CS, Management, Admin</td><td>Instagram-Screenshots → HubSpot-Lead</td></tr>
+      <tr><td><strong>HubSpot Lead</strong></td><td>NB, Management, Admin</td><td>Manueller HubSpot-Lead-Eintrag mit Duplikat-Check</td></tr>
+      <tr><td><strong>Aufgaben</strong></td><td>Alle</td><td>Vollständige Aufgaben-Übersicht</td></tr>
+      <tr><td><strong>Sourcing-Anfrage</strong></td><td>NB, CS</td><td>Excel-ähnliche Anfrage-Tabelle</td></tr>
+      <tr><td><strong>Tools &amp; Links</strong></td><td>Alle</td><td>Google Drive, HubSpot, Personio, Onboarding</td></tr>
+      <tr><td><strong>Statistik</strong></td><td>Admin, Management</td><td>Umsatz pro Salesperson, Pipeline</td></tr>
+      <tr><td><strong>Wiki</strong></td><td>Alle</td><td>Internes Wissen / Anleitungen</td></tr>
+      <tr><td><strong>Feedback</strong></td><td>Alle außer Admin</td><td>Bewertung &amp; Verbesserungsvorschläge</td></tr>
+      <tr><td><strong>Admin-Panel</strong></td><td>Admin, Management</td><td>Mitarbeiter, Onboarding, Logo, Commitments</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ── 6 ──────────────────────────────────────────────── -->
+<section class="chapter" id="k6">
+  <h2><span class="num">06</span>Insta-Leads</h2>
+  <p>Das Tool generiert aus einem Instagram-Profil automatisch einen HubSpot-Lead. Es nutzt Claude (AI) für die Erkennung.</p>
+
+  <h3>So gehst du vor</h3>
+  <ol class="step-list">
+    <li>Sidebar → <strong>Insta Leads</strong>.</li>
+    <li>Entweder Screenshot vom Instagram-Profil hochladen <em>oder</em> Instagram-Username direkt eingeben.</li>
+    <li>Die AI erkennt: Firmenname, Website, Instagram-Handle.</li>
+    <li>Die App sucht in HubSpot, ob die Firma schon existiert.</li>
+    <li>Wähle den <strong>Salesperson</strong> (Avatar): Ramon, Tim, Leon, Justus, Henry, Marko.</li>
+    <li>Wenn schon in HubSpot: <em>„Owner auf … umschreiben"</em>-Button erscheint.<br>Wenn neu: <em>„Company + Deal anlegen"</em>-Button erscheint.</li>
+    <li>Nach Klick: Bestätigung mit Link zum HubSpot-Deal.</li>
+  </ol>
+  <div class="callout">
+    <strong>Voraussetzung:</strong> Im Profil muss die Instagram-Session-ID hinterlegt sein (siehe Kapitel 19), damit die App auf Instagram zugreifen kann.
+  </div>
+</section>
+
+<!-- ── 7 ──────────────────────────────────────────────── -->
+<section class="chapter" id="k7">
+  <h2><span class="num">07</span>HubSpot-Lead anlegen</h2>
+  <p>Das manuelle Lead-Anlegen geht ab jetzt <strong>Schritt für Schritt</strong>. Du gibst zuerst die URL ein, die App prüft HubSpot, und je nachdem siehst du zwei verschiedene Flows.</p>
+
+  <h3>Step 1 — URL eingeben</h3>
+  <ol class="step-list">
+    <li>Sidebar → <strong>HubSpot Lead</strong>.</li>
+    <li>Im Modal zuerst nur die <strong>Website / URL</strong> eingeben.</li>
+    <li>Auf <strong>Prüfen →</strong> klicken.</li>
+  </ol>
+
+  <h3>Step 2a — URL existiert bereits in HubSpot</h3>
+  <p>Dann erscheint eine Detail-Karte:</p>
+  <div class="ui-box">
+    <div class="ui-title">⚠ Diese URL ist bereits in HubSpot vorhanden</div>
+    <div style="font-weight:700;font-size:14px">The Döner Brothers <span style="font-weight:normal;color:var(--gray-500)">— thedoenerbrothers.de</span></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--gray-500);font-weight:700;text-transform:uppercase">Deals (1)</div>
+    <div class="ui-row">
+      <span>The Döner Brothers — Neuer Deal</span>
+      <span class="pill pill--gray">Owner: Marko Zecevic</span>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--gray-500);font-weight:700;text-transform:uppercase">Kontakte (0)</div>
+    <div style="color:var(--red);font-size:12px;font-weight:600">⚠ Kein Kontakt hinterlegt</div>
+  </div>
+  <p>Unter der Karte siehst du dann die Felder <strong>Kontaktperson, E-Mail, Telefon, Salesperson</strong>. Was du dort eingibst, schaltet die passenden Buttons frei:</p>
+  <ul>
+    <li><strong>„Owner auf &lt;Salesperson&gt; umschreiben"</strong> — taucht auf, sobald du im Dropdown jemanden auswählst. Schreibt alle Deals + die Company auf den neuen Owner um.</li>
+    <li><strong>„Kontakt „&lt;Name&gt;" hinzufügen"</strong> — taucht auf, sobald du einen Namen tippst. Legt einen neuen Kontakt an und verknüpft ihn mit der Company.</li>
+    <li><strong>„Trotzdem komplett neu anlegen"</strong> — blendet die zusätzlichen Felder (Firma, Pipeline, Notizen) ein und ermöglicht eine neue Company.</li>
+    <li><strong>„Abbrechen"</strong> — schließt die Karte, du kannst eine andere URL prüfen.</li>
+  </ul>
+
+  <h3>Step 2b — URL ist noch nicht in HubSpot</h3>
+  <p>Dann erscheinen alle Felder: Firmenname, Kontaktperson, E-Mail, Telefon, Pipeline, Salesperson, Notizen. Auf <strong>„Lead in HubSpot anlegen →"</strong> klicken.</p>
+
+  <h3>Erfolg</h3>
+  <p>Egal welcher Pfad: am Ende grüne Box mit drei Optionen — <strong>In HubSpot öffnen ↗</strong>, <strong>Weiteren Lead anlegen</strong>, <strong>Schließen</strong>.</p>
+
+  <div class="callout callout--tip">
+    <strong>Warum dieser Flow?</strong> So vermeiden wir Duplikate. Vorher wurde oft eine Firma zweimal angelegt — jetzt siehst du sofort, wenn sie schon drin ist, und kannst stattdessen den Owner umschreiben oder einen Kontakt nachpflegen.
+  </div>
+</section>
+
+<!-- ── 8 ──────────────────────────────────────────────── -->
+<section class="chapter" id="k8">
+  <h2><span class="num">08</span>Aufgaben</h2>
+
+  <h3>Aufgabe anlegen</h3>
+  <ol class="step-list">
+    <li>Sidebar → <strong>Aufgaben</strong> → <strong>+ Neue Aufgabe</strong>.</li>
+    <li>Titel, Beschreibung, Projekt eintragen.</li>
+    <li>Optional: Fälligkeit, Priorität (<span class="pill">High</span> <span class="pill pill--orange">Med</span> <span class="pill pill--gray">Low</span>), Zuweisung.</li>
+    <li>Speichern.</li>
+  </ol>
+
+  <h3>Checklisten</h3>
+  <p>In der Detail-Ansicht einer Task kannst du Checklisten-Items abhaken. Manche Tasks (z. B. CS-Übergabe) haben automatisch eine Checkliste angelegt.</p>
+
+  <h3>Status &amp; Countdown</h3>
+  <ul>
+    <li>Standard-Status: <strong>offen</strong>. Mit „Erledigt"-Button → <strong>done</strong>.</li>
+    <li>Bei Fälligkeit läuft ein <strong>Live-Countdown</strong>.</li>
+    <li>Überfällig → ⚠ und rote Markierung.</li>
+  </ul>
+
+  <h3>Sourcing-Tasks</h3>
+  <p>Tasks vom Typ „Sourcing-Anfrage" haben einen <strong>Kopieren</strong>-Button, der die Tabelle in die Zwischenablage legt — direkt einfügen in Mail oder Slack.</p>
+</section>
+
+<!-- ── 9 ──────────────────────────────────────────────── -->
+<section class="chapter" id="k9">
+  <h2><span class="num">09</span>Sourcing-Anfrage</h2>
+  <p>Sourcing-Anfragen werden strukturiert in Tabellenform erfasst. Sichtbar in der Sidebar nur für <strong>NB</strong> und <strong>CS</strong>.</p>
+
+  <ol class="step-list">
+    <li>Sidebar → <strong>Sourcing-Anfrage</strong>.</li>
+    <li>Excel-ähnliche Tabelle ausfüllen: Produkt, Menge, Anforderungen, Deadline pro Zeile.</li>
+    <li>Zeilen hinzufügen mit „+ Zeile".</li>
+    <li>Auf <strong>Kopieren</strong> klicken → komplette Tabelle in der Zwischenablage.</li>
+    <li>In E-Mail oder Chat einfügen (formatierte Tabelle bleibt erhalten).</li>
+  </ol>
+
+  <div class="callout">
+    <strong>Hinweis:</strong> Die Anfrage wird als Task angelegt, damit sie nachvollziehbar bleibt und nicht in Mails verloren geht.
+  </div>
+</section>
+
+<!-- ── 10 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k10">
+  <h2><span class="num">10</span>Customer-Success-Workflow</h2>
+  <p>Wenn New Business einen Member abgeschlossen hat, wird er an Customer Success übergeben. Dieser Workflow steuert den ganzen Prozess.</p>
+
+  <h3>Übergabe (Handover)</h3>
+  <ol class="step-list">
+    <li>NB legt den Member an (siehe Kapitel 11) und wählt <strong>service_type</strong>: <span class="pill">full_service</span> oder <span class="pill pill--orange">templates_only</span>.</li>
+    <li>Bei <code>templates_only</code> wählt NB außerdem den <strong>templates_sender</strong>: NB oder CS.</li>
+    <li>NB ändert Phase auf <strong>design</strong> → System erkennt den Handover.</li>
+    <li>CS-User wird zugewiesen → automatisch eine <strong>„Übergabe von NB"-Aufgabe</strong> erstellt mit einer Checkliste (3 oder 4 Items, je nach Service-Type).</li>
+  </ol>
+
+  <h3>24h-SLA</h3>
+  <p>Ab dem Handover läuft ein <strong>24-Stunden-Timer</strong> bis der erste WhatsApp-Kontakt erfolgen muss:</p>
+  <ul>
+    <li>Banner ist erst <strong>grün/neutral</strong>.</li>
+    <li>Nach 18h wird er <span class="pill pill--orange">gelb (Warnung)</span>.</li>
+    <li>Nach 24h wird er <span class="pill pill--red">rot (eskaliert)</span>.</li>
+  </ul>
+  <p>Sobald in der Checkliste „WhatsApp kontaktiert" abgehakt wird, stoppt der Timer.</p>
+
+  <h3>Phasen</h3>
+  <p>CS führt den Member durch die Phasen: <strong>design</strong> → <strong>production</strong> → <strong>fertig</strong>. Buttons im Member-Detail. Jede Phase wird im <code>phase_history</code> protokolliert.</p>
+
+  <h3>CS Member Overview</h3>
+  <p>Klick auf einen Member öffnet eine spezielle Overview für CS: SLA-Banner, Phasen-Buttons, alle Tasks zu diesem Member auf einen Blick.</p>
+</section>
+
+<!-- ── 11 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k11">
+  <h2><span class="num">11</span>Member (Kunden)</h2>
+
+  <h3>Anlegen</h3>
+  <ol class="step-list">
+    <li>Sidebar → <strong>Member</strong> → <strong>+ Neuer Member</strong>.</li>
+    <li>Pflichtfelder: Firma, Telefon, Kanal, Abschlussdatum, Umsatz, Marge.</li>
+    <li>Service-Type wählen:
+      <ul>
+        <li><span class="pill">full_service</span> — kompletter Service inkl. Design + Production.</li>
+        <li><span class="pill pill--orange">templates_only</span> — nur Templates, kein Full-Service.</li>
+      </ul>
+    </li>
+    <li>Bei <code>templates_only</code>: <strong>templates_sender</strong> wählen (NB oder CS).</li>
+    <li>Optional: HubSpot-Company-ID, CS-Zuweisung.</li>
+    <li>Speichern.</li>
+  </ol>
+
+  <h3>Bearbeiten</h3>
+  <p>Im Member-Detail alle Felder editierbar. Phasen-Buttons (design / production / fertig) ändern den Status mit Historie.</p>
+
+  <div class="callout callout--tip">
+    <strong>Statistik-Hinweis:</strong> Member zählen für die monatliche Intake-Statistik nur, wenn sie <em>in diesem Monat</em> die jeweilige Phase erstmals erreicht haben.
+  </div>
+</section>
+
+<!-- ── 12 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k12">
+  <h2><span class="num">12</span>Ankündigungen</h2>
+  <p>Ankündigungen erscheinen als Feed auf jedem Dashboard. Sichtbar für alle, erstellt von Management/Admin.</p>
+
+  <h3>Erstellen</h3>
+  <ol class="step-list">
+    <li>Im Admin-Panel oder Dashboard → <strong>+ Ankündigung</strong>.</li>
+    <li>Rich-Text-Editor öffnet sich: <strong>fett</strong>, <em>kursiv</em>, Links, Listen formatieren.</li>
+    <li>Speichern → erscheint sofort im Feed aller User.</li>
+  </ol>
+
+  <h3>Als gelesen markieren</h3>
+  <p>Klick auf eine Ankündigung im Feed → öffnet Detail und markiert sie als gelesen. Ungelesene zählen in der Notification-Kachel.</p>
+
+  <h3>Löschen</h3>
+  <p>Admin und Management können Ankündigungen löschen (Papierkorb-Icon).</p>
+</section>
+
+<!-- ── 13 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k13">
+  <h2><span class="num">13</span>Callliste</h2>
+  <p>Generiert aus HubSpot die Liste aller Kontaktnummern eines bestimmten Salespersons. Praktisch für Call-Sessions.</p>
+
+  <ol class="step-list">
+    <li>Sidebar → <strong>Callliste</strong> (oder „HubSpot Lead" → unten).</li>
+    <li>Salesperson auswählen (Avatar-Buttons mit Initialen).</li>
+    <li><strong>Liste erstellen</strong> → zieht alle aktiven Kontakte dieses Owners aus HubSpot.</li>
+    <li>Alternativ <strong>Meine Wochenliste</strong> — fokussierter Auszug für die laufende Woche.</li>
+  </ol>
+
+  <div class="callout">
+    <strong>Caching:</strong> Die Liste wird intern für einige Minuten gecacht, damit wiederholte Aufrufe schnell sind. Bei Bedarf neu laden.
+  </div>
+</section>
+
+<!-- ── 14 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k14">
+  <h2><span class="num">14</span>Statistik</h2>
+  <p>Nur sichtbar für Admin + Management.</p>
+  <ul>
+    <li>Umsatz pro Salesperson (Monat).</li>
+    <li>Offene Aufgaben pro Person.</li>
+    <li>Member-Pipeline pro Phase.</li>
+    <li>Commitment-Erfüllung (Soll vs. Ist).</li>
+  </ul>
+</section>
+
+<!-- ── 15 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k15">
+  <h2><span class="num">15</span>Wiki</h2>
+  <p>Internes Wissen, das nicht in eine Ankündigung passt: Anleitungen, Prozesse, Vorlagen.</p>
+  <ul>
+    <li>Wiki-Artikel anlegen (Admin/Management) und für alle sichtbar machen.</li>
+    <li>Titel + Body (formatierter Text).</li>
+    <li>Durchsuchbar.</li>
+  </ul>
+</section>
+
+<!-- ── 16 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k16">
+  <h2><span class="num">16</span>Feedback</h2>
+  <p>Anonym oder mit Name Feedback geben — sichtbar für Management/Admin.</p>
+  <ol class="step-list">
+    <li>Sidebar → <strong>Feedback</strong>.</li>
+    <li>1–5 Sterne vergeben.</li>
+    <li>Optional: <strong>Pros</strong> und <strong>Cons</strong> ausfüllen.</li>
+    <li>Topic wählen (z. B. „Tool", „Prozess", „Team").</li>
+    <li>Absenden.</li>
+  </ol>
+</section>
+
+<!-- ── 17 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k17">
+  <h2><span class="num">17</span>Tools &amp; Links</h2>
+  <p>Quick-Access zu externen Tools, die das Team täglich nutzt.</p>
+  <ul>
+    <li><strong>Google Drive</strong> — Dateiablage, Mockups, Dokumente.</li>
+    <li><strong>HubSpot</strong> — CRM (Deals, Companies, Contacts).</li>
+    <li><strong>Personio</strong> — HR-Portal.</li>
+    <li><strong>Onboarding starten</strong> — startet den Onboarding-Schritte-Flow für neue Mitarbeiter.</li>
+  </ul>
+</section>
+
+<!-- ── 18 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k18">
+  <h2><span class="num">18</span>Admin-Panel</h2>
+  <p>Sichtbar für Admin + Management. Tabs:</p>
+
+  <h3>Mitarbeiter</h3>
+  <ul>
+    <li>Liste aller User mit Rolle, Department, Position.</li>
+    <li>Anlegen, bearbeiten, Rolle ändern, deaktivieren.</li>
+    <li><strong>CSV-Export</strong> für externe Auswertungen.</li>
+  </ul>
+
+  <h3>Onboarding</h3>
+  <ul>
+    <li>Schritte des Mitarbeiter-Onboardings verwalten (Reihenfolge, Beschreibung).</li>
+    <li>Pro Mitarbeiter: Fortschritt einsehen.</li>
+  </ul>
+
+  <h3>Brand</h3>
+  <ul>
+    <li><strong>Logo</strong> hochladen (PNG, JPG, SVG, WebP) — wird in der ganzen App verwendet.</li>
+    <li><strong>Brand-Name</strong> ändern (z. B. „TBC", „B Mobile" o. Ä.).</li>
+  </ul>
+
+  <h3>Commitments</h3>
+  <ul>
+    <li>Monats-Ziele setzen pro User:
+      <ul>
+        <li>Member-Ziel (Anzahl)</li>
+        <li>Umsatz-Ziel (€)</li>
+        <li>Design-Intake-Ziel (€)</li>
+        <li>Production-Intake-Ziel (€)</li>
+      </ul>
+    </li>
+    <li>Diese Ziele steuern die Fortschrittsbalken auf dem Dashboard.</li>
+  </ul>
+</section>
+
+<!-- ── 19 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k19">
+  <h2><span class="num">19</span>Profil</h2>
+  <p>Klick oben rechts auf deinen Avatar → Profil.</p>
+  <ul>
+    <li><strong>Avatar</strong> hochladen (Bild) — wird in der App und in HubSpot-Owner-Anzeigen verwendet.</li>
+    <li><strong>Passwort ändern</strong>.</li>
+    <li><strong>Instagram-Session-ID</strong> hinterlegen — nötig für das Insta-Leads-Tool, damit du Instagram-Profile abrufen kannst.</li>
+    <li><strong>Profil-Daten</strong>: Name, Position, Telefon.</li>
+  </ul>
+  <div class="callout callout--warn">
+    <strong>Instagram-Session-ID:</strong> Diese ID bekommst du aus deinem eingeloggten Instagram-Browser-Cookie (<code>sessionid</code>). Anleitung im Wiki.
+  </div>
+</section>
+
+<!-- ── 20 ─────────────────────────────────────────────── -->
+<section class="chapter" id="k20">
+  <h2><span class="num">20</span>Tipps für die tägliche Nutzung</h2>
+  <ol>
+    <li><strong>Notification-Kachel täglich prüfen.</strong> Wenn ❗ angezeigt wird, ist etwas Neues für dich da.</li>
+    <li><strong>Fälligkeiten pflegen.</strong> Aufgaben ohne due_date verschwinden im Strom. Mit Datum bekommst du Überfällig-Markierung &amp; Sortierung.</li>
+    <li><strong>HubSpot-Lead: immer erst URL prüfen.</strong> Spart Duplikate &amp; macht den Owner-Reassign-Flow möglich.</li>
+    <li><strong>CS: WhatsApp-Erstkontakt innerhalb 24h.</strong> Sonst eskaliert das SLA-Banner und Management sieht es.</li>
+    <li><strong>Logout am Schichtende.</strong> Token läuft eh nach 8h ab, aber Logout ist saubere Praxis.</li>
+    <li><strong>Sourcing-Anfragen über das Tool, nicht direkt per Mail.</strong> So bleibt alles nachvollziehbar.</li>
+    <li><strong>Feedback geben.</strong> Ehrlich. Das Tool entwickelt sich mit eurem Input.</li>
+  </ol>
+
+  <hr>
+  <div class="callout">
+    <strong>Hilfe nötig?</strong> Wende dich an Admin (Ramon) — oder nutze das Feedback-Tool für Verbesserungswünsche.
+  </div>
+</section>
+
+<footer>
+  TBC WORLDWIDE — Internes Benutzerhandbuch · Stand Mai 2026 · Nicht zur externen Weitergabe.
+</footer>
+
+</body>
+</html>
