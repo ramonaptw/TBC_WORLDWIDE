@@ -289,13 +289,11 @@ async function loadDashboard() {
   const unreadNewsCount = unreadNewsList(news).length;
   const totalUnread = unreadTaskCount + unreadNewsCount;
   const notifyTile = `
-      <div class="dash-kpi${totalUnread > 0 ? ' dash-kpi--warn' : ' dash-kpi--ok'}" onclick="openDashNotifyPopup()" style="cursor:pointer;position:relative">
-        <div class="dash-kpi-label">Neue Nachrichten</div>
-        <div class="dash-kpi-value" style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:28px;line-height:1">${totalUnread > 0 ? '❗' : '✓'}</span>
-          ${totalUnread > 0 ? `<span style="background:var(--danger);color:#fff;padding:2px 9px;border-radius:99px;font-size:13px;font-weight:800">+${totalUnread}</span>` : ''}
-        </div>
-        <div class="dash-kpi-sub">${totalUnread === 0 ? 'Alles gelesen' : `${unreadTaskCount} Aufgabe${unreadTaskCount === 1 ? '' : 'n'} · ${unreadNewsCount} Ankündigung${unreadNewsCount === 1 ? '' : 'en'}`}</div>
+      <div class="dash-kpi dash-kpi--compact${totalUnread > 0 ? ' dash-kpi--warn' : ' dash-kpi--ok'}"
+           onclick="openDashNotifyPopup()"
+           style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 18px">
+        <span style="font-size:26px;line-height:1">${totalUnread > 0 ? '❗' : '✓'}</span>
+        ${totalUnread > 0 ? `<span style="background:var(--danger);color:#fff;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:800">+${totalUnread}</span>` : ''}
       </div>`;
 
   if (hasSales) {
@@ -319,6 +317,7 @@ async function loadDashboard() {
         ${targetUmsatz ? `<div class="dash-kpi-bar"><div class="dash-kpi-bar-fill ${barClass(umsatzPct)}" style="width:${umsatzPct}%"></div></div><div class="dash-kpi-sub">${umsatzPct}% von €${targetUmsatz.toLocaleString('de-DE')}</div>` : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>
       ${notifyTile}`;
+    kpiEl.style.gridTemplateColumns = '1fr 1fr auto';
   } else if (hasIntakeCommit) {
     // Customer Success KPIs: € sum of revenue of kunden that entered design/production this month
     const fmtEur = n => '€' + Number(n).toLocaleString('de-DE');
@@ -342,6 +341,7 @@ async function loadDashboard() {
       </div>`;
     };
     kpiEl.innerHTML = moneyTile('Design Intake', designEur, targetDI) + moneyTile('Production Intake', productionEur, targetPI) + notifyTile;
+    kpiEl.style.gridTemplateColumns = '1fr 1fr auto';
   } else if (hasTasks) {
     kpiEl.innerHTML = `
       <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
@@ -349,6 +349,7 @@ async function loadDashboard() {
         <div class="dash-kpi-value">${myOpenTasks}</div>
         <div class="dash-kpi-sub">${overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${overdueTasks} überfällig</span>` : myOpenTasks === 0 ? '✓ alle erledigt' : 'offen'}</div>
       </div>`;
+    kpiEl.style.gridTemplateColumns = '';
   } else {
     kpiEl.style.display = 'none';
   }
