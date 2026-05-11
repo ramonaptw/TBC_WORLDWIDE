@@ -3,843 +3,1291 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TBC WORLDWIDE — Benutzerhandbuch</title>
+<title>TBC WORLDWIDE — Deine Mitarbeiter-App</title>
 <style>
   :root {
-    --green-dark: #0d5c38;
-    --green-mid: #16a34a;
-    --green-light: #d8f0e8;
-    --green-bg: #f0fdf4;
+    --primary: #0d5c38;
+    --primary-dark: #084327;
+    --primary-light: #d8f0e8;
+    --primary-bg: #f0fdf4;
+    --accent: #16a34a;
     --orange: #D97706;
     --orange-light: #fef3c7;
     --red: #B91C1C;
     --red-light: #fef2f2;
-    --gray-900: #111827;
-    --gray-700: #374151;
-    --gray-500: #6b7280;
-    --gray-300: #d1d5db;
-    --gray-100: #f3f4f6;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-light: #9ca3af;
     --border: #e5e7eb;
+    --border-light: #f3f4f6;
+    --bg: #fafafa;
+    --bg-soft: #f9fafb;
+    --card: #ffffff;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 20px 50px rgba(13,92,56,0.12), 0 6px 18px rgba(0,0,0,0.04);
   }
-
-  @page { size: A4; margin: 18mm 16mm; }
 
   * { box-sizing: border-box; }
-
-  html, body {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--gray-900);
-    line-height: 1.55;
-    background: #fafafa;
-  }
-
+  html { scroll-behavior: smooth; }
   body {
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 24px 24px 80px;
-    background: #fff;
-    box-shadow: 0 0 60px rgba(0,0,0,0.06);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-primary);
+    line-height: 1.6;
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
   }
+  a { color: var(--primary); text-decoration: none; }
+  h1, h2, h3, h4 { line-height: 1.2; margin: 0; }
 
-  h1, h2, h3 { color: var(--green-dark); font-weight: 700; line-height: 1.25; }
-  h1 { font-size: 32px; margin: 0 0 8px; }
-  h2 { font-size: 22px; margin: 32px 0 14px; padding-left: 14px; border-left: 5px solid var(--green-dark); }
-  h3 { font-size: 16px; margin: 22px 0 8px; color: var(--gray-900); }
-  p { margin: 0 0 12px; }
-  ul, ol { margin: 0 0 14px; padding-left: 22px; }
-  li { margin-bottom: 6px; }
-  strong { color: var(--gray-900); font-weight: 700; }
-  code, .kbd {
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 0.88em;
-    background: var(--gray-100);
-    padding: 1px 6px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-  }
-  a { color: var(--green-dark); }
-
-  .print-bar {
+  /* ─── Sticky Nav ─── */
+  .navbar {
     position: sticky;
     top: 0;
-    background: #fff;
-    padding: 8px 0 14px;
+    z-index: 50;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: saturate(180%) blur(12px);
     border-bottom: 1px solid var(--border);
-    margin: -24px -24px 24px;
-    padding-left: 24px;
-    padding-right: 24px;
-    z-index: 10;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: var(--gray-500);
   }
-  .print-bar button {
-    background: var(--green-dark);
+  .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+  }
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--primary);
+    letter-spacing: -0.01em;
+  }
+  .nav-logo-mark {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px; font-weight: 800;
+  }
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .nav-links a {
+    color: var(--text-secondary);
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--primary); }
+  .nav-cta {
+    background: var(--primary);
     color: #fff;
     border: none;
-    padding: 8px 18px;
-    border-radius: 6px;
+    padding: 9px 18px;
+    border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+    transition: background 0.15s;
   }
-  .print-bar button:hover { background: var(--green-mid); }
+  .nav-cta:hover { background: var(--primary-dark); }
+  @media (max-width: 760px) { .nav-links { display: none; } }
 
-  .cover {
-    page-break-after: always;
-    min-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 60px 0;
-    background: linear-gradient(135deg, var(--green-light) 0%, #fff 100%);
-    margin: -24px -24px 0;
-    padding-left: 60px;
-    padding-right: 60px;
-    border-radius: 8px;
+  /* ─── Hero ─── */
+  .hero {
+    position: relative;
+    padding: 80px 24px 120px;
+    background:
+      radial-gradient(ellipse 80% 60% at 80% 0%, rgba(22,163,74,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 20% 100%, rgba(13,92,56,0.08) 0%, transparent 60%),
+      linear-gradient(180deg, var(--primary-bg) 0%, #fff 100%);
+    overflow: hidden;
   }
-  .cover .badge {
-    background: var(--green-dark);
+  .hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  @media (max-width: 900px) { .hero-inner { grid-template-columns: 1fr; gap: 40px; } }
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(13,92,56,0.08);
+    color: var(--primary);
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(34px, 5vw, 54px);
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: 18px;
+  }
+  .hero h1 span { color: var(--primary); }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    max-width: 540px;
+  }
+  .hero-cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 36px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--primary);
     color: #fff;
-    padding: 5px 14px;
+    box-shadow: 0 4px 12px rgba(13,92,56,0.25);
+  }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(13,92,56,0.35); }
+  .btn-ghost { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--primary); }
+  .hero-stats {
+    display: flex;
+    gap: 36px;
+    flex-wrap: wrap;
+  }
+  .stat .stat-num { font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: -0.02em; }
+  .stat .stat-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* ─── Mock dashboard preview in hero ─── */
+  .hero-mock {
+    position: relative;
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 18px;
+    border: 1px solid var(--border);
+    transform: perspective(1200px) rotateY(-6deg) rotateX(2deg);
+    transition: transform 0.4s;
+  }
+  .hero-mock:hover { transform: perspective(1200px) rotateY(-3deg) rotateX(1deg); }
+  .mock-topbar { display: flex; align-items: center; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); margin-bottom: 14px; }
+  .mock-dot { width: 10px; height: 10px; border-radius: 50%; background: #e5e7eb; }
+  .mock-dot:nth-child(1) { background: #fca5a5; }
+  .mock-dot:nth-child(2) { background: #fcd34d; }
+  .mock-dot:nth-child(3) { background: #86efac; }
+  .mock-topbar-title { margin-left: auto; font-size: 11px; color: var(--text-light); }
+  .mock-kpi-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-bottom: 12px; }
+  .mock-kpi {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: var(--bg-soft);
+  }
+  .mock-kpi-label { font-size: 9px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 6px; }
+  .mock-kpi-value { font-size: 22px; font-weight: 800; color: var(--text-primary); }
+  .mock-kpi-bar { height: 4px; background: var(--border); border-radius: 99px; margin-top: 8px; overflow: hidden; }
+  .mock-kpi-bar-fill { height: 100%; background: var(--accent); }
+  .mock-kpi--notify {
+    background: var(--primary-bg);
+    border-color: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  .mock-kpi--notify .ico { font-size: 20px; }
+  .mock-kpi--notify .badge { background: var(--red); color: #fff; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 800; }
+  .mock-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fff; }
+  .mock-card-title { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+  .mock-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 11px; }
+  .mock-item-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  /* ─── Section base ─── */
+  section.scope {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 100px 24px;
+  }
+  @media (max-width: 600px) { section.scope { padding: 60px 20px; } }
+  .section-eyebrow {
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    max-width: 700px;
+  }
+  .section-title span { color: var(--primary); }
+  .section-sub {
+    font-size: 17px;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin-bottom: 50px;
+  }
+
+  /* ─── Was kann die App: Feature cards ─── */
+  .feat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+  }
+  .feat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 22px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feat-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+  .feat-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--primary-bg);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+  .feat-card h3 { font-size: 17px; margin-bottom: 6px; color: var(--text-primary); }
+  .feat-card p { font-size: 14px; color: var(--text-secondary); margin: 0; line-height: 1.55; }
+
+  /* ─── Section: Two-column with mock ─── */
+  .duo {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .duo.reverse { grid-template-columns: 1.1fr 1fr; }
+  .duo.reverse .duo-text { order: 2; }
+  .duo.reverse .duo-mock { order: 1; }
+  @media (max-width: 900px) { .duo, .duo.reverse { grid-template-columns: 1fr; gap: 40px; } .duo.reverse .duo-text, .duo.reverse .duo-mock { order: unset; } }
+  .duo-text .badge {
+    display: inline-block;
+    background: var(--primary-bg);
+    color: var(--primary);
+    padding: 4px 12px;
     border-radius: 99px;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.1em;
-    margin-bottom: 28px;
+    letter-spacing: 0.05em;
+    margin-bottom: 14px;
+    text-transform: uppercase;
   }
-  .cover h1 {
-    font-size: 44px;
-    line-height: 1.15;
-    margin: 0 0 12px;
-    color: var(--green-dark);
+  .duo-text h2 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 14px; }
+  .duo-text h2 span { color: var(--primary); }
+  .duo-text p { font-size: 16px; color: var(--text-secondary); margin-bottom: 18px; }
+  .duo-text ul { padding-left: 0; list-style: none; }
+  .duo-text ul li {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 6px 0;
+    font-size: 14px;
   }
-  .cover .subtitle {
-    font-size: 18px;
-    color: var(--gray-700);
-    margin-bottom: 32px;
-  }
-  .cover .meta {
-    color: var(--gray-500);
-    font-size: 13px;
-    line-height: 1.8;
-  }
-  .cover .meta strong { color: var(--gray-900); }
-
-  .toc {
-    page-break-after: always;
-    margin: 32px 0;
-  }
-  .toc h2 { margin-top: 0; }
-  .toc ol { padding-left: 0; counter-reset: tocitem; }
-  .toc ol li {
-    list-style: none;
-    counter-increment: tocitem;
-    padding: 7px 0;
-    border-bottom: 1px dashed var(--border);
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-  }
-  .toc ol li::before {
-    content: counter(tocitem, decimal-leading-zero);
-    color: var(--green-dark);
-    font-weight: 700;
-    font-family: "SF Mono", monospace;
-    font-size: 12px;
+  .duo-text ul li::before {
+    content: '✓';
+    color: var(--accent);
+    font-weight: 800;
     flex-shrink: 0;
-    width: 28px;
   }
-  .toc a {
-    text-decoration: none;
-    color: var(--gray-900);
-    font-size: 14px;
-    flex: 1;
-  }
-  .toc a:hover { color: var(--green-dark); }
 
-  .chapter {
-    page-break-before: always;
-    margin-top: 28px;
+  /* ─── Mock UI shells (used for app-like illustrations) ─── */
+  .mock-window {
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
   }
-  .chapter:first-of-type { page-break-before: auto; }
-  .chapter > h2 .num {
-    display: inline-block;
-    background: var(--green-dark);
-    color: #fff;
+  .mock-window-header {
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-secondary);
+  }
+  .mock-window-body { padding: 18px; }
+
+  /* HubSpot lead modal mock */
+  .mock-modal {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .mock-modal-head {
+    padding: 14px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .mock-modal-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  .mock-modal-close { color: var(--text-light); font-size: 16px; }
+  .mock-modal-body { padding: 18px; }
+  .mock-field { margin-bottom: 12px; }
+  .mock-field-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .mock-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     font-size: 13px;
-    font-weight: 700;
-    padding: 2px 10px;
-    border-radius: 4px;
-    margin-right: 10px;
-    vertical-align: middle;
+    background: #fff;
+    color: var(--text-primary);
   }
+  .mock-input-with-btn { display: flex; gap: 8px; }
+  .mock-input-with-btn .mock-input { flex: 1; }
+  .mock-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .mock-btn-sec { background: #fff; color: var(--text-primary); border: 1px solid var(--border); }
 
-  .callout {
-    border-left: 4px solid var(--green-dark);
-    background: var(--green-bg);
-    padding: 12px 16px;
-    margin: 14px 0;
-    border-radius: 0 6px 6px 0;
-    font-size: 14px;
+  .mock-warn-card {
+    background: #FEF2F2;
+    border: 1px solid #FCA5A5;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 8px;
   }
-  .callout strong { color: var(--green-dark); }
-  .callout--tip { border-color: var(--orange); background: var(--orange-light); }
-  .callout--tip strong { color: var(--orange); }
-  .callout--warn { border-color: var(--red); background: var(--red-light); }
-  .callout--warn strong { color: var(--red); }
-
-  .role-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin: 14px 0;
-  }
-  .role-card {
+  .mock-warn-title { color: var(--red); font-weight: 700; font-size: 13px; margin-bottom: 10px; }
+  .mock-detail-card {
+    background: #fff;
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 12px 14px;
-    background: #fafafa;
   }
-  .role-card .name {
-    font-weight: 700;
-    color: var(--green-dark);
-    margin-bottom: 4px;
-    font-size: 14px;
+  .mock-detail-company { font-weight: 700; font-size: 13px; }
+  .mock-detail-sub { font-size: 11px; color: var(--text-light); margin-bottom: 10px; }
+  .mock-detail-section-label { font-size: 10px; color: var(--text-light); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+  .mock-detail-deal { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--border-light); font-size: 12px; }
+  .mock-detail-deal:last-child { border-bottom: 0; }
+  .mock-owner-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px;
   }
-  .role-card .desc { font-size: 12.5px; color: var(--gray-700); }
-
-  .step-list { padding-left: 0; counter-reset: step; }
-  .step-list > li {
-    list-style: none;
-    counter-increment: step;
-    position: relative;
-    padding-left: 38px;
-    margin-bottom: 12px;
-    min-height: 26px;
-  }
-  .step-list > li::before {
-    content: counter(step);
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 26px;
-    height: 26px;
-    background: var(--green-dark);
-    color: #fff;
+  .mock-avatar {
+    width: 18px; height: 18px;
     border-radius: 50%;
+    font-size: 9px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mock-action-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .mock-action-row .mock-btn { font-size: 11px; padding: 6px 12px; }
+
+  /* Step-flow visualization */
+  .step-flow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+    margin-top: 50px;
+    position: relative;
+  }
+  .step-flow-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 22px;
+    position: relative;
+    transition: all 0.2s;
+  }
+  .step-flow-card:hover { border-color: var(--primary); box-shadow: var(--shadow); }
+  .step-num {
+    position: absolute;
+    top: -14px; left: 22px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(13,92,56,0.3);
+  }
+  .step-flow-card h4 {
+    font-size: 16px; margin-top: 8px; margin-bottom: 6px;
+  }
+  .step-flow-card p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+
+  /* CS Phase timeline */
+  .phase-timeline {
+    background: linear-gradient(135deg, var(--primary-bg) 0%, #fff 100%);
+    border: 1px solid var(--primary-light);
+    border-radius: 14px;
+    padding: 28px;
+    margin-top: 24px;
+    position: relative;
+  }
+  .phase-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
+    gap: 0;
+    margin: 24px 0 16px;
+  }
+  .phase-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+  }
+  .phase-circle {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 3px solid var(--primary);
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 10px;
+    box-shadow: 0 4px 10px rgba(13,92,56,0.15);
+  }
+  .phase-step.done .phase-circle { background: var(--primary); color: #fff; }
+  .phase-step.current .phase-circle { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .phase-step .phase-label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .phase-step .phase-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .phase-arrow {
+    flex: 0 0 30px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary) 50%, var(--border) 50%);
+    margin-top: -28px;
+    align-self: center;
   }
 
-  .feat-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 14px 0;
-    font-size: 13px;
+  /* Role grid */
+  .role-grid-fancy {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
   }
-  .feat-table th, .feat-table td {
-    text-align: left;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: top;
+  .role-tile {
+    background: linear-gradient(135deg, #fff 0%, var(--bg-soft) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 20px;
+    transition: all 0.2s;
   }
-  .feat-table th {
-    background: var(--green-light);
-    color: var(--green-dark);
-    font-weight: 700;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .feat-table tr:nth-child(even) td { background: #fafafa; }
-
-  .pill {
-    display: inline-block;
-    background: var(--green-light);
-    color: var(--green-dark);
-    padding: 2px 9px;
-    border-radius: 99px;
-    font-size: 11px;
-    font-weight: 700;
-    margin-right: 4px;
-  }
-  .pill--gray { background: var(--gray-100); color: var(--gray-700); }
-  .pill--orange { background: var(--orange-light); color: var(--orange); }
-  .pill--red { background: var(--red-light); color: var(--red); }
-
-  .ui-box {
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin: 14px 0;
-    background: #fff;
-    font-size: 13px;
-  }
-  .ui-box .ui-title {
-    font-weight: 700;
-    color: var(--gray-900);
+  .role-tile:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .role-tile .role-emoji {
+    font-size: 28px;
     margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
   }
-  .ui-box .ui-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-    border-bottom: 1px dashed var(--border);
+  .role-tile .role-name {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--primary);
+    margin-bottom: 6px;
   }
-  .ui-box .ui-row:last-child { border-bottom: 0; }
+  .role-tile .role-desc { font-size: 13px; color: var(--text-secondary); }
 
-  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  /* Tips */
+  .tip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .tip-card {
+    background: var(--card);
+    border-left: 4px solid var(--primary);
+    border-radius: 0 12px 12px 0;
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .tip-card h4 { font-size: 14px; margin-bottom: 4px; }
+  .tip-card p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+  .tip-card.warn { border-left-color: var(--red); }
+  .tip-card.warn h4 { color: var(--red); }
+  .tip-card.success { border-left-color: var(--accent); }
 
-  footer {
+  /* Task mock card */
+  .mock-task-list { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .mock-task-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 13px;
+  }
+  .mock-task-item:last-child { border-bottom: 0; }
+  .mock-task-item.overdue { background: #FEF9F9; }
+  .mock-task-title { flex: 1; font-weight: 600; }
+  .mock-task-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .mock-task-priority {
+    background: var(--red-light); color: var(--red);
+    padding: 2px 9px; border-radius: 99px;
+    font-size: 10px; font-weight: 800;
+  }
+  .mock-task-priority.med { background: var(--orange-light); color: var(--orange); }
+  .mock-task-priority.low { background: var(--border-light); color: var(--text-secondary); }
+
+  /* Footer */
+  footer.foot {
     margin-top: 60px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-    font-size: 11px;
-    color: var(--gray-500);
+    background: var(--primary);
+    color: #fff;
+    padding: 60px 24px 40px;
+  }
+  .foot-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; }
+  @media (max-width: 700px) { .foot-inner { grid-template-columns: 1fr; gap: 24px; } }
+  .foot h4 { color: #fff; font-size: 14px; margin-bottom: 14px; letter-spacing: 0.02em; }
+  .foot ul { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+  .foot ul li { padding: 4px 0; opacity: 0.85; }
+  .foot-brand { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 12px; }
+  .foot-tag { font-size: 13px; opacity: 0.85; max-width: 360px; line-height: 1.6; }
+  .foot-bottom {
+    max-width: 1200px;
+    margin: 40px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-size: 12px;
+    opacity: 0.7;
     text-align: center;
   }
 
-  @media print {
-    body {
-      max-width: none;
-      margin: 0;
-      box-shadow: none;
-      padding: 0;
-      background: #fff;
-    }
-    .print-bar { display: none; }
-    .cover { background: var(--green-light); }
-    a { color: var(--green-dark); text-decoration: none; }
-    h2 { break-inside: avoid; }
-    .role-card, .ui-box, .callout { break-inside: avoid; }
-    .chapter { page-break-before: always; }
-    .toc { page-break-after: always; }
-  }
-
-  @media (max-width: 600px) {
-    body { padding: 16px; }
-    .role-grid { grid-template-columns: 1fr; }
-    .cover { padding-left: 30px; padding-right: 30px; }
-    .cover h1 { font-size: 32px; }
-  }
+  /* Reveal-on-scroll (CSS-only) */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+  .reveal.in { opacity: 1; transform: translateY(0); }
 </style>
 </head>
 <body>
 
-<div class="print-bar">
-  <span>TBC WORLDWIDE — Benutzerhandbuch</span>
-  <button onclick="window.print()">📄 Als PDF speichern</button>
-</div>
+<!-- ─── Nav ─── -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <div class="nav-logo-mark">T</div>
+      TBC WORLDWIDE
+    </div>
+    <div class="nav-links">
+      <a href="#was-kann">Funktionen</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#hubspot">HubSpot-Lead</a>
+      <a href="#cs">Customer Success</a>
+      <a href="#rollen">Rollen</a>
+      <a href="#tipps">Tipps</a>
+    </div>
+    <button class="nav-cta" onclick="window.print()">📄 Als PDF</button>
+  </div>
+</nav>
 
-<!-- ── COVER ───────────────────────────────────────────── -->
-<section class="cover">
-  <span class="badge">MITARBEITER-BRIEFING</span>
-  <h1>TBC WORLDWIDE</h1>
-  <h1 style="font-size:28px;font-weight:500;color:var(--gray-700);margin-top:-4px">Benutzerhandbuch</h1>
-  <div class="subtitle">So nutzt du die Mitarbeiter-App im Alltag</div>
-  <div class="meta">
-    <strong>Version:</strong> Stand Mai 2026<br>
-    <strong>Zielgruppe:</strong> Alle TBC-Mitarbeiter (NB, CS, SellSupport, Management, Admin)<br>
-    <strong>Hinweis:</strong> Beste Druck-Ergebnisse mit Chrome oder Edge<br>
-    <strong>So speicherst du das PDF:</strong> oben rechts auf „Als PDF speichern" klicken, im Browser-Dialog Ziel „Als PDF speichern" wählen
+<!-- ─── Hero ─── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow">⚡ Mitarbeiter-Briefing</div>
+      <h1>Eine App. <span>Dein ganzes</span> Tagesgeschäft.</h1>
+      <p class="hero-sub">
+        TBC WORLDWIDE bündelt Sales, Customer Success, Aufgaben und Wissen
+        an einem Ort. Keine Excel-Listen mehr. Keine manuellen HubSpot-Duplikate.
+        Alles, was du brauchst — direkt im Browser, sofort einsatzbereit.
+      </p>
+      <div class="hero-cta-row">
+        <a href="#was-kann" class="btn btn-primary">Funktionen entdecken →</a>
+        <a href="#anmeldung" class="btn btn-ghost">So gehst du los</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num">5</div>
+          <div class="stat-label">Rollen</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">20+</div>
+          <div class="stat-label">Funktionen</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">0</div>
+          <div class="stat-label">Installation</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero mockup: dashboard preview -->
+    <div class="hero-mock">
+      <div class="mock-topbar">
+        <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
+        <span class="mock-topbar-title">tbc.up.railway.app/app</span>
+      </div>
+      <div class="mock-kpi-row">
+        <div class="mock-kpi">
+          <div class="mock-kpi-label">Member</div>
+          <div class="mock-kpi-value">12<span style="font-size:14px;color:var(--text-light)"> / 15</span></div>
+          <div class="mock-kpi-bar"><div class="mock-kpi-bar-fill" style="width:80%"></div></div>
+        </div>
+        <div class="mock-kpi">
+          <div class="mock-kpi-label">Umsatz</div>
+          <div class="mock-kpi-value" style="font-size:18px">€48.200</div>
+          <div class="mock-kpi-bar"><div class="mock-kpi-bar-fill" style="width:65%"></div></div>
+        </div>
+        <div class="mock-kpi mock-kpi--notify">
+          <span class="ico">❗</span>
+          <span class="badge">+3</span>
+        </div>
+      </div>
+      <div class="mock-card">
+        <div class="mock-card-title">📢 Ankündigungen</div>
+        <div class="mock-item"><span class="mock-item-dot"></span> Neue Sourcing-Pipeline ab Montag</div>
+        <div class="mock-item"><span class="mock-item-dot"></span> Team-Lunch Freitag, 12:30</div>
+      </div>
+      <div class="mock-card">
+        <div class="mock-card-title">✅ Meine offenen Aufgaben</div>
+        <div class="mock-item"><span class="mock-item-dot" style="background:var(--red)"></span> Übergabe Döner Brothers <span style="margin-left:auto;color:var(--red);font-weight:700">⚠ Heute</span></div>
+        <div class="mock-item"><span class="mock-item-dot" style="background:var(--orange)"></span> Sourcing Q3 Anfrage</div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ── INHALTSVERZEICHNIS ─────────────────────────────── -->
-<section class="toc">
-  <h2>Inhalt</h2>
-  <ol>
-    <li><a href="#k1">Was ist TBC WORLDWIDE?</a></li>
-    <li><a href="#k2">Anmeldung &amp; Konto</a></li>
-    <li><a href="#k3">Rollen &amp; Berechtigungen</a></li>
-    <li><a href="#k4">Dashboard</a></li>
-    <li><a href="#k5">Navigation (Sidebar)</a></li>
-    <li><a href="#k6">Insta-Leads</a></li>
-    <li><a href="#k7">HubSpot-Lead anlegen</a></li>
-    <li><a href="#k8">Aufgaben</a></li>
-    <li><a href="#k9">Sourcing-Anfrage</a></li>
-    <li><a href="#k10">Customer-Success-Workflow</a></li>
-    <li><a href="#k11">Member (Kunden)</a></li>
-    <li><a href="#k12">Ankündigungen</a></li>
-    <li><a href="#k13">Callliste</a></li>
-    <li><a href="#k14">Statistik</a></li>
-    <li><a href="#k15">Wiki</a></li>
-    <li><a href="#k16">Feedback</a></li>
-    <li><a href="#k17">Tools &amp; Links</a></li>
-    <li><a href="#k18">Admin-Panel</a></li>
-    <li><a href="#k19">Profil</a></li>
-    <li><a href="#k20">Tipps für die tägliche Nutzung</a></li>
-  </ol>
-</section>
+<!-- ─── Was kann die App ─── -->
+<section class="scope reveal" id="was-kann">
+  <div class="section-eyebrow">WAS DIE APP KANN</div>
+  <h2 class="section-title">Alles, was du im Alltag <span>wirklich</span> brauchst.</h2>
+  <p class="section-sub">
+    Statt drei Tools parallel offen zu haben, machst du alles hier — von Lead-Erfassung
+    bis Customer-Success-Übergabe.
+  </p>
 
-<!-- ── 1 ──────────────────────────────────────────────── -->
-<section class="chapter" id="k1">
-  <h2><span class="num">01</span>Was ist TBC WORLDWIDE?</h2>
-  <p>TBC WORLDWIDE ist die interne <strong>Mitarbeiter-App von The Branding Club</strong>. Sie bündelt alles, was du im Tagesgeschäft brauchst: Lead-Erfassung in HubSpot, Customer-Success-Workflow, Aufgaben, Sourcing-Anfragen, Ankündigungen und ein internes Wiki.</p>
-  <p>Die App läuft im Browser — egal ob Desktop oder Smartphone. Du brauchst keine Installation, nur deinen Login.</p>
-  <div class="callout">
-    <strong>Auf einen Blick:</strong> Web-App, Login per <code>@thebrandingclub.com</code>-Adresse. Die App ersetzt mehrere Tools (Excel-Listen für Sourcing, manuelle Lead-Erfassung in HubSpot, separate Aufgaben-Listen) und macht alles an einem Ort verfügbar.
-  </div>
-  <h3>Was kannst du damit konkret machen?</h3>
-  <ul>
-    <li>Neue Leads in HubSpot anlegen — mit automatischer Duplikat-Prüfung</li>
-    <li>Instagram-Profile screenshotten und per AI direkt als HubSpot-Lead erfassen</li>
-    <li>Member (Kunden) anlegen, durch alle Phasen führen (Design → Production → fertig)</li>
-    <li>Aufgaben erstellen, zuweisen, abhaken</li>
-    <li>Sourcing-Anfragen strukturiert erfassen und kopieren</li>
-    <li>Calllisten aus HubSpot generieren (pro Salesperson)</li>
-    <li>Ankündigungen für das Team posten</li>
-  </ul>
-</section>
-
-<!-- ── 2 ──────────────────────────────────────────────── -->
-<section class="chapter" id="k2">
-  <h2><span class="num">02</span>Anmeldung &amp; Konto</h2>
-
-  <h3>Einloggen</h3>
-  <ol class="step-list">
-    <li>App-URL im Browser öffnen (z. B. <code>tbc.up.railway.app</code>).</li>
-    <li>E-Mail und Passwort eingeben.</li>
-    <li>Auf <strong>Anmelden</strong> klicken.</li>
-  </ol>
-  <p>Es können sich nur Mitarbeiter mit einer <code>@thebrandingclub.com</code>-Adresse anmelden. Externe Admins können einen Bypass haben.</p>
-
-  <h3>Erstanmeldung (Account aktivieren)</h3>
-  <ol class="step-list">
-    <li>Auf der Login-Seite auf <strong>Registrieren</strong> klicken.</li>
-    <li>Deine Firmen-Mail eingeben.</li>
-    <li>Du bekommst per Mail (von Resend) einen Link zum Passwort-Setzen.</li>
-    <li>Auf den Link klicken (gültig 30 Minuten), neues Passwort vergeben — fertig.</li>
-  </ol>
-
-  <h3>Passwort vergessen</h3>
-  <p>Gleicher Flow wie Erstanmeldung — „Registrieren" funktioniert auch als Passwort-Reset.</p>
-  <div class="callout callout--warn">
-    <strong>Wichtig:</strong> Ein Login-Token ist <strong>8 Stunden</strong> gültig. Danach musst du dich neu anmelden. Logout am Schichtende ist gute Praxis.
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-icon">🎯</div>
+      <h3>Leads in Sekunden</h3>
+      <p>Instagram-Screenshot rein, AI erkennt Firma + Website, HubSpot-Eintrag raus. Inkl. automatischer Duplikat-Prüfung.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🔄</div>
+      <h3>CS-Workflow ohne Lücken</h3>
+      <p>Auto-Aufgaben bei Übergabe, 24h-SLA-Banner für WhatsApp-Erstkontakt, Phasen-Tracking inkl. Statistik.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📋</div>
+      <h3>Aufgaben mit Köpfchen</h3>
+      <p>Live-Countdown, automatische Checklisten, überfällige Tasks rot markiert, Sourcing-Anfragen mit Copy-Button.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <h3>Dashboard auf einen Blick</h3>
+      <p>KPIs mit Ziel-Balken, Notification-Kachel für ungelesene Updates, Ankündigungs-Feed, eigene offene Tasks.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📞</div>
+      <h3>Callliste aus HubSpot</h3>
+      <p>Owner wählen, „Liste erstellen" klicken — alle Kontaktnummern dieses Salespersons sofort einsatzbereit.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🛡️</div>
+      <h3>Sicher &amp; einfach</h3>
+      <p>Nur @thebrandingclub.com-Logins. Passwort-Reset per Mail. Rollen-basierte Sichtbarkeit — jeder sieht nur, was er sieht.</p>
+    </div>
   </div>
 </section>
 
-<!-- ── 3 ──────────────────────────────────────────────── -->
-<section class="chapter" id="k3">
-  <h2><span class="num">03</span>Rollen &amp; Berechtigungen</h2>
-  <p>Die App kennt fünf Rollen. Welche Funktionen du siehst, hängt von deiner Rolle ab.</p>
-  <div class="role-grid">
-    <div class="role-card">
-      <div class="name">Admin</div>
-      <div class="desc">Vollzugriff — Admin-Panel, Mitarbeiter, Logo, Brand-Name, Commitments, alle Daten.</div>
+<!-- ─── Anmeldung ─── -->
+<section class="scope reveal" id="anmeldung" style="background:linear-gradient(180deg, #fff 0%, var(--bg-soft) 100%); max-width:none; padding-left:0; padding-right:0">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px">
+    <div class="section-eyebrow">ERSTE SCHRITTE</div>
+    <h2 class="section-title">In <span>3 Schritten</span> drin.</h2>
+    <p class="section-sub">Keine Installation. Kein Setup. Browser auf, einloggen, los.</p>
+
+    <div class="duo">
+      <div class="duo-text">
+        <div class="badge">ANMELDUNG</div>
+        <h2>Login per Firmen-Mail.</h2>
+        <p>Nur Mitarbeiter mit einer <code style="background:var(--primary-bg);color:var(--primary);padding:2px 8px;border-radius:4px;font-size:0.9em;font-weight:600">@thebrandingclub.com</code>-Adresse können sich anmelden.</p>
+        <ul>
+          <li>Erstanmeldung über „Registrieren" — du bekommst einen Link per Mail</li>
+          <li>Passwort vergessen? Gleicher Flow, Link 30 Min gültig</li>
+          <li>Token gilt 8 Stunden, danach neuer Login</li>
+        </ul>
+      </div>
+      <div class="duo-mock">
+        <div class="mock-window" style="max-width:380px;margin:0 auto">
+          <div class="mock-window-header">🔒 Sichere Anmeldung</div>
+          <div class="mock-window-body" style="padding:32px 28px;background:linear-gradient(180deg, var(--primary-bg) 0%, #fff 60%)">
+            <div style="text-align:center;margin-bottom:24px">
+              <div style="width:48px;height:48px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:12px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px">T</div>
+              <div style="font-weight:800;font-size:18px;color:var(--primary)">Willkommen zurück</div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">Anmelden mit deiner Firmen-Mail</div>
+            </div>
+            <div class="mock-field">
+              <div class="mock-field-label">E-Mail</div>
+              <div class="mock-input" style="color:var(--text-light)">vorname@thebrandingclub.com</div>
+            </div>
+            <div class="mock-field">
+              <div class="mock-field-label">Passwort</div>
+              <div class="mock-input" style="color:var(--text-light);letter-spacing:0.3em">••••••••</div>
+            </div>
+            <button class="mock-btn" style="width:100%;padding:11px;margin-top:8px">Anmelden →</button>
+            <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text-secondary)">
+              <a href="#" style="color:var(--primary);font-weight:600">Passwort vergessen / Registrieren</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="role-card">
-      <div class="name">Management</div>
-      <div class="desc">Wie Admin, mit Zugriff auf Statistik, Commitments, Ankündigungen verwalten.</div>
-    </div>
-    <div class="role-card">
-      <div class="name">New Business (NB)</div>
-      <div class="desc">Leads anlegen (Insta + HubSpot), Member anlegen, Sourcing, eigene Aufgaben.</div>
-    </div>
-    <div class="role-card">
-      <div class="name">Customer Success (CS)</div>
-      <div class="desc">Übernahme von Membern, Phasen-Steuerung, SLA, CS-Member-Overview, Sourcing.</div>
-    </div>
-    <div class="role-card">
-      <div class="name">SellSupport</div>
-      <div class="desc">Unterstützungsrolle für NB/CS, eingeschränkter Lese-/Edit-Zugriff.</div>
-    </div>
-  </div>
-  <div class="callout">
-    <strong>Wie wird Rolle vergeben?</strong> Beim Anlegen oder im Admin-Panel. Bestimmte E-Mail-Adressen (z. B. <code>ramon@thebrandingclub.com</code>) werden automatisch zu Admin promoted.
   </div>
 </section>
 
-<!-- ── 4 ──────────────────────────────────────────────── -->
-<section class="chapter" id="k4">
-  <h2><span class="num">04</span>Dashboard</h2>
-  <p>Das Dashboard ist deine Startseite nach dem Login. Hier siehst du auf einen Blick:</p>
-
-  <h3>KPI-Reihe (oben, 3 Kacheln)</h3>
-  <ul>
-    <li><strong>Member</strong> (NB) oder <strong>Design Intake</strong> (CS) — wie viele Member abgeschlossen / wie viel Umsatz schon in Design-Phase, mit Ziel-Fortschrittsbalken.</li>
-    <li><strong>Umsatz</strong> (NB) oder <strong>Production Intake</strong> (CS) — der zweite Hauptindikator, ebenfalls mit Ziel-Anzeige.</li>
-    <li><strong>Notification-Kachel</strong> — die 3. Kachel ist schmal und zeigt nur ein Symbol:
+<!-- ─── Dashboard ─── -->
+<section class="scope reveal" id="dashboard">
+  <div class="duo reverse">
+    <div class="duo-text">
+      <div class="badge">DASHBOOK</div>
+      <h2>Dein <span>Tagesüberblick</span> auf einer Seite.</h2>
+      <p>Sobald du eingeloggt bist, siehst du sofort, wo du stehst und was zu tun ist.</p>
       <ul>
-        <li>✓ wenn alle Aufgaben &amp; Ankündigungen gelesen sind</li>
-        <li>❗ mit <span class="pill pill--red">+N</span>-Badge bei ungelesenen Einträgen</li>
+        <li><strong>3 KPI-Kacheln</strong> — Member &amp; Umsatz mit Ziel-Balken, plus eine Notification-Kachel</li>
+        <li><strong>Notification ❗+N</strong> — zeigt ungelesene Aufgaben &amp; Ankündigungen kompakt an</li>
+        <li><strong>Ankündigungen-Feed</strong> — neue Posts oben, mit einem Klick als gelesen markiert</li>
+        <li><strong>Offene Aufgaben</strong> — überfällige rot, sortiert nach Fälligkeit</li>
       </ul>
-      Klick öffnet ein Popup mit den ungelesenen Items.
-    </li>
-  </ul>
-
-  <h3>📢 Ankündigungen</h3>
-  <p>Feed mit Posts aus dem Management. Neueste oben. Klick markiert als gelesen.</p>
-
-  <h3>✅ Meine offenen Aufgaben</h3>
-  <p>Bis zu 6 deiner offenen Tasks. Überfällige Aufgaben werden mit ⚠ rot markiert und nach oben sortiert. Klick öffnet Task-Detail.</p>
-
-  <h3>🕐 Zuletzt hinzugefügt</h3>
-  <p>Erscheint nur für bestimmte Rollen — zeigt aktuell neu angelegte Member oder Leads.</p>
-
-  <div class="callout callout--tip">
-    <strong>Tipp:</strong> Die Notification-Kachel ist deine „Posteingang"-Anzeige. Wenn sie ❗ zeigt, ist etwas neu für dich. Daily-Driver-Liste bleibt die „Meine offenen Aufgaben"-Karte darunter.
-  </div>
-</section>
-
-<!-- ── 5 ──────────────────────────────────────────────── -->
-<section class="chapter" id="k5">
-  <h2><span class="num">05</span>Navigation (Sidebar)</h2>
-  <p>Links siehst du die Hauptnavigation. Welche Einträge sichtbar sind, hängt von deiner Rolle ab.</p>
-  <table class="feat-table">
-    <thead>
-      <tr><th>Eintrag</th><th>Sichtbar für</th><th>Was es macht</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><strong>Dashboard</strong></td><td>Alle</td><td>Startseite mit KPIs, Ankündigungen, Aufgaben</td></tr>
-      <tr><td><strong>Insta Leads</strong></td><td>NB, CS, Management, Admin</td><td>Instagram-Screenshots → HubSpot-Lead</td></tr>
-      <tr><td><strong>HubSpot Lead</strong></td><td>NB, Management, Admin</td><td>Manueller HubSpot-Lead-Eintrag mit Duplikat-Check</td></tr>
-      <tr><td><strong>Aufgaben</strong></td><td>Alle</td><td>Vollständige Aufgaben-Übersicht</td></tr>
-      <tr><td><strong>Sourcing-Anfrage</strong></td><td>NB, CS</td><td>Excel-ähnliche Anfrage-Tabelle</td></tr>
-      <tr><td><strong>Tools &amp; Links</strong></td><td>Alle</td><td>Google Drive, HubSpot, Personio, Onboarding</td></tr>
-      <tr><td><strong>Statistik</strong></td><td>Admin, Management</td><td>Umsatz pro Salesperson, Pipeline</td></tr>
-      <tr><td><strong>Wiki</strong></td><td>Alle</td><td>Internes Wissen / Anleitungen</td></tr>
-      <tr><td><strong>Feedback</strong></td><td>Alle außer Admin</td><td>Bewertung &amp; Verbesserungsvorschläge</td></tr>
-      <tr><td><strong>Admin-Panel</strong></td><td>Admin, Management</td><td>Mitarbeiter, Onboarding, Logo, Commitments</td></tr>
-    </tbody>
-  </table>
-</section>
-
-<!-- ── 6 ──────────────────────────────────────────────── -->
-<section class="chapter" id="k6">
-  <h2><span class="num">06</span>Insta-Leads</h2>
-  <p>Das Tool generiert aus einem Instagram-Profil automatisch einen HubSpot-Lead. Es nutzt Claude (AI) für die Erkennung.</p>
-
-  <h3>So gehst du vor</h3>
-  <ol class="step-list">
-    <li>Sidebar → <strong>Insta Leads</strong>.</li>
-    <li>Entweder Screenshot vom Instagram-Profil hochladen <em>oder</em> Instagram-Username direkt eingeben.</li>
-    <li>Die AI erkennt: Firmenname, Website, Instagram-Handle.</li>
-    <li>Die App sucht in HubSpot, ob die Firma schon existiert.</li>
-    <li>Wähle den <strong>Salesperson</strong> (Avatar): Ramon, Tim, Leon, Justus, Henry, Marko.</li>
-    <li>Wenn schon in HubSpot: <em>„Owner auf … umschreiben"</em>-Button erscheint.<br>Wenn neu: <em>„Company + Deal anlegen"</em>-Button erscheint.</li>
-    <li>Nach Klick: Bestätigung mit Link zum HubSpot-Deal.</li>
-  </ol>
-  <div class="callout">
-    <strong>Voraussetzung:</strong> Im Profil muss die Instagram-Session-ID hinterlegt sein (siehe Kapitel 19), damit die App auf Instagram zugreifen kann.
-  </div>
-</section>
-
-<!-- ── 7 ──────────────────────────────────────────────── -->
-<section class="chapter" id="k7">
-  <h2><span class="num">07</span>HubSpot-Lead anlegen</h2>
-  <p>Das manuelle Lead-Anlegen geht ab jetzt <strong>Schritt für Schritt</strong>. Du gibst zuerst die URL ein, die App prüft HubSpot, und je nachdem siehst du zwei verschiedene Flows.</p>
-
-  <h3>Step 1 — URL eingeben</h3>
-  <ol class="step-list">
-    <li>Sidebar → <strong>HubSpot Lead</strong>.</li>
-    <li>Im Modal zuerst nur die <strong>Website / URL</strong> eingeben.</li>
-    <li>Auf <strong>Prüfen →</strong> klicken.</li>
-  </ol>
-
-  <h3>Step 2a — URL existiert bereits in HubSpot</h3>
-  <p>Dann erscheint eine Detail-Karte:</p>
-  <div class="ui-box">
-    <div class="ui-title">⚠ Diese URL ist bereits in HubSpot vorhanden</div>
-    <div style="font-weight:700;font-size:14px">The Döner Brothers <span style="font-weight:normal;color:var(--gray-500)">— thedoenerbrothers.de</span></div>
-    <div style="margin-top:8px;font-size:11px;color:var(--gray-500);font-weight:700;text-transform:uppercase">Deals (1)</div>
-    <div class="ui-row">
-      <span>The Döner Brothers — Neuer Deal</span>
-      <span class="pill pill--gray">Owner: Marko Zecevic</span>
     </div>
-    <div style="margin-top:8px;font-size:11px;color:var(--gray-500);font-weight:700;text-transform:uppercase">Kontakte (0)</div>
-    <div style="color:var(--red);font-size:12px;font-weight:600">⚠ Kein Kontakt hinterlegt</div>
-  </div>
-  <p>Unter der Karte siehst du dann die Felder <strong>Kontaktperson, E-Mail, Telefon, Salesperson</strong>. Was du dort eingibst, schaltet die passenden Buttons frei:</p>
-  <ul>
-    <li><strong>„Owner auf &lt;Salesperson&gt; umschreiben"</strong> — taucht auf, sobald du im Dropdown jemanden auswählst. Schreibt alle Deals + die Company auf den neuen Owner um.</li>
-    <li><strong>„Kontakt „&lt;Name&gt;" hinzufügen"</strong> — taucht auf, sobald du einen Namen tippst. Legt einen neuen Kontakt an und verknüpft ihn mit der Company.</li>
-    <li><strong>„Trotzdem komplett neu anlegen"</strong> — blendet die zusätzlichen Felder (Firma, Pipeline, Notizen) ein und ermöglicht eine neue Company.</li>
-    <li><strong>„Abbrechen"</strong> — schließt die Karte, du kannst eine andere URL prüfen.</li>
-  </ul>
 
-  <h3>Step 2b — URL ist noch nicht in HubSpot</h3>
-  <p>Dann erscheinen alle Felder: Firmenname, Kontaktperson, E-Mail, Telefon, Pipeline, Salesperson, Notizen. Auf <strong>„Lead in HubSpot anlegen →"</strong> klicken.</p>
-
-  <h3>Erfolg</h3>
-  <p>Egal welcher Pfad: am Ende grüne Box mit drei Optionen — <strong>In HubSpot öffnen ↗</strong>, <strong>Weiteren Lead anlegen</strong>, <strong>Schließen</strong>.</p>
-
-  <div class="callout callout--tip">
-    <strong>Warum dieser Flow?</strong> So vermeiden wir Duplikate. Vorher wurde oft eine Firma zweimal angelegt — jetzt siehst du sofort, wenn sie schon drin ist, und kannst stattdessen den Owner umschreiben oder einen Kontakt nachpflegen.
-  </div>
-</section>
-
-<!-- ── 8 ──────────────────────────────────────────────── -->
-<section class="chapter" id="k8">
-  <h2><span class="num">08</span>Aufgaben</h2>
-
-  <h3>Aufgabe anlegen</h3>
-  <ol class="step-list">
-    <li>Sidebar → <strong>Aufgaben</strong> → <strong>+ Neue Aufgabe</strong>.</li>
-    <li>Titel, Beschreibung, Projekt eintragen.</li>
-    <li>Optional: Fälligkeit, Priorität (<span class="pill">High</span> <span class="pill pill--orange">Med</span> <span class="pill pill--gray">Low</span>), Zuweisung.</li>
-    <li>Speichern.</li>
-  </ol>
-
-  <h3>Checklisten</h3>
-  <p>In der Detail-Ansicht einer Task kannst du Checklisten-Items abhaken. Manche Tasks (z. B. CS-Übergabe) haben automatisch eine Checkliste angelegt.</p>
-
-  <h3>Status &amp; Countdown</h3>
-  <ul>
-    <li>Standard-Status: <strong>offen</strong>. Mit „Erledigt"-Button → <strong>done</strong>.</li>
-    <li>Bei Fälligkeit läuft ein <strong>Live-Countdown</strong>.</li>
-    <li>Überfällig → ⚠ und rote Markierung.</li>
-  </ul>
-
-  <h3>Sourcing-Tasks</h3>
-  <p>Tasks vom Typ „Sourcing-Anfrage" haben einen <strong>Kopieren</strong>-Button, der die Tabelle in die Zwischenablage legt — direkt einfügen in Mail oder Slack.</p>
-</section>
-
-<!-- ── 9 ──────────────────────────────────────────────── -->
-<section class="chapter" id="k9">
-  <h2><span class="num">09</span>Sourcing-Anfrage</h2>
-  <p>Sourcing-Anfragen werden strukturiert in Tabellenform erfasst. Sichtbar in der Sidebar nur für <strong>NB</strong> und <strong>CS</strong>.</p>
-
-  <ol class="step-list">
-    <li>Sidebar → <strong>Sourcing-Anfrage</strong>.</li>
-    <li>Excel-ähnliche Tabelle ausfüllen: Produkt, Menge, Anforderungen, Deadline pro Zeile.</li>
-    <li>Zeilen hinzufügen mit „+ Zeile".</li>
-    <li>Auf <strong>Kopieren</strong> klicken → komplette Tabelle in der Zwischenablage.</li>
-    <li>In E-Mail oder Chat einfügen (formatierte Tabelle bleibt erhalten).</li>
-  </ol>
-
-  <div class="callout">
-    <strong>Hinweis:</strong> Die Anfrage wird als Task angelegt, damit sie nachvollziehbar bleibt und nicht in Mails verloren geht.
+    <!-- Bigger dashboard mock -->
+    <div class="duo-mock">
+      <div class="mock-window">
+        <div class="mock-window-header">
+          <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
+          <span style="margin-left:auto">Dashboard</span>
+        </div>
+        <div class="mock-window-body" style="background:var(--bg-soft)">
+          <div class="mock-kpi-row" style="margin-bottom:16px">
+            <div class="mock-kpi" style="background:#fff">
+              <div class="mock-kpi-label">Member</div>
+              <div class="mock-kpi-value">12<span style="font-size:13px;color:var(--text-light)"> / 15</span></div>
+              <div class="mock-kpi-bar"><div class="mock-kpi-bar-fill" style="width:80%"></div></div>
+              <div style="font-size:10px;color:var(--text-secondary);margin-top:4px">80%</div>
+            </div>
+            <div class="mock-kpi" style="background:#fff">
+              <div class="mock-kpi-label">Umsatz</div>
+              <div class="mock-kpi-value" style="font-size:17px">€48.200</div>
+              <div class="mock-kpi-bar"><div class="mock-kpi-bar-fill" style="width:65%"></div></div>
+              <div style="font-size:10px;color:var(--text-secondary);margin-top:4px">65% von €75.000</div>
+            </div>
+            <div class="mock-kpi mock-kpi--notify">
+              <span class="ico">❗</span>
+              <span class="badge">+3</span>
+            </div>
+          </div>
+          <div class="mock-card" style="background:#fff">
+            <div class="mock-card-title">📢 Ankündigungen</div>
+            <div class="mock-item"><span class="mock-item-dot"></span> <strong>Neue Sourcing-Pipeline ab Montag</strong></div>
+            <div class="mock-item"><span class="mock-item-dot"></span> Team-Lunch Freitag, 12:30 im Innenhof</div>
+          </div>
+          <div class="mock-card" style="background:#fff">
+            <div class="mock-card-title">✅ Meine offenen Aufgaben</div>
+            <div class="mock-item" style="background:#FEF9F9;border-radius:6px;padding:6px 8px;margin-bottom:4px">
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:12px">Übergabe Döner Brothers an CS</div>
+                <div style="font-size:10px;color:var(--text-secondary)">Onboarding · <span style="color:var(--red);font-weight:700">⚠ Heute fällig</span></div>
+              </div>
+              <span class="mock-task-priority">High</span>
+            </div>
+            <div class="mock-item">
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:12px">Sourcing-Anfrage Q3 verschicken</div>
+                <div style="font-size:10px;color:var(--text-secondary)">Sourcing · Fällig: 14.05.</div>
+              </div>
+              <span class="mock-task-priority med">Med</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ── 10 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k10">
-  <h2><span class="num">10</span>Customer-Success-Workflow</h2>
-  <p>Wenn New Business einen Member abgeschlossen hat, wird er an Customer Success übergeben. Dieser Workflow steuert den ganzen Prozess.</p>
-
-  <h3>Übergabe (Handover)</h3>
-  <ol class="step-list">
-    <li>NB legt den Member an (siehe Kapitel 11) und wählt <strong>service_type</strong>: <span class="pill">full_service</span> oder <span class="pill pill--orange">templates_only</span>.</li>
-    <li>Bei <code>templates_only</code> wählt NB außerdem den <strong>templates_sender</strong>: NB oder CS.</li>
-    <li>NB ändert Phase auf <strong>design</strong> → System erkennt den Handover.</li>
-    <li>CS-User wird zugewiesen → automatisch eine <strong>„Übergabe von NB"-Aufgabe</strong> erstellt mit einer Checkliste (3 oder 4 Items, je nach Service-Type).</li>
-  </ol>
-
-  <h3>24h-SLA</h3>
-  <p>Ab dem Handover läuft ein <strong>24-Stunden-Timer</strong> bis der erste WhatsApp-Kontakt erfolgen muss:</p>
-  <ul>
-    <li>Banner ist erst <strong>grün/neutral</strong>.</li>
-    <li>Nach 18h wird er <span class="pill pill--orange">gelb (Warnung)</span>.</li>
-    <li>Nach 24h wird er <span class="pill pill--red">rot (eskaliert)</span>.</li>
-  </ul>
-  <p>Sobald in der Checkliste „WhatsApp kontaktiert" abgehakt wird, stoppt der Timer.</p>
-
-  <h3>Phasen</h3>
-  <p>CS führt den Member durch die Phasen: <strong>design</strong> → <strong>production</strong> → <strong>fertig</strong>. Buttons im Member-Detail. Jede Phase wird im <code>phase_history</code> protokolliert.</p>
-
-  <h3>CS Member Overview</h3>
-  <p>Klick auf einen Member öffnet eine spezielle Overview für CS: SLA-Banner, Phasen-Buttons, alle Tasks zu diesem Member auf einen Blick.</p>
-</section>
-
-<!-- ── 11 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k11">
-  <h2><span class="num">11</span>Member (Kunden)</h2>
-
-  <h3>Anlegen</h3>
-  <ol class="step-list">
-    <li>Sidebar → <strong>Member</strong> → <strong>+ Neuer Member</strong>.</li>
-    <li>Pflichtfelder: Firma, Telefon, Kanal, Abschlussdatum, Umsatz, Marge.</li>
-    <li>Service-Type wählen:
+<!-- ─── Insta-Leads ─── -->
+<section class="scope reveal" id="insta">
+  <div class="duo">
+    <div class="duo-text">
+      <div class="badge">INSTA-LEADS</div>
+      <h2>Vom <span>Screenshot</span> zum HubSpot-Deal.</h2>
+      <p>Das Insta-Tool macht den lästigen Teil automatisch: Screenshot rein, AI erkennt Firma + Website, du wählst nur noch Salesperson.</p>
       <ul>
-        <li><span class="pill">full_service</span> — kompletter Service inkl. Design + Production.</li>
-        <li><span class="pill pill--orange">templates_only</span> — nur Templates, kein Full-Service.</li>
+        <li>Instagram-Profil hochladen oder Username eingeben</li>
+        <li>Claude (AI) extrahiert Firmenname, Website, Username</li>
+        <li>App prüft automatisch, ob die Firma schon in HubSpot ist</li>
+        <li>Mit einem Klick: Owner umschreiben <em>oder</em> neue Company + Deal anlegen</li>
       </ul>
-    </li>
-    <li>Bei <code>templates_only</code>: <strong>templates_sender</strong> wählen (NB oder CS).</li>
-    <li>Optional: HubSpot-Company-ID, CS-Zuweisung.</li>
-    <li>Speichern.</li>
-  </ol>
+    </div>
 
-  <h3>Bearbeiten</h3>
-  <p>Im Member-Detail alle Felder editierbar. Phasen-Buttons (design / production / fertig) ändern den Status mit Historie.</p>
+    <div class="duo-mock">
+      <div class="mock-window">
+        <div class="mock-window-header">📸 Insta-Leads Tool</div>
+        <div class="mock-window-body">
+          <!-- Step illustration -->
+          <div style="display:flex;align-items:center;justify-content:space-around;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+            <div style="text-align:center;flex:1;min-width:90px">
+              <div style="width:50px;height:50px;border-radius:10px;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:20px">📸</div>
+              <div style="font-size:11px;font-weight:700">Screenshot</div>
+            </div>
+            <div style="font-size:18px;color:var(--primary)">→</div>
+            <div style="text-align:center;flex:1;min-width:90px">
+              <div style="width:50px;height:50px;border-radius:10px;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:20px">🤖</div>
+              <div style="font-size:11px;font-weight:700">AI erkennt</div>
+            </div>
+            <div style="font-size:18px;color:var(--primary)">→</div>
+            <div style="text-align:center;flex:1;min-width:90px">
+              <div style="width:50px;height:50px;border-radius:10px;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:20px">✅</div>
+              <div style="font-size:11px;font-weight:700">In HubSpot</div>
+            </div>
+          </div>
 
-  <div class="callout callout--tip">
-    <strong>Statistik-Hinweis:</strong> Member zählen für die monatliche Intake-Statistik nur, wenn sie <em>in diesem Monat</em> die jeweilige Phase erstmals erreicht haben.
+          <!-- Owner picker -->
+          <div style="background:var(--bg-soft);border-radius:10px;padding:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.04em">Salesperson wählen</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div style="background:#fff;border:1.5px solid var(--accent);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600">
+                <span class="mock-avatar" style="background:#d8f0e8;color:#0d5c38">RH</span> Ramon
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+                <span class="mock-avatar" style="background:#dde8f5;color:#4a7ab5">TZ</span> Tim
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+                <span class="mock-avatar" style="background:#ede8fd;color:#5a3ab5">JK</span> Justus
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+                <span class="mock-avatar" style="background:#fdf5d7;color:#8a6a13">HS</span> Henry
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+                <span class="mock-avatar" style="background:#fde0eb;color:#a8316c">MZ</span> Marko
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ── 12 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k12">
-  <h2><span class="num">12</span>Ankündigungen</h2>
-  <p>Ankündigungen erscheinen als Feed auf jedem Dashboard. Sichtbar für alle, erstellt von Management/Admin.</p>
+<!-- ─── HubSpot Lead anlegen (full feature explanation) ─── -->
+<section class="scope reveal" id="hubspot" style="background:linear-gradient(180deg, var(--bg-soft) 0%, #fff 100%); max-width:none; padding-left:0; padding-right:0">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px">
+    <div class="section-eyebrow">HUBSPOT-LEAD ANLEGEN</div>
+    <h2 class="section-title">Erst <span>prüfen</span>. Dann <span>handeln</span>.</h2>
+    <p class="section-sub">
+      Der intelligenteste Lead-Anlege-Flow: Du gibst zuerst nur die URL ein. Die App
+      prüft HubSpot, und je nachdem siehst du den passenden Schritt.
+    </p>
 
-  <h3>Erstellen</h3>
-  <ol class="step-list">
-    <li>Im Admin-Panel oder Dashboard → <strong>+ Ankündigung</strong>.</li>
-    <li>Rich-Text-Editor öffnet sich: <strong>fett</strong>, <em>kursiv</em>, Links, Listen formatieren.</li>
-    <li>Speichern → erscheint sofort im Feed aller User.</li>
-  </ol>
+    <!-- Step flow -->
+    <div class="step-flow">
+      <div class="step-flow-card">
+        <div class="step-num">1</div>
+        <h4>URL eingeben + Prüfen</h4>
+        <p>Nur das URL-Feld ist zu Beginn sichtbar. Tippen, „Prüfen →" klicken.</p>
+      </div>
+      <div class="step-flow-card">
+        <div class="step-num">2</div>
+        <h4>System prüft HubSpot</h4>
+        <p>Im Hintergrund läuft die Domain-Suche nach Companies mit dieser Website.</p>
+      </div>
+      <div class="step-flow-card">
+        <div class="step-num">3</div>
+        <h4>Passender Flow erscheint</h4>
+        <p>Existiert die Firma? Detail-Karte mit Aktionen. Neu? Komplettes Formular.</p>
+      </div>
+    </div>
 
-  <h3>Als gelesen markieren</h3>
-  <p>Klick auf eine Ankündigung im Feed → öffnet Detail und markiert sie als gelesen. Ungelesene zählen in der Notification-Kachel.</p>
+    <!-- Two outcomes side by side -->
+    <div style="margin-top:60px">
+      <h3 style="font-size:22px;font-weight:800;margin-bottom:24px">Zwei Ergebnisse, ein klarer Weg.</h3>
 
-  <h3>Löschen</h3>
-  <p>Admin und Management können Ankündigungen löschen (Papierkorb-Icon).</p>
-</section>
+      <div class="duo">
+        <!-- 2a: duplicate -->
+        <div class="duo-mock">
+          <div class="mock-modal">
+            <div class="mock-modal-head">
+              <div class="mock-modal-title">Lead in HubSpot einpflegen</div>
+              <span class="mock-modal-close">✕</span>
+            </div>
+            <div class="mock-modal-body">
+              <div class="mock-field">
+                <div class="mock-field-label">Website / URL *</div>
+                <div class="mock-input-with-btn">
+                  <div class="mock-input">https://thedoenerbrothers.de</div>
+                  <button class="mock-btn">Erneut prüfen</button>
+                </div>
+              </div>
+              <div class="mock-warn-card">
+                <div class="mock-warn-title">⚠ Diese URL ist bereits in HubSpot vorhanden</div>
+                <div class="mock-detail-card">
+                  <div class="mock-detail-company">The Döner Brothers</div>
+                  <div class="mock-detail-sub">thedoenerbrothers.de</div>
+                  <div class="mock-detail-section-label">Deals (1)</div>
+                  <div class="mock-detail-deal">
+                    <div>
+                      <div style="font-weight:600;font-size:12px">Neuer Deal</div>
+                      <div style="font-size:10px;color:var(--text-light)">Qualification · DE Cold Sales</div>
+                    </div>
+                    <div class="mock-owner-pill">
+                      <span class="mock-avatar" style="background:#fde0eb;color:#a8316c">MZ</span> Marko
+                    </div>
+                  </div>
+                  <div class="mock-detail-section-label" style="margin-top:8px">Kontakte (0)</div>
+                  <div style="color:var(--red);font-size:11px;font-weight:600">⚠ Kein Kontakt hinterlegt</div>
+                  <div class="mock-action-row">
+                    <button class="mock-btn">Owner auf Justus umschreiben</button>
+                    <button class="mock-btn mock-btn-sec">Kontakt hinzufügen</button>
+                    <button class="mock-btn mock-btn-sec">Trotzdem neu anlegen</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="duo-text">
+          <div class="badge" style="background:var(--red-light);color:var(--red)">PFAD A — DUPLIKAT</div>
+          <h2>Firma schon drin? <span>Kein Problem.</span></h2>
+          <p>Detail-Karte zeigt dir <strong>Firma, alle Deals mit aktuellem Owner und alle Kontakte</strong> — oder fehlende Kontakte rot markiert.</p>
+          <ul>
+            <li>Salesperson unten wählen → Button „Owner umschreiben" erscheint</li>
+            <li>Name unten eingeben → Button „Kontakt hinzufügen" wird aktiv</li>
+            <li>Beides geht live, ohne erneutes Klicken auf „Prüfen"</li>
+            <li>Notfalls: „Trotzdem komplett neu anlegen" — dein Wille</li>
+          </ul>
+        </div>
+      </div>
 
-<!-- ── 13 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k13">
-  <h2><span class="num">13</span>Callliste</h2>
-  <p>Generiert aus HubSpot die Liste aller Kontaktnummern eines bestimmten Salespersons. Praktisch für Call-Sessions.</p>
-
-  <ol class="step-list">
-    <li>Sidebar → <strong>Callliste</strong> (oder „HubSpot Lead" → unten).</li>
-    <li>Salesperson auswählen (Avatar-Buttons mit Initialen).</li>
-    <li><strong>Liste erstellen</strong> → zieht alle aktiven Kontakte dieses Owners aus HubSpot.</li>
-    <li>Alternativ <strong>Meine Wochenliste</strong> — fokussierter Auszug für die laufende Woche.</li>
-  </ol>
-
-  <div class="callout">
-    <strong>Caching:</strong> Die Liste wird intern für einige Minuten gecacht, damit wiederholte Aufrufe schnell sind. Bei Bedarf neu laden.
+      <div class="duo reverse" style="margin-top:60px">
+        <div class="duo-mock">
+          <div class="mock-modal">
+            <div class="mock-modal-head">
+              <div class="mock-modal-title">Lead in HubSpot einpflegen</div>
+              <span class="mock-modal-close">✕</span>
+            </div>
+            <div class="mock-modal-body">
+              <div class="mock-field">
+                <div class="mock-field-label">Website / URL *</div>
+                <div class="mock-input-with-btn">
+                  <div class="mock-input">https://neue-firma.de</div>
+                  <button class="mock-btn">Erneut prüfen</button>
+                </div>
+              </div>
+              <div style="background:var(--primary-bg);border:1px solid var(--primary-light);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--primary);margin-bottom:14px">
+                ✅ URL ist noch nicht in HubSpot — bitte unten alle Felder ausfüllen
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                <div class="mock-field" style="margin:0">
+                  <div class="mock-field-label">Firmenname *</div>
+                  <div class="mock-input" style="color:var(--text-light)">Neue Firma GmbH</div>
+                </div>
+                <div class="mock-field" style="margin:0">
+                  <div class="mock-field-label">Kontaktperson *</div>
+                  <div class="mock-input" style="color:var(--text-light)">Max Muster</div>
+                </div>
+                <div class="mock-field" style="margin:0">
+                  <div class="mock-field-label">E-Mail</div>
+                  <div class="mock-input" style="color:var(--text-light)">max@neue-firma.de</div>
+                </div>
+                <div class="mock-field" style="margin:0">
+                  <div class="mock-field-label">Salesperson *</div>
+                  <div class="mock-input" style="color:var(--text-primary)">Justus Kemper ▼</div>
+                </div>
+              </div>
+              <button class="mock-btn" style="width:100%;padding:11px">Lead in HubSpot anlegen →</button>
+            </div>
+          </div>
+        </div>
+        <div class="duo-text">
+          <div class="badge" style="background:var(--primary-bg);color:var(--primary)">PFAD B — NEU</div>
+          <h2>Firma neu? <span>Komplett anlegen.</span></h2>
+          <p>Wenn die URL noch nicht im System ist, klappen die anderen Felder auf — Firma, Kontakt, E-Mail, Pipeline, Salesperson, Notizen.</p>
+          <ul>
+            <li>URL kommt automatisch ins Feld</li>
+            <li>Du füllst nur einmal alles aus</li>
+            <li>Company + Contact + Deal werden in HubSpot angelegt</li>
+            <li>Direkt-Link zum Deal nach Erfolg</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ── 14 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k14">
-  <h2><span class="num">14</span>Statistik</h2>
-  <p>Nur sichtbar für Admin + Management.</p>
-  <ul>
-    <li>Umsatz pro Salesperson (Monat).</li>
-    <li>Offene Aufgaben pro Person.</li>
-    <li>Member-Pipeline pro Phase.</li>
-    <li>Commitment-Erfüllung (Soll vs. Ist).</li>
-  </ul>
-</section>
+<!-- ─── Customer Success Workflow ─── -->
+<section class="scope reveal" id="cs">
+  <div class="section-eyebrow">CUSTOMER SUCCESS</div>
+  <h2 class="section-title">Von der Übergabe bis <span>fertig</span> — automatisch begleitet.</h2>
+  <p class="section-sub">
+    Sobald NB einen Member übergibt, läuft der ganze CS-Prozess strukturiert ab.
+    Mit klaren Phasen, automatischen Aufgaben und einem SLA-Banner, das niemanden
+    vergessen lässt.
+  </p>
 
-<!-- ── 15 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k15">
-  <h2><span class="num">15</span>Wiki</h2>
-  <p>Internes Wissen, das nicht in eine Ankündigung passt: Anleitungen, Prozesse, Vorlagen.</p>
-  <ul>
-    <li>Wiki-Artikel anlegen (Admin/Management) und für alle sichtbar machen.</li>
-    <li>Titel + Body (formatierter Text).</li>
-    <li>Durchsuchbar.</li>
-  </ul>
-</section>
+  <div class="phase-timeline">
+    <div style="font-size:13px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px">📍 Phasen-Tracking</div>
+    <div style="font-size:18px;font-weight:700">Member „Döner Brothers" — aktueller Stand:</div>
+    <div class="phase-row">
+      <div class="phase-step done">
+        <div class="phase-circle">✓</div>
+        <div class="phase-label">Übernommen</div>
+        <div class="phase-sub">02.05.</div>
+      </div>
+      <div class="phase-arrow"></div>
+      <div class="phase-step current">
+        <div class="phase-circle">D</div>
+        <div class="phase-label">Design</div>
+        <div class="phase-sub">aktuell</div>
+      </div>
+      <div class="phase-arrow" style="background:var(--border)"></div>
+      <div class="phase-step">
+        <div class="phase-circle">P</div>
+        <div class="phase-label">Production</div>
+        <div class="phase-sub">offen</div>
+      </div>
+      <div class="phase-arrow" style="background:var(--border)"></div>
+      <div class="phase-step">
+        <div class="phase-circle">F</div>
+        <div class="phase-label">Fertig</div>
+        <div class="phase-sub">offen</div>
+      </div>
+    </div>
+  </div>
 
-<!-- ── 16 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k16">
-  <h2><span class="num">16</span>Feedback</h2>
-  <p>Anonym oder mit Name Feedback geben — sichtbar für Management/Admin.</p>
-  <ol class="step-list">
-    <li>Sidebar → <strong>Feedback</strong>.</li>
-    <li>1–5 Sterne vergeben.</li>
-    <li>Optional: <strong>Pros</strong> und <strong>Cons</strong> ausfüllen.</li>
-    <li>Topic wählen (z. B. „Tool", „Prozess", „Team").</li>
-    <li>Absenden.</li>
-  </ol>
-</section>
-
-<!-- ── 17 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k17">
-  <h2><span class="num">17</span>Tools &amp; Links</h2>
-  <p>Quick-Access zu externen Tools, die das Team täglich nutzt.</p>
-  <ul>
-    <li><strong>Google Drive</strong> — Dateiablage, Mockups, Dokumente.</li>
-    <li><strong>HubSpot</strong> — CRM (Deals, Companies, Contacts).</li>
-    <li><strong>Personio</strong> — HR-Portal.</li>
-    <li><strong>Onboarding starten</strong> — startet den Onboarding-Schritte-Flow für neue Mitarbeiter.</li>
-  </ul>
-</section>
-
-<!-- ── 18 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k18">
-  <h2><span class="num">18</span>Admin-Panel</h2>
-  <p>Sichtbar für Admin + Management. Tabs:</p>
-
-  <h3>Mitarbeiter</h3>
-  <ul>
-    <li>Liste aller User mit Rolle, Department, Position.</li>
-    <li>Anlegen, bearbeiten, Rolle ändern, deaktivieren.</li>
-    <li><strong>CSV-Export</strong> für externe Auswertungen.</li>
-  </ul>
-
-  <h3>Onboarding</h3>
-  <ul>
-    <li>Schritte des Mitarbeiter-Onboardings verwalten (Reihenfolge, Beschreibung).</li>
-    <li>Pro Mitarbeiter: Fortschritt einsehen.</li>
-  </ul>
-
-  <h3>Brand</h3>
-  <ul>
-    <li><strong>Logo</strong> hochladen (PNG, JPG, SVG, WebP) — wird in der ganzen App verwendet.</li>
-    <li><strong>Brand-Name</strong> ändern (z. B. „TBC", „B Mobile" o. Ä.).</li>
-  </ul>
-
-  <h3>Commitments</h3>
-  <ul>
-    <li>Monats-Ziele setzen pro User:
+  <div class="duo reverse" style="margin-top:60px">
+    <div class="duo-text">
+      <div class="badge" style="background:var(--orange-light);color:var(--orange)">24H-SLA</div>
+      <h2>Erstkontakt <span>innerhalb 24h</span>.</h2>
+      <p>Nach der Übergabe muss WhatsApp-Erstkontakt innerhalb 24 Stunden erfolgen. Das Banner im CS Member Overview wechselt seine Farbe je nach Restzeit.</p>
       <ul>
-        <li>Member-Ziel (Anzahl)</li>
-        <li>Umsatz-Ziel (€)</li>
-        <li>Design-Intake-Ziel (€)</li>
-        <li>Production-Intake-Ziel (€)</li>
+        <li>🟢 Frisch — alles im grünen Bereich</li>
+        <li>🟠 18h+ — Warnung erscheint</li>
+        <li>🔴 24h+ — Eskalation (Management sieht es)</li>
+        <li>✅ WhatsApp-Häkchen stoppt den Timer</li>
       </ul>
-    </li>
-    <li>Diese Ziele steuern die Fortschrittsbalken auf dem Dashboard.</li>
-  </ul>
-</section>
-
-<!-- ── 19 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k19">
-  <h2><span class="num">19</span>Profil</h2>
-  <p>Klick oben rechts auf deinen Avatar → Profil.</p>
-  <ul>
-    <li><strong>Avatar</strong> hochladen (Bild) — wird in der App und in HubSpot-Owner-Anzeigen verwendet.</li>
-    <li><strong>Passwort ändern</strong>.</li>
-    <li><strong>Instagram-Session-ID</strong> hinterlegen — nötig für das Insta-Leads-Tool, damit du Instagram-Profile abrufen kannst.</li>
-    <li><strong>Profil-Daten</strong>: Name, Position, Telefon.</li>
-  </ul>
-  <div class="callout callout--warn">
-    <strong>Instagram-Session-ID:</strong> Diese ID bekommst du aus deinem eingeloggten Instagram-Browser-Cookie (<code>sessionid</code>). Anleitung im Wiki.
+    </div>
+    <div class="duo-mock">
+      <div class="mock-window">
+        <div class="mock-window-header">👥 CS Member Overview · Döner Brothers</div>
+        <div class="mock-window-body">
+          <!-- SLA banner -->
+          <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+            <div style="font-size:22px">⏰</div>
+            <div style="flex:1">
+              <div style="font-weight:700;color:#92400E;font-size:13px">SLA-Warnung: Erstkontakt in <strong>5h 23min</strong></div>
+              <div style="font-size:11px;color:#92400E;opacity:0.85">WhatsApp-Kontakt mit Kunde noch offen</div>
+            </div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px">CHECKLISTE — ÜBERGABE</div>
+          <div style="font-size:13px">
+            <div style="padding:6px 0;display:flex;align-items:center;gap:8px"><span style="color:var(--accent);font-weight:800">✓</span> Member-Dokumente geprüft</div>
+            <div style="padding:6px 0;display:flex;align-items:center;gap:8px"><span style="color:var(--accent);font-weight:800">✓</span> NB-Onboarding abgehakt</div>
+            <div style="padding:6px 0;display:flex;align-items:center;gap:8px;color:var(--red);font-weight:600"><span style="width:14px;height:14px;border:2px solid var(--red);border-radius:3px;display:inline-block"></span> WhatsApp kontaktiert <span style="margin-left:auto;font-size:11px">⚠ überfällig</span></div>
+            <div style="padding:6px 0;display:flex;align-items:center;gap:8px;color:var(--text-light)"><span style="width:14px;height:14px;border:2px solid var(--border);border-radius:3px;display:inline-block"></span> Design-Briefing versandt</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ── 20 ─────────────────────────────────────────────── -->
-<section class="chapter" id="k20">
-  <h2><span class="num">20</span>Tipps für die tägliche Nutzung</h2>
-  <ol>
-    <li><strong>Notification-Kachel täglich prüfen.</strong> Wenn ❗ angezeigt wird, ist etwas Neues für dich da.</li>
-    <li><strong>Fälligkeiten pflegen.</strong> Aufgaben ohne due_date verschwinden im Strom. Mit Datum bekommst du Überfällig-Markierung &amp; Sortierung.</li>
-    <li><strong>HubSpot-Lead: immer erst URL prüfen.</strong> Spart Duplikate &amp; macht den Owner-Reassign-Flow möglich.</li>
-    <li><strong>CS: WhatsApp-Erstkontakt innerhalb 24h.</strong> Sonst eskaliert das SLA-Banner und Management sieht es.</li>
-    <li><strong>Logout am Schichtende.</strong> Token läuft eh nach 8h ab, aber Logout ist saubere Praxis.</li>
-    <li><strong>Sourcing-Anfragen über das Tool, nicht direkt per Mail.</strong> So bleibt alles nachvollziehbar.</li>
-    <li><strong>Feedback geben.</strong> Ehrlich. Das Tool entwickelt sich mit eurem Input.</li>
-  </ol>
+<!-- ─── Aufgaben & Sourcing ─── -->
+<section class="scope reveal" id="aufgaben" style="background:linear-gradient(180deg, #fff 0%, var(--bg-soft) 100%); max-width:none; padding-left:0; padding-right:0">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px">
+    <div class="section-eyebrow">AUFGABEN &amp; SOURCING</div>
+    <h2 class="section-title">Nichts mehr <span>vergessen</span>.</h2>
+    <p class="section-sub">Klare Listen, Live-Countdown bei Fälligkeit, automatische Markierung bei Überfälligkeit. Sourcing-Anfragen mit einem Klick kopiert.</p>
 
-  <hr>
-  <div class="callout">
-    <strong>Hilfe nötig?</strong> Wende dich an Admin (Ramon) — oder nutze das Feedback-Tool für Verbesserungswünsche.
+    <div class="duo">
+      <div class="duo-text">
+        <div class="badge">FEATURES</div>
+        <h2>Tasks, die <span>mitdenken</span>.</h2>
+        <ul>
+          <li><strong>Live-Countdown</strong> wenn Fälligkeit gesetzt ist</li>
+          <li><strong>Automatische Checklisten</strong> bei CS-Übergaben</li>
+          <li><strong>Priorität</strong> in 3 Stufen (High, Med, Low)</li>
+          <li><strong>Erledigt-Button</strong> setzt status=done mit einem Klick</li>
+          <li><strong>Sourcing-Tasks</strong> haben eingebauten Copy-Button für die Anfrage-Tabelle</li>
+          <li><strong>Überfällig</strong> = rote Markierung + Sortierung nach oben</li>
+        </ul>
+      </div>
+      <div class="duo-mock">
+        <div class="mock-task-list">
+          <div class="mock-task-item overdue">
+            <div style="flex:1">
+              <div class="mock-task-title">Übergabe Döner Brothers an CS</div>
+              <div class="mock-task-meta">Onboarding · <span style="color:var(--red);font-weight:700">⚠ Überfällig seit 11.05.</span></div>
+            </div>
+            <span class="mock-task-priority">High</span>
+            <span style="color:var(--text-light)">→</span>
+          </div>
+          <div class="mock-task-item">
+            <div style="flex:1">
+              <div class="mock-task-title">Sourcing-Anfrage Q3 — Caps schwarz</div>
+              <div class="mock-task-meta">Sourcing · <span style="color:var(--orange);font-weight:700">⏰ Heute fällig</span></div>
+            </div>
+            <span class="mock-task-priority med">Med</span>
+            <span style="color:var(--text-light)">→</span>
+          </div>
+          <div class="mock-task-item">
+            <div style="flex:1">
+              <div class="mock-task-title">Design-Briefing erstellen Bäckerei Schmidt</div>
+              <div class="mock-task-meta">Design · Fällig: 14.05.</div>
+            </div>
+            <span class="mock-task-priority low">Low</span>
+            <span style="color:var(--text-light)">→</span>
+          </div>
+          <div class="mock-task-item">
+            <div style="flex:1">
+              <div class="mock-task-title">Callliste Henry für KW20</div>
+              <div class="mock-task-meta">Sales · Fällig: 16.05.</div>
+            </div>
+            <span class="mock-task-priority med">Med</span>
+            <span style="color:var(--text-light)">→</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<footer>
-  TBC WORLDWIDE — Internes Benutzerhandbuch · Stand Mai 2026 · Nicht zur externen Weitergabe.
+<!-- ─── Rollen ─── -->
+<section class="scope reveal" id="rollen">
+  <div class="section-eyebrow">ROLLEN &amp; SICHTBARKEIT</div>
+  <h2 class="section-title">Jeder sieht, <span>was er braucht</span>.</h2>
+  <p class="section-sub">5 klar definierte Rollen. Die App passt sich dir an — nicht umgekehrt.</p>
+
+  <div class="role-grid-fancy">
+    <div class="role-tile">
+      <div class="role-emoji">👑</div>
+      <div class="role-name">Admin</div>
+      <div class="role-desc">Vollzugriff. Admin-Panel, Mitarbeiter, Logo, Commitments, alle Daten.</div>
+    </div>
+    <div class="role-tile">
+      <div class="role-emoji">📊</div>
+      <div class="role-name">Management</div>
+      <div class="role-desc">Statistik, Commitments, Ankündigungen, Mitarbeiter-Verwaltung.</div>
+    </div>
+    <div class="role-tile">
+      <div class="role-emoji">🎯</div>
+      <div class="role-name">New Business</div>
+      <div class="role-desc">Leads erfassen (Insta + HubSpot), Member anlegen, Sourcing.</div>
+    </div>
+    <div class="role-tile">
+      <div class="role-emoji">🔄</div>
+      <div class="role-name">Customer Success</div>
+      <div class="role-desc">Member-Übernahme, Phasen, SLA, CS-Member-Overview.</div>
+    </div>
+    <div class="role-tile">
+      <div class="role-emoji">🤝</div>
+      <div class="role-name">SellSupport</div>
+      <div class="role-desc">Unterstützung für NB/CS, eingeschränkter Edit-Zugriff.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Tipps ─── -->
+<section class="scope reveal" id="tipps">
+  <div class="section-eyebrow">TIPPS FÜR DEN ALLTAG</div>
+  <h2 class="section-title">Mit diesen <span>kleinen Gewohnheiten</span> bist du sofort produktiv.</h2>
+  <p class="section-sub">Lies das einmal, dann läuft alles auf Autopilot.</p>
+
+  <div class="tip-grid">
+    <div class="tip-card success">
+      <h4>✅ Notification-Kachel täglich prüfen</h4>
+      <p>Wenn ❗+N angezeigt wird, ist etwas Neues für dich da. Klick öffnet Popup mit allen ungelesenen Items.</p>
+    </div>
+    <div class="tip-card">
+      <h4>📅 Fälligkeiten setzen</h4>
+      <p>Aufgaben ohne Fälligkeit verschwinden im Strom. Mit Datum bekommst du Markierung &amp; Sortierung.</p>
+    </div>
+    <div class="tip-card">
+      <h4>🔍 HubSpot-Lead: erst prüfen</h4>
+      <p>Immer URL eingeben → Prüfen. Spart Duplikate und macht den Owner-Reassign-Flow möglich.</p>
+    </div>
+    <div class="tip-card warn">
+      <h4>⏰ CS: 24h WhatsApp-Kontakt</h4>
+      <p>Sonst eskaliert das SLA-Banner. Häkchen in der Checkliste stoppt den Timer.</p>
+    </div>
+    <div class="tip-card">
+      <h4>📋 Sourcing via Tool, nicht Mail</h4>
+      <p>So bleibt alles nachvollziehbar. Copy-Button erzeugt die Tabelle für E-Mail/Chat.</p>
+    </div>
+    <div class="tip-card">
+      <h4>🚪 Logout am Schichtende</h4>
+      <p>Token läuft eh nach 8h ab. Saubere Praxis: am Feierabend ausloggen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Footer ─── -->
+<footer class="foot">
+  <div class="foot-inner">
+    <div>
+      <div class="foot-brand">TBC WORLDWIDE</div>
+      <div class="foot-tag">
+        Die interne Mitarbeiter-App von The Branding Club.
+        Sales, Customer Success, Aufgaben &amp; Wissen — alles an einem Ort.
+      </div>
+    </div>
+    <div>
+      <h4>Funktionen</h4>
+      <ul>
+        <li>Insta-Leads</li>
+        <li>HubSpot-Lead</li>
+        <li>CS-Workflow</li>
+        <li>Sourcing-Anfrage</li>
+        <li>Callliste</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Hilfe</h4>
+      <ul>
+        <li>Wiki (in der App)</li>
+        <li>Feedback-Tool</li>
+        <li>Ramon (Admin)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    Stand Mai 2026 · Internes Mitarbeiter-Briefing · Nicht zur externen Weitergabe.
+  </div>
 </footer>
+
+<script>
+  // Reveal on scroll
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
 
 </body>
 </html>
