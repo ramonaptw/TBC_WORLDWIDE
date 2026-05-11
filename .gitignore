@@ -2,3 +2,6 @@ node_modules/
 backend/tbc.db
 backend/tbc-data.json
 .env
+
+# Standalone-Benutzerhandbuch (nicht Teil der App)
+TBC_App_Handbuch.html
