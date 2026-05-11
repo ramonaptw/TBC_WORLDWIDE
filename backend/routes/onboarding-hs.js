@@ -188,18 +188,20 @@ router.post('/', authenticate, async (req, res) => {
 
     // ── CREATE LEAD (Contact + Company + Deal) ──
     if (action === 'createLead') {
-      const { firma, url, contactName, email, phone, pipeline, notes } = payload;
+      const { firma, url, contactName, email, phone, pipeline, ownerId, notes } = payload;
       if (!firma || !contactName) return res.status(400).json({ error: 'Firma und Kontaktperson erforderlich' });
+      if (!ownerId) return res.status(400).json({ error: 'Salesperson erforderlich' });
+      const ownerStr = String(ownerId);
 
       // 1. Create Company
-      const companyProps = { name: firma };
+      const companyProps = { name: firma, hubspot_owner_id: ownerStr };
       if (url) companyProps.website = url;
       const company = await hs('POST', '/crm/v3/objects/companies', { properties: companyProps });
       const companyId = company.id;
 
       // 2. Create Contact
       const [firstName, ...lastParts] = contactName.trim().split(' ');
-      const contactProps = { firstname: firstName, lastname: lastParts.join(' ') || '' };
+      const contactProps = { firstname: firstName, lastname: lastParts.join(' ') || '', hubspot_owner_id: ownerStr };
       if (email) contactProps.email = email;
       if (phone) contactProps.phone = phone;
       const contact = await hs('POST', '/crm/v3/objects/contacts', { properties: contactProps });
@@ -211,7 +213,7 @@ router.post('/', authenticate, async (req, res) => {
       // 4. Create Deal in Qualification stage
       const QUAL_STAGES = { '1073833178': '1487657147', '250370754': '418155464' };
       const dealStage = QUAL_STAGES[pipeline] || '1487657147';
-      const dealProps = { dealname: firma, pipeline, dealstage: dealStage };
+      const dealProps = { dealname: firma, pipeline, dealstage: dealStage, hubspot_owner_id: ownerStr };
       if (notes) dealProps.description = notes;
       const deal = await hs('POST', '/crm/v3/objects/deals', { properties: dealProps });
       const dealId = deal.id;

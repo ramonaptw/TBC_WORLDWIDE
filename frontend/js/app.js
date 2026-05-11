@@ -2422,13 +2422,21 @@ function openHsLeadModal() {
   document.getElementById('hlStatus').innerHTML = '';
   const submitBtn = document.getElementById('hlSubmitBtn');
   if (submitBtn) { submitBtn.disabled = false; submitBtn.style.display = ''; }
+  const ownerSel = document.getElementById('hlOwner');
+  if (ownerSel) {
+    ownerSel.innerHTML = '<option value="">– bitte wählen –</option>' +
+      CL_PERSONS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    ownerSel.value = '';
+  }
   openModal('modalHsLead');
 }
 
 async function submitHsLead() {
   const firma = document.getElementById('hlFirma').value.trim();
   const contactName = document.getElementById('hlName').value.trim();
+  const ownerId = document.getElementById('hlOwner').value;
   if (!firma || !contactName) return alert('Firmenname und Kontaktperson sind Pflichtfelder.');
+  if (!ownerId) return alert('Bitte Salesperson auswählen.');
 
   const statusEl = document.getElementById('hlStatus');
   const submitBtn = document.getElementById('hlSubmitBtn');
@@ -2444,6 +2452,7 @@ async function submitHsLead() {
       email: document.getElementById('hlEmail').value.trim(),
       phone: document.getElementById('hlPhone').value.trim(),
       pipeline: document.getElementById('hlPipeline').value,
+      ownerId,
       notes: document.getElementById('hlNotes').value.trim(),
     });
     const dealUrl = r?.dealId ? `https://app.hubspot.com/contacts/143445032/record/0-3/${r.dealId}` : null;
