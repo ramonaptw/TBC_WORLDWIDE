@@ -186,16 +186,43 @@ router.post('/', authenticate, async (req, res) => {
       return res.json({ deals, companyId, companyName });
     }
 
+    // ── CHECK LEAD URL (duplicate detection) ──
+    if (action === 'checkLeadUrl') {
+      const { url } = payload;
+      if (!url) return res.status(400).json({ error: 'URL erforderlich' });
+      const domain = String(url).trim().replace(/^https?:\/\/(www\.)?/i, '').split('/')[0].toLowerCase();
+      if (!domain) return res.json({ matches: [] });
+      const searchBody = {
+        filterGroups: [
+          { filters: [{ propertyName: 'domain',  operator: 'CONTAINS_TOKEN', value: domain }] },
+          { filters: [{ propertyName: 'website', operator: 'CONTAINS_TOKEN', value: domain }] },
+        ],
+        properties: ['name', 'website', 'domain', 'hubspot_owner_id'],
+        limit: 5,
+      };
+      const r = await hs('POST', '/crm/v3/objects/companies/search', searchBody);
+      const matches = (r.results || []).map(c => ({
+        id: c.id,
+        name: c.properties.name || '(ohne Name)',
+        website: c.properties.website || null,
+        domain: c.properties.domain || null,
+        ownerId: c.properties.hubspot_owner_id || null,
+      }));
+      return res.json({ matches });
+    }
+
     // ── CREATE LEAD (Contact + Company + Deal) ──
     if (action === 'createLead') {
       const { firma, url, contactName, email, phone, pipeline, ownerId, notes } = payload;
       if (!firma || !contactName) return res.status(400).json({ error: 'Firma und Kontaktperson erforderlich' });
+      if (!url) return res.status(400).json({ error: 'URL erforderlich' });
       if (!ownerId) return res.status(400).json({ error: 'Salesperson erforderlich' });
       const ownerStr = String(ownerId);
 
       // 1. Create Company
-      const companyProps = { name: firma, hubspot_owner_id: ownerStr };
-      if (url) companyProps.website = url;
+      const companyProps = { name: firma, website: url, hubspot_owner_id: ownerStr };
+      const domainExtracted = String(url).trim().replace(/^https?:\/\/(www\.)?/i, '').split('/')[0].toLowerCase();
+      if (domainExtracted) companyProps.domain = domainExtracted;
       const company = await hs('POST', '/crm/v3/objects/companies', { properties: companyProps });
       const companyId = company.id;
 

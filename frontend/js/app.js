@@ -2438,26 +2438,64 @@ function openHsLeadModal() {
 
 async function submitHsLead() {
   const firma = document.getElementById('hlFirma').value.trim();
+  const url = document.getElementById('hlUrl').value.trim();
   const contactName = document.getElementById('hlName').value.trim();
   const ownerId = document.getElementById('hlOwner').value;
   if (!firma || !contactName) return alert('Firmenname und Kontaktperson sind Pflichtfelder.');
+  if (!url) return alert('Website / URL ist Pflichtfeld.');
   if (!ownerId) return alert('Bitte Salesperson auswählen.');
 
   const statusEl = document.getElementById('hlStatus');
   const submitBtn = document.getElementById('hlSubmitBtn');
-  statusEl.innerHTML = '<span style="color:var(--text-secondary)">⏳ Wird in HubSpot angelegt…</span>';
+  statusEl.innerHTML = '<span style="color:var(--text-secondary)">⏳ Prüfe URL in HubSpot…</span>';
   if (submitBtn) submitBtn.disabled = true;
 
+  try {
+    const check = await api.post('/onboarding-hs', { action: 'checkLeadUrl', url });
+    if (check?.matches?.length) {
+      const portalId = '143445032';
+      const rows = check.matches.map(m => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#fff;border:1px solid #FECACA;border-radius:6px">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.name}</div>
+            <div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.website || m.domain || ''}</div>
+          </div>
+          <a href="https://app.hubspot.com/contacts/${portalId}/record/0-2/${m.id}" target="_blank" rel="noopener" class="btn btn-sm btn-secondary" style="font-size:11px;padding:5px 10px">Öffnen ↗</a>
+        </div>`).join('');
+      statusEl.innerHTML = `
+        <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+          <div style="color:#B91C1C;font-weight:700;font-size:14px">⚠ Diese URL ist bereits in HubSpot vorhanden</div>
+          <div style="display:flex;flex-direction:column;gap:6px">${rows}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="_createHsLeadConfirmed()">Trotzdem anlegen</button>
+            <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="document.getElementById('hlStatus').innerHTML='';document.getElementById('hlSubmitBtn').disabled=false">Abbrechen</button>
+          </div>
+        </div>`;
+      return;
+    }
+    await _createHsLeadConfirmed();
+  } catch (e) {
+    statusEl.innerHTML = `<span style="color:var(--danger)">❌ Fehler: ${e.message || 'Unbekannter Fehler'}</span>`;
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+async function _createHsLeadConfirmed() {
+  const firma = document.getElementById('hlFirma').value.trim();
+  const statusEl = document.getElementById('hlStatus');
+  const submitBtn = document.getElementById('hlSubmitBtn');
+  statusEl.innerHTML = '<span style="color:var(--text-secondary)">⏳ Wird in HubSpot angelegt…</span>';
+  if (submitBtn) submitBtn.disabled = true;
   try {
     const r = await api.post('/onboarding-hs', {
       action: 'createLead',
       firma,
       url: document.getElementById('hlUrl').value.trim(),
-      contactName,
+      contactName: document.getElementById('hlName').value.trim(),
       email: document.getElementById('hlEmail').value.trim(),
       phone: document.getElementById('hlPhone').value.trim(),
       pipeline: document.getElementById('hlPipeline').value,
-      ownerId,
+      ownerId: document.getElementById('hlOwner').value,
       notes: document.getElementById('hlNotes').value.trim(),
     });
     const dealUrl = r?.dealId ? `https://app.hubspot.com/contacts/143445032/record/0-3/${r.dealId}` : null;
