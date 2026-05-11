@@ -289,13 +289,11 @@ async function loadDashboard() {
   const unreadNewsCount = unreadNewsList(news).length;
   const totalUnread = unreadTaskCount + unreadNewsCount;
   const notifyTile = `
-      <div class="dash-kpi${totalUnread > 0 ? ' dash-kpi--warn' : ' dash-kpi--ok'}" onclick="openDashNotifyPopup()" style="cursor:pointer;position:relative">
-        <div class="dash-kpi-label">Neue Nachrichten</div>
-        <div class="dash-kpi-value" style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:28px;line-height:1">${totalUnread > 0 ? '❗' : '✓'}</span>
-          ${totalUnread > 0 ? `<span style="background:var(--danger);color:#fff;padding:2px 9px;border-radius:99px;font-size:13px;font-weight:800">+${totalUnread}</span>` : ''}
-        </div>
-        <div class="dash-kpi-sub">${totalUnread === 0 ? 'Alles gelesen' : `${unreadTaskCount} Aufgabe${unreadTaskCount === 1 ? '' : 'n'} · ${unreadNewsCount} Ankündigung${unreadNewsCount === 1 ? '' : 'en'}`}</div>
+      <div class="dash-kpi dash-kpi--compact${totalUnread > 0 ? ' dash-kpi--warn' : ' dash-kpi--ok'}"
+           onclick="openDashNotifyPopup()"
+           style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 18px">
+        <span style="font-size:26px;line-height:1">${totalUnread > 0 ? '❗' : '✓'}</span>
+        ${totalUnread > 0 ? `<span style="background:var(--danger);color:#fff;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:800">+${totalUnread}</span>` : ''}
       </div>`;
 
   if (hasSales) {
@@ -319,6 +317,7 @@ async function loadDashboard() {
         ${targetUmsatz ? `<div class="dash-kpi-bar"><div class="dash-kpi-bar-fill ${barClass(umsatzPct)}" style="width:${umsatzPct}%"></div></div><div class="dash-kpi-sub">${umsatzPct}% von €${targetUmsatz.toLocaleString('de-DE')}</div>` : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>
       ${notifyTile}`;
+    kpiEl.style.gridTemplateColumns = '1fr 1fr auto';
   } else if (hasIntakeCommit) {
     // Customer Success KPIs: € sum of revenue of kunden that entered design/production this month
     const fmtEur = n => '€' + Number(n).toLocaleString('de-DE');
@@ -342,6 +341,7 @@ async function loadDashboard() {
       </div>`;
     };
     kpiEl.innerHTML = moneyTile('Design Intake', designEur, targetDI) + moneyTile('Production Intake', productionEur, targetPI) + notifyTile;
+    kpiEl.style.gridTemplateColumns = '1fr 1fr auto';
   } else if (hasTasks) {
     kpiEl.innerHTML = `
       <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
@@ -349,6 +349,7 @@ async function loadDashboard() {
         <div class="dash-kpi-value">${myOpenTasks}</div>
         <div class="dash-kpi-sub">${overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${overdueTasks} überfällig</span>` : myOpenTasks === 0 ? '✓ alle erledigt' : 'offen'}</div>
       </div>`;
+    kpiEl.style.gridTemplateColumns = '';
   } else {
     kpiEl.style.display = 'none';
   }
@@ -2418,7 +2419,9 @@ function exportUsersCSV() {
 // ── HUBSPOT LEAD MODAL ──
 function openHsLeadModal() {
   ['hlFirma','hlUrl','hlName','hlEmail','hlPhone','hlNotes'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('hlStatus').textContent = '';
+  document.getElementById('hlStatus').innerHTML = '';
+  const submitBtn = document.getElementById('hlSubmitBtn');
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.style.display = ''; }
   openModal('modalHsLead');
 }
 
@@ -2428,10 +2431,12 @@ async function submitHsLead() {
   if (!firma || !contactName) return alert('Firmenname und Kontaktperson sind Pflichtfelder.');
 
   const statusEl = document.getElementById('hlStatus');
-  statusEl.textContent = '⏳ Wird in HubSpot angelegt…';
+  const submitBtn = document.getElementById('hlSubmitBtn');
+  statusEl.innerHTML = '<span style="color:var(--text-secondary)">⏳ Wird in HubSpot angelegt…</span>';
+  if (submitBtn) submitBtn.disabled = true;
 
   try {
-    await api.post('/onboarding-hs', {
+    const r = await api.post('/onboarding-hs', {
       action: 'createLead',
       firma,
       url: document.getElementById('hlUrl').value.trim(),
@@ -2441,12 +2446,29 @@ async function submitHsLead() {
       pipeline: document.getElementById('hlPipeline').value,
       notes: document.getElementById('hlNotes').value.trim(),
     });
-    statusEl.textContent = '';
-    closeModal('modalHsLead');
-    alert(`✅ Lead "${firma}" wurde in HubSpot angelegt (Firma, Kontakt & Deal erstellt).`);
+    const dealUrl = r?.dealId ? `https://app.hubspot.com/contacts/143445032/record/0-3/${r.dealId}` : null;
+    statusEl.innerHTML = `
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+        <div style="color:#15803D;font-weight:700;font-size:14px">✅ Deal „${firma}" in HubSpot angelegt</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${dealUrl ? `<a href="${dealUrl}" target="_blank" rel="noopener" class="btn btn-sm btn-primary" style="font-size:12px;padding:7px 14px">In HubSpot öffnen ↗</a>` : ''}
+          <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="resetHsLeadForm()">Weiteren Lead anlegen</button>
+          <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="closeModal('modalHsLead')">Schließen</button>
+        </div>
+      </div>`;
+    if (submitBtn) submitBtn.style.display = 'none';
   } catch (e) {
-    statusEl.textContent = '❌ Fehler: ' + (e.message || 'Unbekannter Fehler');
+    statusEl.innerHTML = `<span style="color:var(--danger)">❌ Fehler: ${e.message || 'Unbekannter Fehler'}</span>`;
+    if (submitBtn) submitBtn.disabled = false;
   }
+}
+
+function resetHsLeadForm() {
+  ['hlFirma','hlUrl','hlName','hlEmail','hlPhone','hlNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('hlStatus').innerHTML = '';
+  const submitBtn = document.getElementById('hlSubmitBtn');
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.style.display = ''; }
+  document.getElementById('hlFirma').focus();
 }
 
 // ── FEEDBACK PAGE ──
