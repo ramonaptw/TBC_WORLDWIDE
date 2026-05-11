@@ -2453,30 +2453,152 @@ async function submitHsLead() {
   try {
     const check = await api.post('/onboarding-hs', { action: 'checkLeadUrl', url });
     if (check?.matches?.length) {
-      const portalId = '143445032';
-      const rows = check.matches.map(m => `
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#fff;border:1px solid #FECACA;border-radius:6px">
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.name}</div>
-            <div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.website || m.domain || ''}</div>
-          </div>
-          <a href="https://app.hubspot.com/contacts/${portalId}/record/0-2/${m.id}" target="_blank" rel="noopener" class="btn btn-sm btn-secondary" style="font-size:11px;padding:5px 10px">Öffnen ↗</a>
-        </div>`).join('');
-      statusEl.innerHTML = `
-        <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
-          <div style="color:#B91C1C;font-weight:700;font-size:14px">⚠ Diese URL ist bereits in HubSpot vorhanden</div>
-          <div style="display:flex;flex-direction:column;gap:6px">${rows}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="_createHsLeadConfirmed()">Trotzdem anlegen</button>
-            <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="document.getElementById('hlStatus').innerHTML='';document.getElementById('hlSubmitBtn').disabled=false">Abbrechen</button>
-          </div>
-        </div>`;
+      await _showHsLeadDuplicateUI(check.matches);
       return;
     }
     await _createHsLeadConfirmed();
   } catch (e) {
     statusEl.innerHTML = `<span style="color:var(--danger)">❌ Fehler: ${e.message || 'Unbekannter Fehler'}</span>`;
     if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+async function _showHsLeadDuplicateUI(matches) {
+  const statusEl = document.getElementById('hlStatus');
+  const portalId = '143445032';
+  const others = matches.slice(1);
+  const otherRows = others.map(m => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.name}</div>
+        <div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.website || m.domain || ''}</div>
+      </div>
+      <a href="https://app.hubspot.com/contacts/${portalId}/record/0-2/${m.id}" target="_blank" rel="noopener" class="btn btn-sm btn-secondary" style="font-size:11px;padding:5px 10px">Öffnen ↗</a>
+    </div>`).join('');
+  statusEl.innerHTML = `
+    <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:12px">
+      <div style="color:#B91C1C;font-weight:700;font-size:14px">⚠ Diese URL ist bereits in HubSpot vorhanden</div>
+      <div id="hsLeadMatchCard"><div style="color:var(--text-secondary);font-size:13px">⏳ Lade Details…</div></div>
+      ${others.length ? `<div style="display:flex;flex-direction:column;gap:6px"><div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:.05em">Weitere Treffer</div>${otherRows}</div>` : ''}
+    </div>`;
+  await _refreshHsLeadMatchCard(matches[0].id);
+}
+
+async function _refreshHsLeadMatchCard(companyId) {
+  const cardEl = document.getElementById('hsLeadMatchCard');
+  if (!cardEl) return;
+  cardEl.innerHTML = '<div style="color:var(--text-secondary);font-size:13px">⏳ Lade Details…</div>';
+  try {
+    const detail = await api.post('/onboarding-hs', { action: 'getCompanyDetail', companyId });
+    cardEl.innerHTML = _renderHsLeadMatchCard(detail);
+  } catch (e) {
+    cardEl.innerHTML = `<div style="color:var(--danger);font-size:13px">❌ Detail konnte nicht geladen werden: ${e.message || 'Fehler'}</div>`;
+  }
+}
+
+function _renderHsLeadMatchCard(detail) {
+  const portalId = '143445032';
+  const company = detail.company || {};
+  const deals = detail.deals || [];
+  const contacts = detail.contacts || [];
+  const selectedOwnerId = document.getElementById('hlOwner').value;
+  const selectedName = HS_LEAD_PERSONS.find(p => p.id === selectedOwnerId)?.name
+                    || CL_PERSONS.find(p => p.id === selectedOwnerId)?.name
+                    || '–';
+  const contactNameInput = document.getElementById('hlName').value.trim();
+
+  const dealRows = deals.length
+    ? deals.map(d => `
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border-light)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.name}</div>
+            <div style="font-size:11px;color:var(--text-secondary)">${d.stage || ''}${d.pipeline ? ' · ' + d.pipeline : ''}</div>
+          </div>
+          <div style="font-size:12px">${ownerLabel(d.ownerId)}</div>
+          <a href="https://app.hubspot.com/contacts/${portalId}/record/0-3/${d.id}" target="_blank" rel="noopener" style="font-size:11px;color:var(--primary);text-decoration:none">↗</a>
+        </div>`).join('')
+    : `<div style="font-size:12px;color:var(--text-secondary);padding:6px 0">Kein Deal hinterlegt – Company-Owner: ${ownerLabel(company.ownerId)}</div>`;
+
+  const contactRows = contacts.length
+    ? contacts.map(c => {
+        const name = (c.firstname + ' ' + c.lastname).trim() || '(ohne Name)';
+        const sub = [c.email, c.phone].filter(Boolean).join(' · ');
+        return `<div style="font-size:12px;padding:4px 0">👤 <strong>${name}</strong>${sub ? ` <span style="color:var(--text-secondary)">– ${sub}</span>` : ''}</div>`;
+      }).join('')
+    : `<div style="font-size:12px;color:#B91C1C;padding:4px 0;font-weight:600">⚠ Kein Kontakt hinterlegt</div>`;
+
+  const ownersInDeals = deals.map(d => d.ownerId).filter(Boolean);
+  const allOwnersMatchSelected = ownersInDeals.length
+    ? ownersInDeals.every(o => String(o) === String(selectedOwnerId))
+    : String(company.ownerId || '') === String(selectedOwnerId);
+  const showReassign = selectedOwnerId && !allOwnersMatchSelected;
+  const canAddContact = !!contactNameInput;
+
+  return `
+    <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${company.name}</div>
+          <div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${company.website || company.domain || ''}</div>
+        </div>
+        <a href="https://app.hubspot.com/contacts/${portalId}/record/0-2/${company.id}" target="_blank" rel="noopener" class="btn btn-sm btn-secondary" style="font-size:11px;padding:5px 10px">In HubSpot öffnen ↗</a>
+      </div>
+
+      <div>
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Deals (${deals.length})</div>
+        ${dealRows}
+      </div>
+
+      <div>
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Kontakte (${contacts.length})</div>
+        ${contactRows}
+      </div>
+
+      <div id="hsLeadActionStatus" style="font-size:12px;min-height:0"></div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${showReassign ? `<button class="btn btn-sm btn-primary" style="font-size:12px;padding:7px 14px" onclick="_hsLeadReassignOwner('${company.id}')">Owner auf ${selectedName} umschreiben</button>` : ''}
+        <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="_hsLeadAddContact('${company.id}')" ${canAddContact ? '' : 'disabled title="Bitte Kontaktperson im Formular eintragen"'}>${canAddContact ? `Kontakt „${contactNameInput}" hinzufügen` : 'Kontakt hinzufügen (Name fehlt)'}</button>
+        <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="_createHsLeadConfirmed()">Trotzdem neu anlegen</button>
+        <button class="btn btn-sm btn-secondary" style="font-size:12px;padding:7px 14px" onclick="document.getElementById('hlStatus').innerHTML='';document.getElementById('hlSubmitBtn').disabled=false">Abbrechen</button>
+      </div>
+    </div>`;
+}
+
+async function _hsLeadReassignOwner(companyId) {
+  const ownerId = document.getElementById('hlOwner').value;
+  if (!ownerId) return;
+  const st = document.getElementById('hsLeadActionStatus');
+  if (st) st.innerHTML = '<span style="color:var(--text-secondary)">⏳ Owner wird umgeschrieben…</span>';
+  try {
+    const r = await api.post('/onboarding-hs', { action: 'reassignCompanyOwner', companyId, ownerId });
+    await _refreshHsLeadMatchCard(companyId);
+    const after = document.getElementById('hsLeadActionStatus');
+    if (after) after.innerHTML = `<span style="color:#15803D;font-weight:600">✅ Owner aktualisiert (Company + ${r?.dealsUpdated || 0} Deal${(r?.dealsUpdated || 0) === 1 ? '' : 's'})</span>`;
+  } catch (e) {
+    if (st) st.innerHTML = `<span style="color:var(--danger)">❌ ${e.message || 'Fehler'}</span>`;
+  }
+}
+
+async function _hsLeadAddContact(companyId) {
+  const contactName = document.getElementById('hlName').value.trim();
+  if (!contactName) return;
+  const st = document.getElementById('hsLeadActionStatus');
+  if (st) st.innerHTML = '<span style="color:var(--text-secondary)">⏳ Kontakt wird angelegt…</span>';
+  try {
+    await api.post('/onboarding-hs', {
+      action: 'addContactToCompany',
+      companyId,
+      contactName,
+      email: document.getElementById('hlEmail').value.trim(),
+      phone: document.getElementById('hlPhone').value.trim(),
+      ownerId: document.getElementById('hlOwner').value,
+    });
+    await _refreshHsLeadMatchCard(companyId);
+    const after = document.getElementById('hsLeadActionStatus');
+    if (after) after.innerHTML = `<span style="color:#15803D;font-weight:600">✅ Kontakt „${contactName}" hinzugefügt</span>`;
+  } catch (e) {
+    if (st) st.innerHTML = `<span style="color:var(--danger)">❌ ${e.message || 'Fehler'}</span>`;
   }
 }
 

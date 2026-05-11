@@ -186,6 +186,92 @@ router.post('/', authenticate, async (req, res) => {
       return res.json({ deals, companyId, companyName });
     }
 
+    // ── GET COMPANY DETAIL (company + deals + contacts) ──
+    if (action === 'getCompanyDetail') {
+      const { companyId } = payload;
+      if (!companyId) return res.status(400).json({ error: 'companyId fehlt' });
+      const c = await hs('GET', `/crm/v3/objects/companies/${companyId}?properties=name,website,domain,hubspot_owner_id`);
+      const company = {
+        id: c.id,
+        name: c.properties?.name || '(ohne Name)',
+        website: c.properties?.website || null,
+        domain: c.properties?.domain || null,
+        ownerId: c.properties?.hubspot_owner_id || null,
+      };
+      let deals = [];
+      try {
+        const assoc = await hs('GET', `/crm/v3/objects/companies/${companyId}/associations/deals`);
+        const dealIds = (assoc.results || []).map(r => r.id);
+        if (dealIds.length) {
+          const batchRes = await hs('POST', '/crm/v3/objects/deals/batch/read', {
+            inputs: dealIds.map(id => ({ id })),
+            properties: ['dealname', 'dealstage', 'pipeline', 'hubspot_owner_id'],
+          });
+          deals = (batchRes.results || []).map(d => ({
+            id: d.id,
+            name: d.properties?.dealname || '(kein Name)',
+            stage: STAGE_LABELS[d.properties?.dealstage] || d.properties?.dealstage || null,
+            pipeline: PIPELINE_LABELS[d.properties?.pipeline] || d.properties?.pipeline || null,
+            ownerId: d.properties?.hubspot_owner_id || null,
+          }));
+        }
+      } catch {}
+      let contacts = [];
+      try {
+        const assoc = await hs('GET', `/crm/v3/objects/companies/${companyId}/associations/contacts`);
+        const contactIds = (assoc.results || []).map(r => r.id);
+        if (contactIds.length) {
+          const batchRes = await hs('POST', '/crm/v3/objects/contacts/batch/read', {
+            inputs: contactIds.map(id => ({ id })),
+            properties: ['firstname', 'lastname', 'email', 'phone'],
+          });
+          contacts = (batchRes.results || []).map(p => ({
+            id: p.id,
+            firstname: p.properties?.firstname || '',
+            lastname: p.properties?.lastname || '',
+            email: p.properties?.email || null,
+            phone: p.properties?.phone || null,
+          }));
+        }
+      } catch {}
+      return res.json({ company, deals, contacts });
+    }
+
+    // ── REASSIGN COMPANY OWNER (company + all its deals) ──
+    if (action === 'reassignCompanyOwner') {
+      const { companyId, ownerId } = payload;
+      if (!companyId || !ownerId) return res.status(400).json({ error: 'companyId und ownerId erforderlich' });
+      const ownerStr = String(ownerId);
+      await hs('PATCH', `/crm/v3/objects/companies/${companyId}`, { properties: { hubspot_owner_id: ownerStr } });
+      let dealsUpdated = 0;
+      try {
+        const assoc = await hs('GET', `/crm/v3/objects/companies/${companyId}/associations/deals`);
+        const dealIds = (assoc.results || []).map(r => r.id);
+        for (const dealId of dealIds) {
+          try {
+            await hs('PATCH', `/crm/v3/objects/deals/${dealId}`, { properties: { hubspot_owner_id: ownerStr } });
+            dealsUpdated++;
+          } catch {}
+        }
+      } catch {}
+      return res.json({ ok: true, dealsUpdated });
+    }
+
+    // ── ADD CONTACT TO EXISTING COMPANY ──
+    if (action === 'addContactToCompany') {
+      const { companyId, contactName, email, phone, ownerId } = payload;
+      if (!companyId || !contactName) return res.status(400).json({ error: 'companyId und contactName erforderlich' });
+      const [firstName, ...lastParts] = contactName.trim().split(' ');
+      const contactProps = { firstname: firstName, lastname: lastParts.join(' ') || '' };
+      if (email) contactProps.email = email;
+      if (phone) contactProps.phone = phone;
+      if (ownerId) contactProps.hubspot_owner_id = String(ownerId);
+      const contact = await hs('POST', '/crm/v3/objects/contacts', { properties: contactProps });
+      const contactId = contact.id;
+      await hs('PUT', `/crm/v3/objects/contacts/${contactId}/associations/companies/${companyId}/contact_to_company`, null);
+      return res.json({ ok: true, contactId });
+    }
+
     // ── CHECK LEAD URL (duplicate detection) ──
     if (action === 'checkLeadUrl') {
       const { url } = payload;
