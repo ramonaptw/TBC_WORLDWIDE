@@ -284,6 +284,15 @@ async function loadDashboard() {
   const isMine = t => t.assigned_to === currentUser.id || (t.created_by === currentUser.id && !t.assigned_to);
   const overdueTasks = tasks.filter(t => isMine(t) && t.status !== 'done' && t.due_date && t.due_date < today).length;
   const myOpenTasks  = tasks.filter(t => isMine(t) && t.status !== 'done').length;
+  // Unread announcements (tracked client-side via localStorage)
+  const readNewsIds = getReadNewsIds();
+  const unreadNews  = news.filter(n => !readNewsIds.includes(n.id)).length;
+  const newsTile = `
+      <div class="dash-kpi${unreadNews > 0 ? ' dash-kpi--warn' : ' dash-kpi--ok'}" onclick="scrollToNews()" style="cursor:pointer">
+        <div class="dash-kpi-label">Ankündigungen</div>
+        <div class="dash-kpi-value">${unreadNews}</div>
+        <div class="dash-kpi-sub">${unreadNews === 0 ? '✓ alle gelesen' : unreadNews === 1 ? '1 ungelesen' : `${unreadNews} ungelesen`}</div>
+      </div>`;
 
   if (hasSales) {
     const kundenThisMonth = kunden.filter(k => k.abschlussdatum && k.abschlussdatum.startsWith(currentMonth));
@@ -305,11 +314,7 @@ async function loadDashboard() {
         <div class="dash-kpi-value dash-kpi-value--euro">€${actualUmsatz.toLocaleString('de-DE')}</div>
         ${targetUmsatz ? `<div class="dash-kpi-bar"><div class="dash-kpi-bar-fill ${barClass(umsatzPct)}" style="width:${umsatzPct}%"></div></div><div class="dash-kpi-sub">${umsatzPct}% von €${targetUmsatz.toLocaleString('de-DE')}</div>` : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>
-      <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
-        <div class="dash-kpi-label">Aufgaben</div>
-        <div class="dash-kpi-value">${myOpenTasks}</div>
-        <div class="dash-kpi-sub">${overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${overdueTasks} überfällig</span>` : myOpenTasks === 0 ? '✓ alle erledigt' : 'offen'}</div>
-      </div>`;
+      ${newsTile}`;
   } else if (hasIntakeCommit) {
     // Customer Success KPIs: € sum of revenue of kunden that entered design/production this month
     const fmtEur = n => '€' + Number(n).toLocaleString('de-DE');
@@ -332,12 +337,7 @@ async function loadDashboard() {
           : '<div class="dash-kpi-sub dash-kpi-sub--link" onclick="openCommitModal()">Ziel →</div>'}
       </div>`;
     };
-    kpiEl.innerHTML = moneyTile('Design Intake', designEur, targetDI) + moneyTile('Production Intake', productionEur, targetPI) + `
-      <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
-        <div class="dash-kpi-label">Aufgaben</div>
-        <div class="dash-kpi-value">${myOpenTasks}</div>
-        <div class="dash-kpi-sub">${overdueTasks > 0 ? `<span style="color:var(--danger);font-weight:700">⚠ ${overdueTasks} überfällig</span>` : myOpenTasks === 0 ? '✓ alle erledigt' : 'offen'}</div>
-      </div>`;
+    kpiEl.innerHTML = moneyTile('Design Intake', designEur, targetDI) + moneyTile('Production Intake', productionEur, targetPI) + newsTile;
   } else if (hasTasks) {
     kpiEl.innerHTML = `
       <div class="dash-kpi${overdueTasks > 0 ? ' dash-kpi--warn' : myOpenTasks === 0 ? ' dash-kpi--ok' : ''}">
@@ -575,10 +575,25 @@ function newsEditorInput() {
   ed.dataset.empty = ed.innerText.trim() === '';
 }
 
+function getReadNewsIds() {
+  try { return JSON.parse(localStorage.getItem('tbc_read_news') || '[]'); }
+  catch { return []; }
+}
+function markNewsRead(id) {
+  const set = new Set(getReadNewsIds());
+  set.add(id);
+  localStorage.setItem('tbc_read_news', JSON.stringify([...set]));
+}
+function scrollToNews() {
+  const card = document.querySelector('#dashNews')?.closest('.card');
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 async function openNewsRead(id) {
   const news = await api.get('/news');
   const n = news.find(x => x.id === id);
   if (!n) return;
+  markNewsRead(id);
   document.getElementById('newsReadTitle').textContent = n.title;
   document.getElementById('newsReadMeta').textContent = (n.author_name || '') + (n.author_name && n.created_at ? ' · ' : '') + formatRelative(n.created_at);
   // Render with sanitization. Backwards-compat: treat plain-text legacy entries as such.
@@ -595,6 +610,8 @@ async function openNewsRead(id) {
   if (canDelete) delBtn.onclick = () => deleteNews(n.id);
 
   openModal('modalNewsRead');
+  // Refresh dashboard KPI behind the modal so the unread-count updates immediately
+  if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
 }
 
 async function deleteNews(id) {
