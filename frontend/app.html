@@ -991,47 +991,63 @@
       <button class="modal-close" onclick="closeModal('modalHsLead')">✕</button>
     </div>
     <div class="modal-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group">
-          <label class="form-label">Firmenname *</label>
-          <input class="form-control" id="hlFirma" placeholder="z.B. Muster GmbH">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Website / URL *</label>
-          <input class="form-control" id="hlUrl" placeholder="https://...">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Kontaktperson *</label>
-          <input class="form-control" id="hlName" placeholder="Vorname Nachname">
-        </div>
-        <div class="form-group">
-          <label class="form-label">E-Mail</label>
-          <input class="form-control" id="hlEmail" type="email" placeholder="kontakt@firma.de">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Telefon</label>
-          <input class="form-control" id="hlPhone" placeholder="+49 ...">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Pipeline</label>
-          <select class="form-control" id="hlPipeline">
-            <option value="1073833178">DE Cold Sales</option>
-            <option value="250370754">NL Pipeline</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Salesperson *</label>
-          <select class="form-control" id="hlOwner">
-            <option value="">– bitte wählen –</option>
-          </select>
+      <!-- Step 1: URL eingeben + Prüfen -->
+      <div id="hsLeadUrlSection" class="form-group">
+        <label class="form-label">Website / URL *</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-control" id="hlUrl" placeholder="https://..." style="flex:1">
+          <button class="btn btn-primary" id="hlCheckBtn" onclick="hsLeadCheckUrl()" style="white-space:nowrap">Prüfen →</button>
         </div>
       </div>
-      <div class="form-group" style="margin-top:4px">
-        <label class="form-label">Notizen / Informationen</label>
-        <textarea class="form-control" id="hlNotes" style="min-height:80px" placeholder="Weitere Infos zum Lead…"></textarea>
+
+      <!-- Status / Duplikat-Detail-Karte / Erfolgsbox -->
+      <div id="hlStatus" style="font-size:13px;color:var(--text-secondary);margin:8px 0;min-height:0"></div>
+
+      <!-- Step 2 Shared: Felder für AddContact/Reassign UND als Teil der Neu-Anlage -->
+      <div id="hsLeadSharedFields" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Kontaktperson *</label>
+            <input class="form-control" id="hlName" placeholder="Vorname Nachname">
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-Mail</label>
+            <input class="form-control" id="hlEmail" type="email" placeholder="kontakt@firma.de">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefon</label>
+            <input class="form-control" id="hlPhone" placeholder="+49 ...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Salesperson *</label>
+            <select class="form-control" id="hlOwner">
+              <option value="">– bitte wählen –</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div id="hlStatus" style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;min-height:20px"></div>
-      <button class="btn btn-primary" id="hlSubmitBtn" style="width:100%" onclick="submitHsLead()">Lead in HubSpot anlegen →</button>
+
+      <!-- Step 2b: nur bei Neu-Anlage -->
+      <div id="hsLeadNewOnlyFields" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Firmenname *</label>
+            <input class="form-control" id="hlFirma" placeholder="z.B. Muster GmbH">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pipeline</label>
+            <select class="form-control" id="hlPipeline">
+              <option value="1073833178">DE Cold Sales</option>
+              <option value="250370754">NL Pipeline</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:4px">
+          <label class="form-label">Notizen / Informationen</label>
+          <textarea class="form-control" id="hlNotes" style="min-height:80px" placeholder="Weitere Infos zum Lead…"></textarea>
+        </div>
+        <button class="btn btn-primary" id="hlSubmitBtn" style="width:100%" onclick="_createHsLeadConfirmed()">Lead in HubSpot anlegen →</button>
+      </div>
     </div>
   </div>
 </div>
