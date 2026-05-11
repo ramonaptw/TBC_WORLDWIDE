@@ -182,7 +182,6 @@ function showPage(page, pushState = true) {
   }
   if (page === 'tasks') {
     addActionBtn(actions, '+ Aufgabe', () => openNewTaskModal());
-    addActionBtn(actions, '📦 Sourcing-Anfrage', () => openSourcingModal());
   }
 
   const loaders = {
