@@ -1148,8 +1148,10 @@ async function loadDatenbank() {
 
     let statusBadge;
     if (isUebergeben) {
+      // Hide the big "Übergeben an X" banner for the CS-user looking at their own assignment — it's redundant.
+      const showHandoverBadge = !(isCS && k.assigned_cs_user_id === currentUser.id);
       statusBadge = `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
-        <span style="font-size:11px;font-weight:700;color:var(--success);background:#F0FDF4;border:1px solid #22C55E;border-radius:99px;padding:2px 8px">📤 Übergeben an ${csLabel}</span>
+        ${showHandoverBadge ? `<span style="font-size:11px;font-weight:700;color:var(--success);background:#F0FDF4;border:1px solid #22C55E;border-radius:99px;padding:2px 8px">📤 Übergeben an ${csLabel}</span>` : ''}
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           ${phaseLabel ? `<span style="font-size:10px;font-weight:700;color:#6D28D9;background:#F3E8FF;border:1px solid #DDD6FE;border-radius:6px;padding:2px 7px">Phase: ${phaseLabel}</span>` : ''}
           ${serviceChip}
@@ -1167,13 +1169,6 @@ async function loadDatenbank() {
       statusBadge = `<span style="font-size:10px;font-weight:700;color:var(--text-secondary);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px 7px;display:inline-block;margin-bottom:4px">von ${k.mitarbeiter_name} gewonnen</span><br>${statusBadge}`;
     }
 
-    const csActions = mineAsCS ? `
-      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">
-        <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:#F3E8FF;color:#6D28D9;border-radius:6px" onclick="setKundePhase(${k.id},'design',this)" title="In Design verschieben">Design</button>
-        <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:#E0F2FE;color:#0369A1;border-radius:6px" onclick="setKundePhase(${k.id},'production',this)" title="In Production verschieben">Production</button>
-        <button class="btn-icon" style="padding:4px 8px;font-size:11px;background:#DCFCE7;color:#15803D;border-radius:6px" onclick="setKundePhase(${k.id},'fertig',this)" title="Fertig">Fertig</button>
-      </div>` : '';
-
     return `<tr>
       <td data-label="Firma"><div style="font-weight:600">${k.firma}</div>${k.telefon ? `<div style="font-size:12px;color:var(--text-secondary)">${k.telefon}</div>` : ''}</td>
       <td data-label="Kanal"><span class="db-kanal-badge">${k.kanal}</span></td>
@@ -1183,10 +1178,17 @@ async function loadDatenbank() {
       <td data-label="Mitarbeiter">${k.mitarbeiter_name}</td>
       <td data-label="Status">${statusBadge}</td>
       <td class="db-actions">
-        ${csActions}
-        ${!isUebergeben && !isCS ? `<button class="btn btn-sm btn-primary" onclick="startUebergabe(${k.id},'${k.firma.replace(/'/g,"\\'")}')">Übergeben →</button>` : ''}
-        <button class="btn-icon" onclick="editKunde(${k.id})" title="Bearbeiten">✏️</button>
-        <button class="btn-icon" onclick="deleteKunde(${k.id})" title="Löschen">🗑️</button>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap">
+          ${mineAsCS ? `
+            <button class="db-phase-btn" style="background:#F3E8FF;color:#6D28D9" onclick="setKundePhase(${k.id},'design',this)" title="In Design verschieben">Design</button>
+            <button class="db-phase-btn" style="background:#E0F2FE;color:#0369A1" onclick="setKundePhase(${k.id},'production',this)" title="In Production verschieben">Production</button>
+            <button class="db-phase-btn" style="background:#DCFCE7;color:#15803D" onclick="setKundePhase(${k.id},'fertig',this)" title="Fertig">Fertig</button>
+            <span style="width:1px;height:22px;background:var(--border);margin:0 4px"></span>
+          ` : ''}
+          ${!isUebergeben && !isCS ? `<button class="btn btn-sm btn-primary" onclick="startUebergabe(${k.id},'${k.firma.replace(/'/g,"\\'")}')">Übergeben →</button>` : ''}
+          <button class="btn-icon" style="padding:5px 8px;font-size:13px" onclick="editKunde(${k.id})" title="Bearbeiten">✏️</button>
+          <button class="btn-icon" style="padding:5px 8px;font-size:13px" onclick="deleteKunde(${k.id})" title="Löschen">🗑️</button>
+        </div>
       </td>
     </tr>`;
   }).join('');

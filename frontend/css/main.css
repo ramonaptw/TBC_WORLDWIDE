@@ -323,6 +323,21 @@ body {
 .btn-icon { padding: 8px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); cursor: pointer; font-size: 14px; transition: all 0.15s; }
 .btn-icon:hover { background: var(--border); }
 
+/* Datenbank phase buttons (Design / Production / Fertig) */
+.db-phase-btn {
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+  transition: filter .12s, transform .1s;
+}
+.db-phase-btn:hover { filter: brightness(0.95); }
+.db-phase-btn:active { transform: translateY(1px); }
+
 /* ─── Forms ─── */
 .form-group { margin-bottom: 16px; }
 .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary); }
